@@ -93,64 +93,82 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
 
         {/* Robot Assistant */}
         <div className="relative flex items-center justify-center">
-          {/* Glow effect for robot */}
+          {/* Elegant glow effect */}
           <div className={cn(
-            "absolute inset-0 w-40 h-40 rounded-full transition-all duration-500",
+            "absolute inset-0 w-48 h-48 transition-all duration-700",
             isListening 
-              ? "bg-gradient-to-r from-destructive to-orange-500 animate-pulse glow scale-110" 
-              : "bg-[var(--gradient-primary)] opacity-20 animate-pulse"
+              ? "bg-cyan-400/30 blur-3xl animate-pulse scale-110" 
+              : "bg-primary/20 blur-2xl animate-pulse"
           )} />
           
-          {/* Robot Image */}
+          {/* Robot Image - No circle background, elegant floating */}
           <div className={cn(
-            "relative w-32 h-32 rounded-full overflow-hidden border-4 transition-all duration-500 cursor-pointer",
+            "relative transition-all duration-500 cursor-pointer",
             isListening 
-              ? "border-destructive shadow-2xl scale-110" 
-              : "border-primary/20 shadow-xl hover:scale-105 float"
+              ? "scale-110 drop-shadow-2xl" 
+              : "hover:scale-105 float"
           )}
           onClick={handleBotClick}
           >
-            {/* Fallback to Bot icon if image doesn't load */}
-            <div className="w-full h-full bg-[var(--gradient-primary)] flex items-center justify-center">
-              <Bot className="h-16 w-16 text-white" />
+            <img 
+              src="/lovable-uploads/8b3271fb-8727-4d0e-ae8f-dcb22868e48e.png"
+              alt="Taskly AI Assistant"
+              className="w-40 h-40 object-contain"
+              onError={(e) => {
+                // Fallback to Bot icon if image doesn't load
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                target.nextElementSibling?.classList.remove('hidden');
+              }}
+            />
+            
+            {/* Fallback Bot icon */}
+            <div className="hidden w-40 h-40 bg-[var(--gradient-primary)] rounded-2xl flex items-center justify-center">
+              <Bot className="h-20 w-20 text-white" />
             </div>
             
             {/* Wave animation when listening */}
             {isListening && (
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="flex gap-1">
-                  <div className="w-1 h-8 bg-white/80 animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-1 h-12 bg-white/80 animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="w-1 h-8 bg-white/80 animate-bounce" style={{ animationDelay: '300ms' }} />
+                <div className="flex gap-2">
+                  <div className="w-1 h-12 bg-cyan-400 animate-bounce rounded-full" style={{ animationDelay: '0ms' }} />
+                  <div className="w-1 h-16 bg-cyan-400 animate-bounce rounded-full" style={{ animationDelay: '150ms' }} />
+                  <div className="w-1 h-12 bg-cyan-400 animate-bounce rounded-full" style={{ animationDelay: '300ms' }} />
                 </div>
               </div>
             )}
           </div>
         </div>
 
-      {/* Action Buttons */}
-      <div className="flex gap-4 relative z-10">
+      {/* Action Buttons - Stacked Vertically */}
+      <div className="flex flex-col gap-4 relative z-10 w-full max-w-sm">
         <Button
           onClick={handleBotClick}
-          variant="outline"
-          className="glass hover:bg-primary/10 transition-all duration-300"
+          size="lg"
+          className={cn(
+            "glass h-14 text-base font-medium transition-all duration-300",
+            isListening
+              ? "bg-cyan-500/20 border-cyan-400/50 text-cyan-100 hover:bg-cyan-500/30"
+              : "hover:bg-primary/10"
+          )}
         >
-          <Mic className="h-4 w-4 mr-2" />
-          Voice Command
+          <Mic className="h-5 w-5 mr-3" />
+          {isListening ? "Listening..." : "Tap to Speak with Taskly"}
         </Button>
         
         <Button
           onClick={handleRecordFlow}
+          size="lg"
           variant="outline"
           className={cn(
-            "glass transition-all duration-300",
+            "glass h-14 text-base font-medium transition-all duration-300",
             isRecording 
-              ? "bg-destructive/10 border-destructive/50 hover:bg-destructive/20" 
+              ? "bg-destructive/20 border-destructive/50 text-destructive-foreground hover:bg-destructive/30" 
               : "hover:bg-accent/10"
           )}
         >
-          <Video className={cn("h-4 w-4 mr-2", isRecording && "text-destructive")} />
-          {isRecording ? "Stop Recording" : "📹 Record My Flow"}
+          <Video className={cn("h-5 w-5 mr-3", isRecording && "text-destructive")} />
+          {isRecording ? "Stop Recording" : "Record Workflow"}
         </Button>
       </div>
 

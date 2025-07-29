@@ -75,75 +75,112 @@ export default function Account() {
           </div>
         </Card>
 
-        {/* Middle Section: Preferences */}
-        <Card className="glass p-6">
-          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Settings className="h-5 w-5" />
-            Preferences
-          </h3>
-          
-          <div className="space-y-3">
-            <Button variant="outline" className="w-full justify-start glass border-0">
-              <Mic className="mr-3 h-4 w-4 text-primary" />
-              🎤 Voice Settings
-            </Button>
+        {/* Account Details Section */}
+        <div className="space-y-6">
+          <Card className="glass p-6">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Mail className="h-5 w-5" />
+              Account Details
+            </h3>
             
-            <Button variant="outline" className="w-full justify-start glass border-0">
-              <User className="mr-3 h-4 w-4 text-accent" />
-              🤖 AI Tone & Personality
-            </Button>
-            
-            <Button variant="outline" className="w-full justify-start glass border-0">
-              <Palette className="mr-3 h-4 w-4 text-secondary-foreground" />
-              🎨 Assistant Theme
-            </Button>
-          </div>
-        </Card>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center p-3 rounded-lg bg-muted/20">
+                <span className="text-sm font-medium">📧 Email</span>
+                <span className="text-sm text-muted-foreground">{user?.email}</span>
+              </div>
+              
+              <div className="flex justify-between items-center p-3 rounded-lg bg-muted/20">
+                <span className="text-sm font-medium">💎 Subscription</span>
+                <Badge variant="secondary">Free Plan</Badge>
+              </div>
+              
+              <div className="flex justify-between items-center p-3 rounded-lg bg-muted/20">
+                <span className="text-sm font-medium">⚙️ Total Workflows</span>
+                <span className="text-sm font-bold text-primary">12</span>
+              </div>
+              
+              <div className="flex justify-between items-center p-3 rounded-lg bg-muted/20">
+                <span className="text-sm font-medium">🤖 Agent Activity</span>
+                <span className="text-sm font-bold text-accent">Active</span>
+              </div>
+            </div>
+          </Card>
 
-        {/* Bottom Section: Analytics */}
-        <Card className="glass p-6">
-          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
-            Your Analytics
-          </h3>
-          
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <div className="text-center p-4 rounded-lg bg-primary/5 border border-primary/10">
-              <div className="text-2xl font-bold text-primary">47</div>
-              <div className="text-sm text-muted-foreground">🗣️ Most Used Commands</div>
-            </div>
+          {/* Preferences */}
+          <Card className="glass p-6">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Settings className="h-5 w-5" />
+              Preferences
+            </h3>
             
-            <div className="text-center p-4 rounded-lg bg-accent/5 border border-accent/10">
-              <div className="text-2xl font-bold text-accent">3.2h</div>
-              <div className="text-sm text-muted-foreground">⏱️ Daily Average</div>
+            <div className="space-y-3">
+              <Button variant="outline" className="w-full justify-start glass border-0">
+                <Mic className="mr-3 h-4 w-4 text-primary" />
+                🎤 Voice Settings
+              </Button>
+              
+              <Button variant="outline" className="w-full justify-start glass border-0">
+                <User className="mr-3 h-4 w-4 text-accent" />
+                🤖 AI Tone & Personality
+              </Button>
+              
+              <Button variant="outline" className="w-full justify-start glass border-0">
+                <Palette className="mr-3 h-4 w-4 text-secondary-foreground" />
+                🎨 Assistant Theme
+              </Button>
+              
+              <Button variant="outline" className="w-full justify-start glass border-0">
+                <Settings className="mr-3 h-4 w-4" />
+                ✏️ Edit Profile
+              </Button>
             </div>
-          </div>
-          
-          <Separator className="my-4" />
-          
-          <div className="space-y-3">
-            <Button variant="outline" className="w-full justify-start glass border-0">
-              <Download className="mr-3 h-4 w-4" />
-              Export My Data
-            </Button>
+          </Card>
+
+          {/* Analytics */}
+          <Card className="glass p-6">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Your Analytics
+            </h3>
             
-            <Button variant="outline" className="w-full justify-start glass border-0">
-              <Shield className="mr-3 h-4 w-4" />
-              Privacy Settings
-            </Button>
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="text-center p-4 rounded-lg bg-primary/5 border border-primary/10">
+                <div className="text-2xl font-bold text-primary">47</div>
+                <div className="text-sm text-muted-foreground">🗣️ Most Used Commands</div>
+              </div>
+              
+              <div className="text-center p-4 rounded-lg bg-accent/5 border border-accent/10">
+                <div className="text-2xl font-bold text-accent">3.2h</div>
+                <div className="text-sm text-muted-foreground">⏱️ Daily Average</div>
+              </div>
+            </div>
             
             <Separator className="my-4" />
             
-            <Button 
-              variant="destructive" 
-              onClick={handleSignOut}
-              className="w-full justify-start"
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              Sign Out
-            </Button>
-          </div>
-        </Card>
+            <div className="space-y-3">
+              <Button variant="outline" className="w-full justify-start glass border-0">
+                <Download className="mr-3 h-4 w-4" />
+                Export My Data
+              </Button>
+              
+              <Button variant="outline" className="w-full justify-start glass border-0">
+                <Shield className="mr-3 h-4 w-4" />
+                Privacy Settings
+              </Button>
+              
+              <Separator className="my-4" />
+              
+              <Button 
+                variant="destructive" 
+                onClick={handleSignOut}
+                className="w-full justify-start"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign Out
+              </Button>
+            </div>
+          </Card>
+        </div>
 
         {!user.email_confirmed_at && (
           <Card className="border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950">

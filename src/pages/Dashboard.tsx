@@ -147,15 +147,28 @@ export default function Dashboard() {
       </header>
 
       <div className="container mx-auto px-6 py-8 max-w-4xl space-y-8">
-        {/* Top Card: Weekly Score & Time Saved */}
+        {/* AI Assistant Panel Header */}
+        <Card className="glass p-6 text-center">
+          <div className="space-y-4">
+            <div className="w-20 h-20 mx-auto bg-[var(--gradient-primary)] rounded-full flex items-center justify-center">
+              <Brain className="h-10 w-10 text-white" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold">Your AI Assistant Panel</h2>
+              <p className="text-muted-foreground">Track your productivity and optimize workflows</p>
+            </div>
+          </div>
+        </Card>
+
+        {/* Top Cards: Weekly Score & Time Saved */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card className="glass p-6">
             <div className="text-center space-y-4">
-              <div className="w-16 h-16 mx-auto bg-[var(--gradient-primary)] rounded-full flex items-center justify-center">
-                <Brain className="h-8 w-8 text-white" />
+              <div className="w-16 h-16 mx-auto bg-gradient-to-r from-primary to-cyan-500 rounded-full flex items-center justify-center">
+                <TrendingUp className="h-8 w-8 text-white" />
               </div>
               <div>
-                <div className="text-3xl font-bold">87</div>
+                <div className="text-3xl font-bold text-primary">87</div>
                 <div className="text-sm text-muted-foreground">🧠 Weekly Productivity Score</div>
               </div>
             </div>
@@ -167,7 +180,7 @@ export default function Dashboard() {
                 <Clock className="h-8 w-8 text-white" />
               </div>
               <div>
-                <div className="text-3xl font-bold">{stats.timesSaved}m</div>
+                <div className="text-3xl font-bold text-accent">{stats.timesSaved}m</div>
                 <div className="text-sm text-muted-foreground">⏰ Time Saved This Week</div>
               </div>
             </div>

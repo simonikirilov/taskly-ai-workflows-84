@@ -5,6 +5,7 @@ import { AppSidebar } from "@/components/Sidebar";
 import { TasklyBot } from "@/components/TasklyBot";
 import { TaskList } from "@/components/TaskList";
 import { AISuggestionsCards } from "@/components/AISuggestionsCards";
+import { WorkflowAnalysis } from "@/components/WorkflowAnalysis";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -18,7 +19,11 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
+  const [showWorkflowAnalysis, setShowWorkflowAnalysis] = useState(false);
+  const [recordingData, setRecordingData] = useState<{
+    duration: string;
+    type: 'voice' | 'screen';
+  } | null>(null);
 
   if (loading) {
     return (
@@ -32,9 +37,16 @@ const Index = () => {
     return <Navigate to="/auth" replace />;
   }
 
-  const handleVoiceCommand = async (command: string) => {
+  const handleVoiceCommand = async (command: string, duration: string = '0:00') => {
     try {
-      // Simple AI processing of voice commands
+      // Analyze the voice session as a potential workflow
+      setRecordingData({
+        duration,
+        type: 'voice'
+      });
+      setShowWorkflowAnalysis(true);
+      
+      // Also process as before for simple commands
       const lowerCommand = command.toLowerCase();
       
       if (lowerCommand.includes('remind') || lowerCommand.includes('task')) {
@@ -49,11 +61,6 @@ const Index = () => {
 
         if (error) throw error;
         
-        toast({
-          title: "Task created!",
-          description: `"${command}" has been added to your tasks.`,
-        });
-        
         setRefreshTrigger(prev => prev + 1);
       } else if (lowerCommand.includes('schedule') || lowerCommand.includes('daily') || lowerCommand.includes('weekly')) {
         // Create a workflow
@@ -67,11 +74,6 @@ const Index = () => {
           });
 
         if (error) throw error;
-        
-        toast({
-          title: "Workflow created!",
-          description: `"${command}" has been saved as a workflow.`,
-        });
       }
     } catch (error) {
       console.error('Error processing voice command:', error);
@@ -83,13 +85,18 @@ const Index = () => {
     }
   };
 
-  const handleRecordFlow = (recordingBlob?: Blob) => {
-    if (recordingBlob) {
-      // Handle the completed recording
-      console.log('Recording completed:', recordingBlob);
+  const handleRecordFlow = (recordingBlob?: Blob, duration?: string) => {
+    if (recordingBlob && duration) {
+      // Show workflow analysis for screen recording
+      setRecordingData({
+        duration,
+        type: 'screen'
+      });
+      setShowWorkflowAnalysis(true);
+      
       toast({
         title: "Workflow Recorded",
-        description: "Your workflow has been captured successfully!",
+        description: "Analyzing your workflow...",
       });
     }
     setRefreshTrigger(prev => prev + 1);
@@ -147,6 +154,13 @@ const Index = () => {
         <AISuggestionsCards 
           isVisible={showSuggestions}
           onClose={() => setShowSuggestions(false)}
+        />
+
+        {/* Workflow Analysis Overlay */}
+        <WorkflowAnalysis
+          isVisible={showWorkflowAnalysis}
+          onClose={() => setShowWorkflowAnalysis(false)}
+          recordingData={recordingData}
         />
       </div>
     </SidebarProvider>
