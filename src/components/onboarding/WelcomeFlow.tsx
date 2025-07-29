@@ -52,7 +52,7 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-6">
           <img 
-            src="/assets/robot-transparent.png"
+            src="/lovable-uploads/0439ea59-9c9e-46ac-9527-cf18c3162602.png"
             alt="Taskly AI"
             className="w-32 h-32 mx-auto object-contain"
           />
@@ -71,7 +71,7 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
         <Card className="w-full max-w-md p-8 space-y-6 glass">
           <div className="text-center space-y-4">
             <img 
-              src="/assets/robot-transparent.png"
+              src="/lovable-uploads/0439ea59-9c9e-46ac-9527-cf18c3162602.png"
               alt="Taskly AI"
               className="w-24 h-24 mx-auto object-contain"
             />
