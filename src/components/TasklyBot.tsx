@@ -111,9 +111,9 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
           onClick={handleBotClick}
           >
             <img 
-              src="/lovable-uploads/8b3271fb-8727-4d0e-ae8f-dcb22868e48e.png"
+              src="/lovable-uploads/55cb4608-23ca-4e56-8544-8d3f2c99ef9f.png"
               alt="Taskly AI Assistant"
-              className="w-40 h-40 object-contain"
+              className="w-48 h-48 object-contain"
               onError={(e) => {
                 // Fallback to Bot icon if image doesn't load
                 const target = e.target as HTMLImageElement;
@@ -140,20 +140,20 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
           </div>
         </div>
 
-      {/* Action Buttons - Stacked Vertically */}
-      <div className="flex flex-col gap-4 relative z-10 w-full max-w-sm">
+      {/* Action Buttons - Horizontal Layout */}
+      <div className="flex gap-3 relative z-10 w-full max-w-md">
         <Button
           onClick={handleBotClick}
           size="lg"
           className={cn(
-            "glass h-14 text-base font-medium transition-all duration-300",
+            "glass h-16 text-base font-medium transition-all duration-300 flex-1 justify-center",
             isListening
               ? "bg-cyan-500/20 border-cyan-400/50 text-cyan-100 hover:bg-cyan-500/30"
               : "hover:bg-primary/10"
           )}
         >
-          <Mic className="h-5 w-5 mr-3" />
-          {isListening ? "Listening..." : "Tap to Speak with Taskly"}
+          <Mic className="h-5 w-5 mr-2" />
+          {isListening ? "Listening..." : "Speak to Taskly"}
         </Button>
         
         <Button
@@ -161,13 +161,13 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
           size="lg"
           variant="outline"
           className={cn(
-            "glass h-14 text-base font-medium transition-all duration-300",
+            "glass h-16 text-base font-medium transition-all duration-300 flex-1 justify-center",
             isRecording 
               ? "bg-destructive/20 border-destructive/50 text-destructive-foreground hover:bg-destructive/30" 
               : "hover:bg-accent/10"
           )}
         >
-          <Video className={cn("h-5 w-5 mr-3", isRecording && "text-destructive")} />
+          <Video className={cn("h-5 w-5 mr-2", isRecording && "text-destructive")} />
           {isRecording ? "Stop Recording" : "Record Workflow"}
         </Button>
       </div>

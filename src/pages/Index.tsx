@@ -39,42 +39,30 @@ const Index = () => {
 
   const handleVoiceCommand = async (command: string, duration: string = '0:00') => {
     try {
-      // Analyze the voice session as a potential workflow
-      setRecordingData({
-        duration,
-        type: 'voice'
-      });
-      setShowWorkflowAnalysis(true);
+      // Extract tasks using AI analysis
+      const extractedTasks = extractTasksFromVoice(command);
       
-      // Also process as before for simple commands
-      const lowerCommand = command.toLowerCase();
-      
-      if (lowerCommand.includes('remind') || lowerCommand.includes('task')) {
-        // Create a task
+      // Create tasks in database
+      for (const taskData of extractedTasks) {
         const { error } = await supabase
           .from('tasks')
           .insert({
             user_id: user.id,
-            title: command,
-            status: false
-          });
-
-        if (error) throw error;
-        
-        setRefreshTrigger(prev => prev + 1);
-      } else if (lowerCommand.includes('schedule') || lowerCommand.includes('daily') || lowerCommand.includes('weekly')) {
-        // Create a workflow
-        const { error } = await supabase
-          .from('workflows')
-          .insert({
-            user_id: user.id,
-            title: command,
-            description: 'Created via voice command',
-            category: 'automation'
+            title: taskData.title,
+            status: false,
+            scheduled_time: taskData.scheduledTime
           });
 
         if (error) throw error;
       }
+      
+      setRefreshTrigger(prev => prev + 1);
+      
+      toast({
+        title: "Tasks created successfully!",
+        description: `Added ${extractedTasks.length} task(s) from your voice command.`,
+      });
+      
     } catch (error) {
       console.error('Error processing voice command:', error);
       toast({
@@ -83,6 +71,49 @@ const Index = () => {
         variant: "destructive",
       });
     }
+  };
+
+  // AI function to extract structured tasks from voice command
+  const extractTasksFromVoice = (command: string) => {
+    const tasks = [];
+    const lowerCommand = command.toLowerCase();
+    
+    // Simple AI logic to extract tasks and times
+    if (lowerCommand.includes('post') && lowerCommand.includes('reels')) {
+      const times = command.match(/(\d{1,2})\s*(am|pm)/gi) || [];
+      const projectMatch = command.match(/for\s+([^,\s]+(?:\s+[^,\s]+)*)/i);
+      const project = projectMatch ? projectMatch[1] : 'Project';
+      
+      if (times.length > 0) {
+        times.forEach((time, index) => {
+          const today = new Date();
+          const [hour, period] = time.toLowerCase().split(/\s*(am|pm)/);
+          let hourNum = parseInt(hour);
+          if (period === 'pm' && hourNum !== 12) hourNum += 12;
+          if (period === 'am' && hourNum === 12) hourNum = 0;
+          
+          today.setHours(hourNum, 0, 0, 0);
+          
+          tasks.push({
+            title: `Post reel ${index + 1} for ${project}`,
+            scheduledTime: today.toISOString()
+          });
+        });
+      } else {
+        tasks.push({
+          title: `Post reels for ${project}`,
+          scheduledTime: null
+        });
+      }
+    } else {
+      // Generic task creation
+      tasks.push({
+        title: command,
+        scheduledTime: null
+      });
+    }
+    
+    return tasks;
   };
 
   const handleRecordFlow = (recordingBlob?: Blob, duration?: string) => {

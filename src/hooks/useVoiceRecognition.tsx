@@ -12,6 +12,21 @@ export function useVoiceRecognition({ onResult, onError }: UseVoiceRecognitionOp
   const recognitionRef = useRef<any>(null);
 
   const startListening = useCallback(() => {
+    // Check for mobile and request permissions
+    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+      // Mobile device - request permissions first
+      navigator.permissions?.query({name: 'microphone' as PermissionName}).then((result) => {
+        if (result.state === 'denied') {
+          toast({
+            title: "Microphone access denied",
+            description: "Please enable microphone access in your browser settings.",
+            variant: "destructive",
+          });
+          return;
+        }
+      });
+    }
+
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
       setIsSupported(false);
       toast({

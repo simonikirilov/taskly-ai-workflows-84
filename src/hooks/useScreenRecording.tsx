@@ -20,6 +20,15 @@ export function useScreenRecording({
   const chunksRef = useRef<Blob[]>([]);
 
   const startRecording = useCallback(async () => {
+    // Check if mobile device
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      // For mobile, show message that screen recording isn't available
+      onError?.('Screen recording not available on mobile. Please use voice to describe your workflow instead.');
+      return;
+    }
+
     try {
       // Request screen recording permission
       const stream = await navigator.mediaDevices.getDisplayMedia({
