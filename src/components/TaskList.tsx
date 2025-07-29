@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { X } from 'lucide-react';
 
 interface Task {
   id: string;
@@ -70,15 +72,50 @@ export function TaskList({ refreshTrigger = 0 }: TaskListProps) {
           : task
       ));
 
-      toast({
-        title: !currentStatus ? "Task completed!" : "Task reopened",
-        description: !currentStatus ? "Great job! Keep up the momentum." : "Task marked as pending.",
-      });
+      // Show completion notification if task was just completed
+      if (!currentStatus) {
+        const completedTask = tasks.find(task => task.id === taskId);
+        toast({
+          title: "✅ Task Completed",
+          description: `${completedTask?.title}`,
+        });
+      } else {
+        toast({
+          title: "Task reopened",
+          description: "Task marked as pending.",
+        });
+      }
     } catch (error) {
       console.error('Error updating task:', error);
       toast({
         title: "Error updating task",
         description: "Failed to update task status. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deleteTask = async (taskId: string) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', taskId);
+
+      if (error) throw error;
+
+      // Update local state
+      setTasks(tasks.filter(task => task.id !== taskId));
+
+      toast({
+        title: "Task deleted",
+        description: "Task removed from your list.",
+      });
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      toast({
+        title: "Error deleting task",
+        description: "Failed to delete task. Please try again.",
         variant: "destructive",
       });
     }
@@ -134,6 +171,16 @@ export function TaskList({ refreshTrigger = 0 }: TaskListProps) {
                   </p>
                 )}
               </div>
+              {task.status && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => deleteTask(task.id)}
+                  className="flex-shrink-0 h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           ))
         ) : (

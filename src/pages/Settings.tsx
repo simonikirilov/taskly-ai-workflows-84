@@ -157,15 +157,33 @@ const Settings = () => {
             <CardContent className="space-y-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label htmlFor="task-reminders" className="text-base font-medium">
-                    Task Reminders
+                  <Label htmlFor="task-completion-notifications" className="text-base font-medium">
+                    Enable Task Completion Notifications
                   </Label>
                   <p className="text-sm text-muted-foreground">
-                    Get notified about upcoming tasks and deadlines
+                    Get notified when Taskly AI completes a task for you
                   </p>
                 </div>
                 <Switch
-                  id="task-reminders"
+                  id="task-completion-notifications"
+                  checked={taskReminders}
+                  onCheckedChange={handleTaskRemindersToggle}
+                />
+              </div>
+
+              <Separator />
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="enable-reminders" className="text-base font-medium">
+                    Enable Reminders
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Get reminders for unfinished or upcoming tasks
+                  </p>
+                </div>
+                <Switch
+                  id="enable-reminders"
                   checked={taskReminders}
                   onCheckedChange={handleTaskRemindersToggle}
                 />

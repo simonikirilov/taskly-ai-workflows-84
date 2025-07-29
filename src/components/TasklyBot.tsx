@@ -92,12 +92,12 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
 
         {/* Robot Assistant */}
         <div className="relative flex items-center justify-center">
-          {/* Elegant glow effect */}
+          {/* Centered glow effect behind Taskly image only */}
           <div className={cn(
-            "absolute inset-0 w-48 h-48 transition-all duration-700",
+            "absolute w-96 h-96 transition-all duration-700 rounded-full",
             isListening 
-              ? "bg-cyan-400/30 blur-3xl animate-pulse scale-110" 
-              : "bg-primary/20 blur-2xl animate-pulse"
+              ? "bg-cyan-400/20 blur-3xl scale-105" 
+              : "bg-primary/15 blur-2xl"
           )} />
           
           {/* Robot Image - Clean and professional */}
