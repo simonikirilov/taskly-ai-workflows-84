@@ -11,8 +11,8 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { DarkModeToggle } from "@/components/ui/dark-mode-toggle";
-import { Search, Mic, Menu } from "lucide-react";
+import { Search, Menu, Lightbulb } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -158,7 +158,24 @@ const Index = () => {
                 </div>
               </div>
               
-              <DarkModeToggle />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-9 w-9">
+                    <Lightbulb className="h-4 w-4" />
+                    <span className="sr-only">Quick Actions</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem onClick={() => setShowSuggestions(true)}>
+                    <Lightbulb className="mr-2 h-4 w-4" />
+                    AI Tips & Shortcuts
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => toast({ title: "Feature coming soon!", description: "Quick stats will be available in the next update." })}>
+                    <Search className="mr-2 h-4 w-4" />
+                    Weekly Stats
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </header>
 

@@ -29,8 +29,6 @@ const menuItems = [
   { title: "Account", url: "/account", icon: User },
   { title: "Dashboard", url: "/dashboard", icon: BarChart3 },
   { title: "Settings", url: "/settings", icon: Settings },
-  { title: "Notifications", url: "/notifications", icon: Bell },
-  { title: "Activity Log", url: "/activity", icon: Activity },
 ]
 
 export function AppSidebar() {
@@ -44,7 +42,11 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-2">
-          <Bot className="h-6 w-6 text-primary" />
+          <img 
+            src="/lovable-uploads/0439ea59-9c9e-46ac-9527-cf18c3162602.png" 
+            alt="Taskly Robot" 
+            className="h-6 w-6 object-contain"
+          />
           <span className="font-bold text-lg">Taskly</span>
         </div>
       </SidebarHeader>
