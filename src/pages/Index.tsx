@@ -4,7 +4,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/Sidebar";
 import { TasklyBot } from "@/components/TasklyBot";
 import { TaskList } from "@/components/TaskList";
-import { SuggestionsList } from "@/components/SuggestionsList";
+import { AISuggestionsCards } from "@/components/AISuggestionsCards";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,6 +17,8 @@ const Index = () => {
   const { user, loading } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
 
   if (loading) {
     return (
@@ -81,52 +83,74 @@ const Index = () => {
     }
   };
 
+  const handleRecordFlow = () => {
+    setIsRecording(!isRecording);
+    if (!isRecording) {
+      toast({
+        title: "Recording Started",
+        description: "Recording your workflow. Tap the button again to stop.",
+      });
+    } else {
+      toast({
+        title: "Recording Stopped",
+        description: "Workflow recording saved for analysis.",
+      });
+    }
+  };
+
   return (
     <SidebarProvider defaultOpen={false}>
       <div className="min-h-screen flex w-full bg-background">
         <AppSidebar />
         
-        <main className="flex-1 overflow-auto">
-          {/* Header */}
-          <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="flex h-14 items-center gap-4 px-4">
-              <SidebarTrigger>
-                <Menu className="h-4 w-4" />
-              </SidebarTrigger>
-              
-              <div className="flex-1 flex items-center gap-4 max-w-md">
-                <div className="relative flex-1">
+        <main className="flex-1 overflow-auto relative">
+          {/* Simplified Header */}
+          <header className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-xl">
+            <div className="flex h-16 items-center justify-between px-6">
+              <div className="flex items-center gap-4">
+                <SidebarTrigger className="glass">
+                  <Menu className="h-4 w-4" />
+                </SidebarTrigger>
+                
+                <div className="relative max-w-sm">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Search workflows..."
+                    placeholder="Search tasks..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 glass border-0"
                   />
                 </div>
-                <Button size="icon" variant="outline">
-                  <Mic className="h-4 w-4" />
-                </Button>
               </div>
               
               <DarkModeToggle />
             </div>
           </header>
 
-          {/* Main Content */}
-          <div className="container mx-auto p-6 max-w-6xl space-y-8">
-            {/* Taskly Bot Section */}
-            <div className="flex justify-center">
-              <TasklyBot onVoiceCommand={handleVoiceCommand} />
-            </div>
+          {/* Main Content - Redesigned Layout */}
+          <div className="container mx-auto px-6 py-8 max-w-4xl space-y-12">
+            {/* Hero Section with Taskly Bot */}
+            <section className="text-center space-y-8">
+              <TasklyBot 
+                onVoiceCommand={handleVoiceCommand}
+                onRecordFlow={handleRecordFlow}
+                suggestionCount={3}
+                onShowSuggestions={() => setShowSuggestions(true)}
+              />
+            </section>
 
-            {/* Tasks and Suggestions Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Tasks Section */}
+            <section className="space-y-6">
               <TaskList refreshTrigger={refreshTrigger} />
-              <SuggestionsList />
-            </div>
+            </section>
           </div>
         </main>
+
+        {/* AI Suggestions Overlay */}
+        <AISuggestionsCards 
+          isVisible={showSuggestions}
+          onClose={() => setShowSuggestions(false)}
+        />
       </div>
     </SidebarProvider>
   );

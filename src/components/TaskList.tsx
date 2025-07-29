@@ -6,8 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
-import { Clock, Plus } from 'lucide-react';
+import { Clock, Plus, Sparkles, Target, CheckCircle2, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface Task {
   id: string;
@@ -90,9 +91,14 @@ export function TaskList({ refreshTrigger }: TaskListProps) {
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Today's Tasks</CardTitle>
+      <Card className="glass border-0">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-lg bg-[var(--gradient-primary)] flex items-center justify-center">
+              <Calendar className="h-4 w-4 text-white" />
+            </div>
+            Today's Tasks
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center p-8">
@@ -105,53 +111,100 @@ export function TaskList({ refreshTrigger }: TaskListProps) {
 
   const completedTasks = tasks.filter(task => task.status);
   const pendingTasks = tasks.filter(task => !task.status);
+  const completionRate = tasks.length > 0 ? Math.round((completedTasks.length / tasks.length) * 100) : 0;
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2">
-          <Clock className="h-5 w-5" />
-          Today's Tasks
-        </CardTitle>
-        <Badge variant="secondary">
-          {completedTasks.length}/{tasks.length} completed
-        </Badge>
+    <Card className="glass border-0 overflow-hidden">
+      {/* Header with Progress */}
+      <CardHeader className="pb-4 bg-gradient-to-r from-background to-muted/20">
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-lg bg-[var(--gradient-primary)] flex items-center justify-center">
+              <Calendar className="h-4 w-4 text-white" />
+            </div>
+            Today's Tasks
+          </CardTitle>
+          {tasks.length > 0 && (
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
+                {completedTasks.length}/{tasks.length}
+              </Badge>
+              <div className="h-2 w-16 bg-muted rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-[var(--gradient-primary)] transition-all duration-500"
+                  style={{ width: `${completionRate}%` }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      
+      <CardContent className="space-y-6">
         {tasks.length === 0 ? (
-          <div className="text-center p-8 text-muted-foreground">
-            <Plus className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p className="text-lg mb-2">No tasks for today</p>
-            <p className="text-sm">
-              Use voice commands to create your first workflow and task!
-            </p>
+          <div className="text-center p-12 space-y-4">
+            <div className="h-16 w-16 mx-auto rounded-full bg-[var(--gradient-primary)] flex items-center justify-center opacity-80">
+              <Sparkles className="h-8 w-8 text-white" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="font-medium text-lg">Let's win the day! 🚀</h3>
+              <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+                Start by saying "Remind me to..." or "Schedule..." to create your first task
+              </p>
+            </div>
+            <Button variant="outline" className="glass hover:bg-primary/10">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Task via Voice
+            </Button>
           </div>
         ) : (
-          <div className="space-y-3">
-            {pendingTasks.map((task) => (
-              <TaskItem
-                key={task.id}
-                task={task}
-                onToggle={toggleTaskStatus}
-              />
-            ))}
-            {completedTasks.length > 0 && (
-              <>
-                <div className="border-t pt-4">
-                  <p className="text-sm font-medium text-muted-foreground mb-3">
-                    Completed ({completedTasks.length})
-                  </p>
-                  {completedTasks.map((task) => (
+          <>
+            {/* Pending Tasks */}
+            {pendingTasks.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Target className="h-4 w-4 text-primary" />
+                  <h3 className="text-sm font-medium">Focus Zone</h3>
+                  <Badge variant="outline" className="text-xs">
+                    {pendingTasks.length} pending
+                  </Badge>
+                </div>
+                <div className="space-y-2">
+                  {pendingTasks.map((task, index) => (
                     <TaskItem
                       key={task.id}
                       task={task}
                       onToggle={toggleTaskStatus}
+                      delay={index * 100}
                     />
                   ))}
                 </div>
-              </>
+              </div>
             )}
-          </div>
+            
+            {/* Completed Tasks */}
+            {completedTasks.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  <h3 className="text-sm font-medium text-muted-foreground">Completed</h3>
+                  <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                    {completedTasks.length} done
+                  </Badge>
+                </div>
+                <div className="space-y-2">
+                  {completedTasks.map((task, index) => (
+                    <TaskItem
+                      key={task.id}
+                      task={task}
+                      onToggle={toggleTaskStatus}
+                      delay={index * 100}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </CardContent>
     </Card>
@@ -161,23 +214,62 @@ export function TaskList({ refreshTrigger }: TaskListProps) {
 interface TaskItemProps {
   task: Task;
   onToggle: (id: string, status: boolean) => void;
+  delay?: number;
 }
 
-function TaskItem({ task, onToggle }: TaskItemProps) {
+function TaskItem({ task, onToggle, delay = 0 }: TaskItemProps) {
   return (
-    <div className="flex items-center space-x-3 p-3 rounded-lg hover:bg-accent transition-colors">
-      <Checkbox
-        checked={task.status}
-        onCheckedChange={() => onToggle(task.id, task.status)}
-      />
-      <div className="flex-1 min-w-0">
-        <p className={`text-sm font-medium ${task.status ? 'line-through text-muted-foreground' : ''}`}>
+    <div 
+      className={cn(
+        "flex items-center gap-4 p-4 rounded-xl border bg-card/50 backdrop-blur-sm transition-all duration-300 group",
+        "hover:bg-card hover:shadow-md hover:scale-[1.02] cursor-pointer animate-[slide-up_0.5s_ease-out]",
+        task.status && "opacity-70"
+      )}
+      style={{ animationDelay: `${delay}ms` }}
+      onClick={() => onToggle(task.id, task.status)}
+    >
+      <div className="relative">
+        <Checkbox
+          checked={task.status}
+          onCheckedChange={() => onToggle(task.id, task.status)}
+          className="h-5 w-5 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
+        />
+        {task.status && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <CheckCircle2 className="h-5 w-5 text-white animate-in zoom-in duration-300" />
+          </div>
+        )}
+      </div>
+      
+      <div className="flex-1 min-w-0 space-y-1">
+        <p className={cn(
+          "text-sm font-medium transition-all duration-300",
+          task.status 
+            ? 'line-through text-muted-foreground' 
+            : 'text-foreground group-hover:text-primary'
+        )}>
           {task.title}
         </p>
+        
         {task.scheduled_time && (
-          <p className="text-xs text-muted-foreground">
-            Scheduled: {format(new Date(task.scheduled_time), 'h:mm a')}
-          </p>
+          <div className="flex items-center gap-2">
+            <Clock className="h-3 w-3 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">
+              {format(new Date(task.scheduled_time), 'h:mm a')}
+            </span>
+          </div>
+        )}
+      </div>
+      
+      <div className="flex items-center gap-2">
+        {task.status ? (
+          <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+            ✓ Done
+          </Badge>
+        ) : (
+          <Badge variant="outline" className="text-xs">
+            Pending
+          </Badge>
         )}
       </div>
     </div>
