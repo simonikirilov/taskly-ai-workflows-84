@@ -101,19 +101,19 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
               : "bg-primary/20 blur-2xl animate-pulse"
           )} />
           
-          {/* Robot Image - No circle background, elegant floating */}
+          {/* Robot Image - Clean and professional */}
           <div className={cn(
             "relative transition-all duration-500 cursor-pointer",
             isListening 
-              ? "scale-110 drop-shadow-2xl" 
-              : "hover:scale-105 float"
+              ? "scale-105 drop-shadow-2xl" 
+              : "hover:scale-102"
           )}
           onClick={handleBotClick}
           >
             <img 
-              src="/lovable-uploads/55cb4608-23ca-4e56-8544-8d3f2c99ef9f.png"
+              src="/assets/robot-transparent.png"
               alt="Taskly AI Assistant"
-              className="w-48 h-48 object-contain"
+              className="w-56 h-56 object-contain"
               onError={(e) => {
                 // Fallback to Bot icon if image doesn't load
                 const target = e.target as HTMLImageElement;
@@ -140,20 +140,20 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
           </div>
         </div>
 
-      {/* Action Buttons - Horizontal Layout */}
-      <div className="flex gap-3 relative z-10 w-full max-w-md">
+      {/* Action Buttons - Vertical Layout */}
+      <div className="flex flex-col gap-4 relative z-10 w-full max-w-sm">
         <Button
           onClick={handleBotClick}
           size="lg"
           className={cn(
-            "glass h-16 text-base font-medium transition-all duration-300 flex-1 justify-center",
+            "glass h-14 text-lg font-medium transition-all duration-300 shadow-lg rounded-xl",
             isListening
               ? "bg-cyan-500/20 border-cyan-400/50 text-cyan-100 hover:bg-cyan-500/30"
               : "hover:bg-primary/10"
           )}
         >
-          <Mic className="h-5 w-5 mr-2" />
-          {isListening ? "Listening..." : "Speak to Taskly"}
+          <Mic className="h-5 w-5 mr-3" />
+          {isListening ? "Listening..." : "Tap to Speak with Taskly"}
         </Button>
         
         <Button
@@ -161,13 +161,13 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
           size="lg"
           variant="outline"
           className={cn(
-            "glass h-16 text-base font-medium transition-all duration-300 flex-1 justify-center",
+            "glass h-14 text-lg font-medium transition-all duration-300 shadow-lg rounded-xl",
             isRecording 
               ? "bg-destructive/20 border-destructive/50 text-destructive-foreground hover:bg-destructive/30" 
               : "hover:bg-accent/10"
           )}
         >
-          <Video className={cn("h-5 w-5 mr-2", isRecording && "text-destructive")} />
+          <Video className={cn("h-5 w-5 mr-3", isRecording && "text-destructive")} />
           {isRecording ? "Stop Recording" : "Record Workflow"}
         </Button>
       </div>

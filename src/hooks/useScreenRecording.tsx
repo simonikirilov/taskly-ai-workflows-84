@@ -24,9 +24,56 @@ export function useScreenRecording({
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
     if (isMobile) {
-      // For mobile, show message that screen recording isn't available
-      onError?.('Screen recording not available on mobile. Please use voice to describe your workflow instead.');
-      return;
+      // For mobile, try to use getDisplayMedia or fallback to voice description
+      try {
+        const stream = await navigator.mediaDevices.getDisplayMedia({
+          video: true,
+          audio: false
+        });
+        
+        // Continue with mobile screen recording
+        streamRef.current = stream;
+        chunksRef.current = [];
+
+        const mediaRecorder = new MediaRecorder(stream);
+        mediaRecorderRef.current = mediaRecorder;
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            chunksRef.current.push(event.data);
+          }
+        };
+
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(chunksRef.current, { type: 'video/webm' });
+          onRecordingStop?.(blob);
+          
+          if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current = null;
+          }
+        };
+
+        stream.getVideoTracks()[0].addEventListener('ended', () => {
+          stopRecording();
+        });
+
+        mediaRecorder.start(1000);
+        setIsRecording(true);
+        setRecordingTime(0);
+
+        intervalRef.current = setInterval(() => {
+          setRecordingTime(prev => prev + 1);
+        }, 1000);
+
+        onRecordingStart?.();
+        return;
+        
+      } catch (error) {
+        // Fallback for mobile - use voice description
+        onError?.('Screen recording not available on this device. Please describe your workflow using voice instead.');
+        return;
+      }
     }
 
     try {
