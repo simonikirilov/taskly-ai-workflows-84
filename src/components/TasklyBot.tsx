@@ -85,10 +85,9 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
         
         {/* Main Greeting */}
         <div className="text-center space-y-2 relative z-10">
-          <h1 className="text-2xl font-semibold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-            Welcome to Taskly
+          <h1 className="text-4xl font-semibold text-foreground">
+            Welcome, Simone.
           </h1>
-          <p className="text-muted-foreground">Your AI-powered productivity companion</p>
         </div>
 
         {/* Robot Assistant */}
@@ -113,7 +112,7 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
             <img 
               src="/lovable-uploads/0439ea59-9c9e-46ac-9527-cf18c3162602.png"
               alt="Taskly AI Assistant"
-              className="w-64 h-64 object-contain"
+              className="w-96 h-96 object-contain"
               onError={(e) => {
                 // Fallback to Bot icon if image doesn't load
                 const target = e.target as HTMLImageElement;
@@ -153,7 +152,7 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
           )}
         >
           <Mic className="h-5 w-5 mr-3" />
-          {isListening ? "Listening..." : "Tap to Speak with Taskly"}
+          {isListening ? "Listening..." : "Tap to Speak"}
         </Button>
         
         <Button
