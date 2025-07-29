@@ -1,16 +1,22 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 import { 
   CheckCircle, 
   Clock, 
   TrendingUp, 
   Workflow,
   Calendar,
-  Target
+  Target,
+  ArrowLeft,
+  Trophy,
+  Flame,
+  Brain
 } from 'lucide-react';
 
 interface DashboardStats {
@@ -33,6 +39,7 @@ export default function Dashboard() {
   });
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -113,151 +120,142 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-6 max-w-6xl">
+      <div className="min-h-screen bg-background">
         <div className="flex items-center justify-center min-h-[400px]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          <div className="h-12 w-12 border-b-2 border-primary rounded-full animate-spin"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-6xl">
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          <Badge variant="secondary" className="text-sm">
-            Productivity Overview
-          </Badge>
+    <div className="min-h-screen bg-background">
+      {/* Header with Back Button */}
+      <header className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-xl">
+        <div className="flex h-16 items-center justify-between px-6">
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/')}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Home
+          </Button>
+          <h1 className="text-lg font-semibold">Dashboard</h1>
+          <div /> {/* Spacer for center alignment */}
+        </div>
+      </header>
+
+      <div className="container mx-auto px-6 py-8 max-w-4xl space-y-8">
+        {/* Top Card: Weekly Score & Time Saved */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card className="glass p-6">
+            <div className="text-center space-y-4">
+              <div className="w-16 h-16 mx-auto bg-[var(--gradient-primary)] rounded-full flex items-center justify-center">
+                <Brain className="h-8 w-8 text-white" />
+              </div>
+              <div>
+                <div className="text-3xl font-bold">87</div>
+                <div className="text-sm text-muted-foreground">🧠 Weekly Productivity Score</div>
+              </div>
+            </div>
+          </Card>
+          
+          <Card className="glass p-6">
+            <div className="text-center space-y-4">
+              <div className="w-16 h-16 mx-auto bg-gradient-to-r from-accent to-orange-500 rounded-full flex items-center justify-center">
+                <Clock className="h-8 w-8 text-white" />
+              </div>
+              <div>
+                <div className="text-3xl font-bold">{stats.timesSaved}m</div>
+                <div className="text-sm text-muted-foreground">⏰ Time Saved This Week</div>
+              </div>
+            </div>
+          </Card>
         </div>
 
-        {/* Main Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Tasks Completed Today</CardTitle>
-              <CheckCircle className="h-4 w-4 text-green-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.completedToday}</div>
-              <p className="text-xs text-muted-foreground">
-                Great progress today!
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Workflows</CardTitle>
-              <Workflow className="h-4 w-4 text-blue-500" />
-            </CardHeader>
-            <CardContent>
+        {/* Middle Card: Visual Calendar & Success Rate */}
+        <Card className="glass p-6">
+          <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            This Week's Flow
+          </h3>
+          
+          <div className="grid grid-cols-7 gap-2 mb-6">
+            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => (
+              <div key={day} className="text-center">
+                <div className="text-xs text-muted-foreground mb-2">{day}</div>
+                <div className={`w-8 h-8 mx-auto rounded-full flex items-center justify-center text-xs font-medium ${
+                  index < 4 ? 'bg-primary/20 text-primary' : 'bg-muted'
+                }`}>
+                  {index < 4 ? '✅' : ''}
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-primary">{stats.completionRate}%</div>
+              <div className="text-sm text-muted-foreground">Success Rate</div>
+            </div>
+            <div className="text-center">
               <div className="text-2xl font-bold">{stats.totalWorkflows}</div>
-              <p className="text-xs text-muted-foreground">
-                Automated processes created
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Schedules</CardTitle>
-              <Calendar className="h-4 w-4 text-purple-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.activeSchedules}</div>
-              <p className="text-xs text-muted-foreground">
-                Recurring automations
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Completion Rate</CardTitle>
-              <Target className="h-4 w-4 text-orange-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.completionRate}%</div>
-              <p className="text-xs text-muted-foreground">
-                Task completion success
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Time Saved</CardTitle>
-              <Clock className="h-4 w-4 text-indigo-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.timesSaved} min</div>
-              <p className="text-xs text-muted-foreground">
-                Estimated time saved
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Tasks</CardTitle>
-              <TrendingUp className="h-4 w-4 text-red-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalTasks}</div>
-              <p className="text-xs text-muted-foreground">
-                All-time task count
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Insights Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Productivity Insights</CardTitle>
-            <CardDescription>
-              AI-powered analysis of your workflow patterns
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {stats.completedToday === 0 && (
-              <div className="p-4 rounded-lg bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800">
-                <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                  💡 <strong>Tip:</strong> Try using voice commands to create your first task today! 
-                  Say something like "Remind me to check emails at 2 PM"
-                </p>
-              </div>
-            )}
-
-            {stats.totalWorkflows === 0 && (
-              <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800">
-                <p className="text-sm text-blue-800 dark:text-blue-200">
-                  🚀 <strong>Get Started:</strong> Create your first workflow using voice commands! 
-                  Try saying "Schedule a daily standup meeting at 9 AM"
-                </p>
-              </div>
-            )}
-
-            {stats.completionRate >= 80 && stats.totalTasks > 0 && (
-              <div className="p-4 rounded-lg bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800">
-                <p className="text-sm text-green-800 dark:text-green-200">
-                  🎉 <strong>Excellent!</strong> You have a {stats.completionRate}% completion rate. 
-                  You're doing great at staying on top of your tasks!
-                </p>
-              </div>
-            )}
-
-            {stats.activeSchedules > 0 && (
-              <div className="p-4 rounded-lg bg-purple-50 dark:bg-purple-950 border border-purple-200 dark:border-purple-800">
-                <p className="text-sm text-purple-800 dark:text-purple-200">
-                  ⚡ <strong>Automation Active:</strong> You have {stats.activeSchedules} active schedules 
-                  saving you time every day!
-                </p>
-              </div>
-            )}
-          </CardContent>
+              <div className="text-sm text-muted-foreground">Completed Flows</div>
+            </div>
+          </div>
         </Card>
+
+        {/* Bottom Card: Achievements & Streaks */}
+        <Card className="glass p-6">
+          <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
+            <Trophy className="h-5 w-5" />
+            Latest Achievements
+          </h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="text-center p-4 rounded-lg bg-primary/5 border border-primary/10">
+              <div className="text-3xl mb-2">🔥</div>
+              <div className="font-bold">5 Day Streak</div>
+              <div className="text-xs text-muted-foreground">Keep it going!</div>
+            </div>
+            
+            <div className="text-center p-4 rounded-lg bg-accent/5 border border-accent/10">
+              <div className="text-3xl mb-2">✅</div>
+              <div className="font-bold">Task Master</div>
+              <div className="text-xs text-muted-foreground">100 tasks completed</div>
+            </div>
+            
+            <div className="text-center p-4 rounded-lg bg-secondary/20 border border-secondary/30">
+              <div className="text-3xl mb-2">🤖</div>
+              <div className="font-bold">Voice Pro</div>
+              <div className="text-xs text-muted-foreground">50 voice commands</div>
+            </div>
+          </div>
+        </Card>
+
+        {/* Quick Tips */}
+        {(stats.completedToday === 0 || stats.totalWorkflows === 0) && (
+          <Card className="glass p-6">
+            <h3 className="text-lg font-semibold mb-4">💡 Quick Tips</h3>
+            <div className="space-y-3">
+              {stats.completedToday === 0 && (
+                <div className="p-3 rounded-lg bg-primary/5 border border-primary/10">
+                  <p className="text-sm">
+                    🎤 <strong>Try saying:</strong> "Remind me to check emails at 2 PM"
+                  </p>
+                </div>
+              )}
+              {stats.totalWorkflows === 0 && (
+                <div className="p-3 rounded-lg bg-accent/5 border border-accent/10">
+                  <p className="text-sm">
+                    📹 <strong>Record your first workflow:</strong> Click "Record My Flow" and capture a task
+                  </p>
+                </div>
+              )}
+            </div>
+          </Card>
+        )}
       </div>
     </div>
   );

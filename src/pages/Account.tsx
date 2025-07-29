@@ -1,12 +1,16 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/hooks/useAuth';
-import { User, Mail, Calendar, LogOut } from 'lucide-react';
+import { User, Mail, Calendar, LogOut, ArrowLeft, Settings, Download, Shield, Mic, Palette, Flame, TrendingUp, Clock } from 'lucide-react';
 import { format } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 
 export default function Account() {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
   if (!user) {
     return null;
@@ -24,90 +28,121 @@ export default function Account() {
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Account Settings</h1>
-          <Button variant="outline" onClick={handleSignOut}>
-            <LogOut className="h-4 w-4 mr-2" />
-            Sign Out
+    <div className="min-h-screen bg-background">
+      {/* Header with Back Button */}
+      <header className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-xl">
+        <div className="flex h-16 items-center justify-between px-6">
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/')}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Home
           </Button>
+          <h1 className="text-lg font-semibold">Account</h1>
+          <div /> {/* Spacer for center alignment */}
         </div>
+      </header>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              Profile Information
-            </CardTitle>
-            <CardDescription>
-              Your account details and authentication method
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium flex items-center gap-2">
-                  <Mail className="h-4 w-4" />
-                  Email Address
-                </label>
-                <div className="p-3 bg-muted rounded-md">
-                  <p className="text-sm">{user.email}</p>
-                </div>
+      <div className="container mx-auto px-6 py-8 max-w-2xl space-y-8">
+        {/* Top Section: Avatar + Greeting + Streak */}
+        <Card className="glass p-6">
+          <div className="flex items-center space-x-6">
+            <Avatar className="h-24 w-24 border-4 border-primary/20">
+              <AvatarImage src="/placeholder.svg" alt="User Avatar" />
+              <AvatarFallback className="bg-[var(--gradient-primary)] text-white text-lg">
+                <User className="h-10 w-10" />
+              </AvatarFallback>
+            </Avatar>
+            
+            <div className="flex-1 space-y-3">
+              <div>
+                <h2 className="text-2xl font-bold">Hello, {user?.email?.split('@')[0] || 'User'}! 👋</h2>
+                <p className="text-muted-foreground">{user?.email}</p>
               </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Authentication Method</label>
-                <div className="p-3 bg-muted rounded-md flex items-center justify-between">
-                  <span className="text-sm">Connected via</span>
-                  {getProviderBadge()}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
-                  Account Created
-                </label>
-                <div className="p-3 bg-muted rounded-md">
-                  <p className="text-sm">
-                    {format(new Date(user.created_at), 'PPP')}
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Account Status</label>
-                <div className="p-3 bg-muted rounded-md">
-                  <Badge variant={user.email_confirmed_at ? "default" : "secondary"}>
-                    {user.email_confirmed_at ? "Verified" : "Pending Verification"}
-                  </Badge>
-                </div>
+              
+              <div className="flex items-center gap-4">
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  <Flame className="h-3 w-3" />
+                  5 Day Streak
+                </Badge>
+                <Badge className="bg-primary/10 text-primary border-primary/20">
+                  {user?.email_confirmed_at ? "Verified" : "Free Plan"}
+                </Badge>
               </div>
             </div>
-          </CardContent>
+          </div>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Account Actions</CardTitle>
-            <CardDescription>
-              Manage your account settings and data
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Button variant="outline" className="flex-1">
-                Export Data
-              </Button>
-              <Button variant="outline" className="flex-1">
-                Privacy Settings
-              </Button>
-              <Button variant="destructive" className="flex-1" onClick={handleSignOut}>
-                Sign Out
-              </Button>
+        {/* Middle Section: Preferences */}
+        <Card className="glass p-6">
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Settings className="h-5 w-5" />
+            Preferences
+          </h3>
+          
+          <div className="space-y-3">
+            <Button variant="outline" className="w-full justify-start glass border-0">
+              <Mic className="mr-3 h-4 w-4 text-primary" />
+              🎤 Voice Settings
+            </Button>
+            
+            <Button variant="outline" className="w-full justify-start glass border-0">
+              <User className="mr-3 h-4 w-4 text-accent" />
+              🤖 AI Tone & Personality
+            </Button>
+            
+            <Button variant="outline" className="w-full justify-start glass border-0">
+              <Palette className="mr-3 h-4 w-4 text-secondary-foreground" />
+              🎨 Assistant Theme
+            </Button>
+          </div>
+        </Card>
+
+        {/* Bottom Section: Analytics */}
+        <Card className="glass p-6">
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <TrendingUp className="h-5 w-5" />
+            Your Analytics
+          </h3>
+          
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="text-center p-4 rounded-lg bg-primary/5 border border-primary/10">
+              <div className="text-2xl font-bold text-primary">47</div>
+              <div className="text-sm text-muted-foreground">🗣️ Most Used Commands</div>
             </div>
-          </CardContent>
+            
+            <div className="text-center p-4 rounded-lg bg-accent/5 border border-accent/10">
+              <div className="text-2xl font-bold text-accent">3.2h</div>
+              <div className="text-sm text-muted-foreground">⏱️ Daily Average</div>
+            </div>
+          </div>
+          
+          <Separator className="my-4" />
+          
+          <div className="space-y-3">
+            <Button variant="outline" className="w-full justify-start glass border-0">
+              <Download className="mr-3 h-4 w-4" />
+              Export My Data
+            </Button>
+            
+            <Button variant="outline" className="w-full justify-start glass border-0">
+              <Shield className="mr-3 h-4 w-4" />
+              Privacy Settings
+            </Button>
+            
+            <Separator className="my-4" />
+            
+            <Button 
+              variant="destructive" 
+              onClick={handleSignOut}
+              className="w-full justify-start"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Sign Out
+            </Button>
+          </div>
         </Card>
 
         {!user.email_confirmed_at && (

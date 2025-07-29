@@ -83,19 +83,16 @@ const Index = () => {
     }
   };
 
-  const handleRecordFlow = () => {
-    setIsRecording(!isRecording);
-    if (!isRecording) {
+  const handleRecordFlow = (recordingBlob?: Blob) => {
+    if (recordingBlob) {
+      // Handle the completed recording
+      console.log('Recording completed:', recordingBlob);
       toast({
-        title: "Recording Started",
-        description: "Recording your workflow. Tap the button again to stop.",
-      });
-    } else {
-      toast({
-        title: "Recording Stopped",
-        description: "Workflow recording saved for analysis.",
+        title: "Workflow Recorded",
+        description: "Your workflow has been captured successfully!",
       });
     }
+    setRefreshTrigger(prev => prev + 1);
   };
 
   return (
