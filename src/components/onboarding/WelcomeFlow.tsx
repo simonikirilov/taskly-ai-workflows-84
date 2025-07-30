@@ -40,6 +40,9 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
   };
 
   const handleComplete = () => {
+    // Store user name in localStorage for later use
+    localStorage.setItem('taskly_user_name', name);
+    
     onComplete({
       name,
       purpose: selectedPurposes,

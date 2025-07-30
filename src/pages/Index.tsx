@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Navigate, Link, useLocation } from 'react-router-dom';
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/Sidebar";
 import { TasklyBot } from "@/components/TasklyBot";
@@ -11,19 +11,30 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Search, Menu, Lightbulb } from "lucide-react";
+import { Search, Menu, Lightbulb, Home, BarChart3, User, Settings } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
 const Index = () => {
   const { user, loading } = useAuth();
+  const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showWorkflowAnalysis, setShowWorkflowAnalysis] = useState(false);
+  const [userName, setUserName] = useState<string>('');
   const [recordingData, setRecordingData] = useState<{
     duration: string;
     type: 'voice' | 'screen';
   } | null>(null);
+
+  // Get user name from localStorage (stored during onboarding)
+  useEffect(() => {
+    const storedUserName = localStorage.getItem('taskly_user_name');
+    if (storedUserName) {
+      setUserName(storedUserName);
+    }
+  }, []);
 
   if (loading) {
     return (
@@ -139,15 +150,26 @@ const Index = () => {
         <AppSidebar />
         
         <main className="flex-1 overflow-auto relative">
-          {/* Simplified Header */}
+          {/* Header with Logo and Navigation */}
           <header className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-xl">
             <div className="flex h-16 items-center justify-between px-6">
+              {/* Left Side - Logo and Sidebar */}
               <div className="flex items-center gap-4">
                 <SidebarTrigger className="glass">
                   <Menu className="h-4 w-4" />
                 </SidebarTrigger>
                 
-                <div className="relative max-w-sm">
+                {/* Taskly Logo */}
+                <Link to="/" className="flex items-center gap-2">
+                  <img 
+                    src="/lovable-uploads/d6ce5d45-f66c-43ab-9c0b-b20a8aee2675.png"
+                    alt="Taskly"
+                    className="w-8 h-8 object-contain"
+                  />
+                  <span className="text-xl font-semibold text-foreground">Taskly</span>
+                </Link>
+                
+                <div className="relative max-w-sm ml-4">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Search tasks..."
@@ -158,24 +180,67 @@ const Index = () => {
                 </div>
               </div>
               
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-9 w-9">
-                    <Lightbulb className="h-4 w-4" />
-                    <span className="sr-only">Quick Actions</span>
+              {/* Right Side - Navigation */}
+              <nav className="flex items-center gap-1">
+                <Link to="/">
+                  <Button variant="ghost" size="sm" className={cn(
+                    "h-9 px-3",
+                    location.pathname === "/" && "bg-primary/10 text-primary"
+                  )}>
+                    <Home className="h-4 w-4 mr-2" />
+                    Home
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem onClick={() => setShowSuggestions(true)}>
-                    <Lightbulb className="mr-2 h-4 w-4" />
-                    AI Tips & Shortcuts
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => toast({ title: "Feature coming soon!", description: "Quick stats will be available in the next update." })}>
-                    <Search className="mr-2 h-4 w-4" />
-                    Weekly Stats
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                </Link>
+                
+                <Link to="/dashboard">
+                  <Button variant="ghost" size="sm" className={cn(
+                    "h-9 px-3",
+                    location.pathname === "/dashboard" && "bg-primary/10 text-primary"
+                  )}>
+                    <BarChart3 className="h-4 w-4 mr-2" />
+                    Dashboard
+                  </Button>
+                </Link>
+                
+                <Link to="/account">
+                  <Button variant="ghost" size="sm" className={cn(
+                    "h-9 px-3",
+                    location.pathname === "/account" && "bg-primary/10 text-primary"
+                  )}>
+                    <User className="h-4 w-4 mr-2" />
+                    Account
+                  </Button>
+                </Link>
+                
+                <Link to="/settings">
+                  <Button variant="ghost" size="sm" className={cn(
+                    "h-9 px-3",
+                    location.pathname === "/settings" && "bg-primary/10 text-primary"
+                  )}>
+                    <Settings className="h-4 w-4 mr-2" />
+                    Settings
+                  </Button>
+                </Link>
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-9 w-9 ml-2">
+                      <Lightbulb className="h-4 w-4" />
+                      <span className="sr-only">Quick Actions</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuItem onClick={() => setShowSuggestions(true)}>
+                      <Lightbulb className="mr-2 h-4 w-4" />
+                      AI Tips & Shortcuts
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => toast({ title: "Feature coming soon!", description: "Quick stats will be available in the next update." })}>
+                      <Search className="mr-2 h-4 w-4" />
+                      Weekly Stats
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </nav>
             </div>
           </header>
 
@@ -185,7 +250,7 @@ const Index = () => {
             <section className="text-center space-y-16 mb-20">
               <div className="space-y-6">
                 <h1 className="text-5xl font-bold text-foreground tracking-tight">
-                  Your Personal AI Co-Pilot
+                  Welcome {userName || 'to Taskly'}
                 </h1>
                 <p className="text-xl text-muted-foreground font-light max-w-2xl mx-auto leading-relaxed">
                   Streamline your workflow with intelligent automation, voice commands, and seamless task management.

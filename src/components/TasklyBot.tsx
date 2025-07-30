@@ -84,13 +84,7 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
 
         {/* Taskly Robot - Littlebird.ai style with soft shadows */}
         <div className="relative flex items-center justify-center p-8">
-          {/* Subtle glow effect - perfectly centered */}
-          <div className={cn(
-            "absolute w-80 h-80 transition-all duration-700 rounded-full",
-            isListening 
-              ? "bg-primary/15 blur-3xl scale-110" 
-              : "bg-primary/8 blur-2xl"
-          )} />
+          {/* Remove background glow effects */}
           
           {/* Robot container with elevated design */}
           <div className={cn(
@@ -102,7 +96,7 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
           onClick={handleBotClick}
           >
             <img 
-              src="/lovable-uploads/0439ea59-9c9e-46ac-9527-cf18c3162602.png"
+              src="/lovable-uploads/7ba10efd-7292-470a-aa74-e3333f5c0ee5.png"
               alt="Taskly AI Assistant"
               className="w-64 h-64 object-contain"
               onError={(e) => {
