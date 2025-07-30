@@ -27,6 +27,7 @@ const Index = () => {
     duration: string;
     type: 'voice' | 'screen';
   } | null>(null);
+  const [voiceHistory, setVoiceHistory] = useState<string[]>([]);
 
   // Get user name from localStorage (stored during onboarding)
   useEffect(() => {
@@ -49,6 +50,9 @@ const Index = () => {
   }
 
   const handleVoiceCommand = async (command: string, duration: string = '0:00') => {
+    // Add to voice history
+    setVoiceHistory(prev => [...prev, command]);
+    
     try {
       // Extract tasks using AI analysis
       const extractedTasks = extractTasksFromVoice(command);
@@ -159,7 +163,7 @@ const Index = () => {
                   <img 
                     src="/lovable-uploads/d6ce5d45-f66c-43ab-9c0b-b20a8aee2675.png"
                     alt="Taskly"
-                    className="w-10 h-10 object-contain"
+                    className="w-20 h-20 object-contain"
                   />
                 </Link>
               </div>
@@ -258,6 +262,7 @@ const Index = () => {
                 onRecordFlow={handleRecordFlow}
                 suggestionCount={3}
                 onShowSuggestions={() => setShowSuggestions(true)}
+                voiceHistory={voiceHistory}
               />
             </section>
 

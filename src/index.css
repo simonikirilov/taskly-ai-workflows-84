@@ -183,13 +183,17 @@ All colors MUST be HSL.
 @layer utilities {
   /* Premium Animations */
   @keyframes breathe {
-    0%, 100% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.05); opacity: 0.8; }
+    0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    25% { transform: scale(1.02) rotate(0.5deg); opacity: 0.95; }
+    50% { transform: scale(1.05) rotate(0deg); opacity: 0.9; }
+    75% { transform: scale(1.02) rotate(-0.5deg); opacity: 0.95; }
   }
   
   @keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
+    0%, 100% { transform: translateY(0px) translateX(0px); }
+    25% { transform: translateY(-5px) translateX(2px); }
+    50% { transform: translateY(-15px) translateX(0px); }
+    75% { transform: translateY(-5px) translateX(-2px); }
   }
   
   @keyframes pulse-glow {
