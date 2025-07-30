@@ -6,6 +6,7 @@ import { TasklyBot } from "@/components/TasklyBot";
 import { TaskList } from "@/components/TaskList";
 import { AISuggestionsCards } from "@/components/AISuggestionsCards";
 import { WorkflowAnalysis } from "@/components/WorkflowAnalysis";
+import { TodaysFocus } from "@/components/TodaysFocus";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -255,27 +256,30 @@ const Index = () => {
                  </p>
               </div>
               
-              {/* Robot and Buttons */}
-              <TasklyBot 
-                onVoiceCommand={handleVoiceCommand}
-                onRecordFlow={handleRecordFlow}
-                suggestionCount={3}
-                onShowSuggestions={() => setShowSuggestions(true)}
-                voiceHistory={voiceHistory}
-              />
-            </section>
-          </div>
+               {/* Robot and Buttons */}
+               <TasklyBot 
+                 onVoiceCommand={handleVoiceCommand}
+                 onRecordFlow={handleRecordFlow}
+                 suggestionCount={3}
+                 onShowSuggestions={() => setShowSuggestions(true)}
+                 voiceHistory={voiceHistory}
+               />
+               
+               {/* Today's Focus Section */}
+               <TodaysFocus className="mt-6" />
+             </section>
+           </div>
 
-          {/* Tasks Section - Elevated design */}
-          <div className="container mx-auto px-4 py-8 max-w-4xl">
-            <section className="space-y-8">
-              <div className="text-center space-y-4 mb-12">
-                <h2 className="text-3xl font-semibold text-foreground">Today's Focus</h2>
-                <p className="text-muted-foreground font-light">Keep track of your priorities and accomplish more</p>
-              </div>
-              <TaskList refreshTrigger={refreshTrigger} />
-            </section>
-          </div>
+           {/* Tasks Section - Elevated design */}
+           <div className="container mx-auto px-4 py-8 max-w-4xl">
+             <section className="space-y-8">
+               <div className="text-center space-y-4 mb-12">
+                 <h2 className="text-3xl font-semibold text-foreground">Today's Tasks</h2>
+                 <p className="text-muted-foreground font-light">Keep track of your priorities and accomplish more</p>
+               </div>
+               <TaskList refreshTrigger={refreshTrigger} />
+             </section>
+           </div>
         </main>
 
         {/* AI Suggestions Overlay */}

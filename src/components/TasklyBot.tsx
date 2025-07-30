@@ -161,21 +161,9 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
         </Button>
       </div>
 
-      {/* Instructions and Voice History */}
-      <div className="relative z-10 max-w-2xl text-center space-y-4 mt-4">
-        {/* Ready for First Task Section */}
-        <div className="flex items-center justify-center gap-4 p-4 rounded-2xl bg-card/50 border border-border/50">
-          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-            <Sparkles className="h-5 w-5 text-primary" />
-          </div>
-          <div className="text-left">
-            <h3 className="text-base font-medium text-foreground">Ready for Your First Task</h3>
-            <p className="text-xs text-muted-foreground">Use voice commands or workflow recording to get started</p>
-          </div>
-        </div>
-
-        {/* Voice History */}
-        {voiceHistory.length > 0 && (
+      {/* Voice History - Only show if there's history */}
+      {voiceHistory.length > 0 && (
+        <div className="relative z-10 max-w-2xl text-center mt-4">
           <div className="bg-muted/80 rounded-2xl p-6 backdrop-blur-sm">
             <h4 className="text-sm font-medium text-muted-foreground mb-4">Voice Command History</h4>
             <div className="space-y-3 max-h-32 overflow-y-auto">
@@ -186,8 +174,8 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
               ))}
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Floating Assistant - Littlebird.ai style */}
       <button
