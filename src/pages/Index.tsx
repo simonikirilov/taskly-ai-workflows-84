@@ -246,13 +246,13 @@ const Index = () => {
 
           {/* Littlebird.ai inspired layout */}
           <div className="container mx-auto px-8 py-12 max-w-5xl">
-            {/* Hero Section - Center-aligned with tight spacing */}
-            <section className="text-center space-y-8 mb-20">
-              <div className="space-y-6">
+            {/* Hero Section - Center-aligned with no spacing */}
+            <section className="text-center mb-20">
+              <div>
                  <h1 className="text-5xl font-bold text-foreground tracking-tight">
                    Welcome {userName ? userName : 'to Taskly'}
                  </h1>
-                 <p className="text-xl text-muted-foreground font-light max-w-2xl mx-auto leading-relaxed mb-0">
+                 <p className="text-xl text-muted-foreground font-light max-w-2xl mx-auto leading-relaxed">
                    Record. Learn. Automate.
                  </p>
               </div>

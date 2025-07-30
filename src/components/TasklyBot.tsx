@@ -80,14 +80,14 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
         onStop={stopRecording}
       />
       
-      <div className="flex flex-col items-center space-y-2 relative">
+      <div className="flex flex-col items-center relative">
         {/* Littlebird.ai inspired layout - no greeting, focus on interaction */}
 
         {/* Taskly Robot - Enhanced with glow and animation */}
-        <div className="relative flex items-center justify-center p-8">
+        <div className="relative flex items-center justify-center">
           {/* Soft background glow using robot's eye color */}
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-[500px] h-[500px] bg-gradient-radial from-blue-400/20 via-blue-400/10 to-transparent rounded-full blur-3xl opacity-60" />
+            <div className="w-[750px] h-[750px] bg-gradient-radial from-blue-400/20 via-blue-400/10 to-transparent rounded-full blur-3xl opacity-60" />
           </div>
           
           {/* Robot container with enhanced design and animation */}
@@ -100,9 +100,9 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
           onClick={handleBotClick}
           >
             <img 
-              src="/lovable-uploads/7ba10efd-7292-470a-aa74-e3333f5c0ee5.png"
+              src="/lovable-uploads/38D37F6B-FF0F-4149-B8B2-C3681A0FF7B6.jpeg"
               alt="Taskly AI Assistant"
-              className="w-[800px] h-[800px] object-contain animate-float-slow"
+              className="w-[1200px] h-[1200px] object-contain animate-float-slow"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.style.display = 'none';
@@ -111,8 +111,8 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
             />
             
             {/* Fallback Bot icon in rounded container */}
-            <div className="hidden w-[600px] h-[600px] bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center">
-              <Bot className="h-32 w-32 text-white" />
+            <div className="hidden w-[900px] h-[900px] bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center">
+              <Bot className="h-48 w-48 text-white" />
             </div>
             
             {/* Listening indicator - minimalistic */}
@@ -129,7 +129,7 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
         </div>
 
       {/* Action Buttons - Littlebird.ai style */}
-      <div className="flex gap-6 relative z-10 w-full max-w-md justify-center -mt-8">
+      <div className="flex gap-6 relative z-10 w-full max-w-md justify-center -mt-16">
         <Button
           onClick={handleBotClick}
           size="lg"
