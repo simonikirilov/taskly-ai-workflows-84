@@ -179,10 +179,19 @@ const Index = () => {
             </div>
           </header>
 
-          {/* Main Content - Redesigned Layout */}
-          <div className="container mx-auto px-6 py-8 max-w-4xl space-y-12">
-            {/* Hero Section with Taskly Bot */}
-            <section className="text-center space-y-8">
+          {/* Littlebird.ai inspired layout */}
+          <div className="container mx-auto px-8 py-12 max-w-5xl">
+            {/* Hero Section - Center-aligned with generous spacing */}
+            <section className="text-center space-y-16 mb-20">
+              <div className="space-y-6">
+                <h1 className="text-5xl font-bold text-foreground tracking-tight">
+                  Your Personal AI Co-Pilot
+                </h1>
+                <p className="text-xl text-muted-foreground font-light max-w-2xl mx-auto leading-relaxed">
+                  Streamline your workflow with intelligent automation, voice commands, and seamless task management.
+                </p>
+              </div>
+              
               <TasklyBot 
                 onVoiceCommand={handleVoiceCommand}
                 onRecordFlow={handleRecordFlow}
@@ -191,8 +200,12 @@ const Index = () => {
               />
             </section>
 
-            {/* Tasks Section */}
-            <section className="space-y-6">
+            {/* Tasks Section - Elevated design */}
+            <section className="space-y-8">
+              <div className="text-center space-y-4 mb-12">
+                <h2 className="text-3xl font-semibold text-foreground">Today's Focus</h2>
+                <p className="text-muted-foreground font-light">Keep track of your priorities and accomplish more</p>
+              </div>
               <TaskList refreshTrigger={refreshTrigger} />
             </section>
           </div>

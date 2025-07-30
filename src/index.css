@@ -61,45 +61,46 @@ All colors MUST be HSL.
   }
 
   .dark {
-    /* Premium Dark Theme - Navy Base */
-    --background: 215 30% 6%;
-    --foreground: 210 17% 93%;
+    /* Littlebird.ai inspired dark theme */
+    --background: 240 8% 5%;
+    --foreground: 0 0% 95%;
 
-    --card: 215 25% 8%;
-    --card-foreground: 210 17% 93%;
+    --card: 240 6% 8%;
+    --card-foreground: 0 0% 95%;
 
-    --popover: 215 25% 8%;
-    --popover-foreground: 210 17% 93%;
+    --popover: 240 6% 10%;
+    --popover-foreground: 0 0% 95%;
 
-    --primary: 195 100% 65%;
-    --primary-foreground: 215 30% 6%;
+    --primary: 210 100% 65%;
+    --primary-foreground: 0 0% 98%;
 
-    --secondary: 215 20% 12%;
-    --secondary-foreground: 210 17% 93%;
+    --secondary: 240 4% 18%;
+    --secondary-foreground: 0 0% 90%;
 
-    --muted: 215 20% 12%;
-    --muted-foreground: 210 9% 64%;
+    --muted: 240 4% 14%;
+    --muted-foreground: 240 5% 70%;
 
-    --accent: 39 100% 72%;
-    --accent-foreground: 215 30% 6%;
+    --accent: 240 4% 20%;
+    --accent-foreground: 0 0% 95%;
 
-    --destructive: 0 100% 67%;
-    --destructive-foreground: 210 17% 93%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 215 20% 14%;
-    --input: 215 20% 14%;
-    --ring: 195 100% 65%;
+    --border: 240 4% 18%;
+    --input: 240 4% 18%;
+    --ring: 210 100% 65%;
     
-    /* Premium Dark Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(195 100% 65%), hsl(210 100% 70%));
-    --gradient-hero: radial-gradient(circle at 50% 50%, hsl(195 100% 65% / 0.15), transparent 70%);
-    --gradient-card: linear-gradient(145deg, hsl(215 25% 8%), hsl(215 20% 10%));
+    /* Littlebird.ai inspired gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(210 100% 65%), hsl(210 100% 55%));
+    --gradient-hero: linear-gradient(135deg, hsl(210 100% 65% / 0.08), hsl(210 100% 65% / 0.04));
+    --gradient-card: linear-gradient(145deg, hsl(240 6% 8%), hsl(240 4% 14%));
+    --gradient-button: linear-gradient(145deg, hsl(240 4% 18%), hsl(240 4% 14%));
     
-    /* Premium Dark Shadows */
-    --shadow-sm: 0 2px 4px hsl(215 30% 3% / 0.3);
-    --shadow-md: 0 4px 16px hsl(215 30% 3% / 0.4);
-    --shadow-lg: 0 8px 32px hsl(215 30% 3% / 0.5);
-    --shadow-glow: 0 0 32px hsl(195 100% 65% / 0.2);
+    /* Soft, elegant shadows */
+    --shadow-sm: 0 4px 12px -2px hsl(0 0% 0% / 0.1), 0 2px 6px -1px hsl(0 0% 0% / 0.06);
+    --shadow-md: 0 8px 25px -5px hsl(0 0% 0% / 0.15), 0 4px 10px -2px hsl(0 0% 0% / 0.08);
+    --shadow-lg: 0 20px 40px -8px hsl(0 0% 0% / 0.20);
+    --shadow-glow: 0 0 40px hsl(210 100% 65% / 0.2);
 
     --sidebar-background: 215 30% 4%;
     --sidebar-foreground: 210 17% 93%;
@@ -123,7 +124,7 @@ All colors MUST be HSL.
 }
 
 @layer components {
-  /* Premium Animation Classes */
+  /* Littlebird.ai inspired effects */
   .breathe {
     animation: breathe 3s ease-in-out infinite;
   }
@@ -136,10 +137,26 @@ All colors MUST be HSL.
     box-shadow: var(--shadow-glow);
   }
   
+  /* Littlebird.ai inspired glass morphism */
   .glass {
-    backdrop-filter: blur(12px);
-    background: hsl(var(--card) / 0.8);
-    border: 1px solid hsl(var(--border) / 0.5);
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* Elevated card effect */
+  .elevated-card {
+    background: var(--gradient-card);
+    border: 1px solid hsl(var(--border));
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .elevated-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
   }
   
   /* Scrollbar Styling */

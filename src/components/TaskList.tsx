@@ -6,7 +6,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { X } from 'lucide-react';
+import { X, CheckCircle, Check } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
 
 interface Task {
   id: string;
@@ -121,72 +122,68 @@ export function TaskList({ refreshTrigger = 0 }: TaskListProps) {
     }
   };
 
-  // Show empty task slots if no tasks
-  const renderEmptyTasks = () => {
-    const emptySlots = 5; // Show 5 empty task slots
-    return Array.from({ length: emptySlots }, (_, index) => (
-      <div key={`empty-${index}`} className="flex items-center space-x-3 py-3 px-4 border border-dashed border-border rounded-lg">
-        <Checkbox disabled className="opacity-50" />
-        <span className="text-muted-foreground italic">Speak a task to get started...</span>
-      </div>
-    ));
-  };
-
   return (
-    <Card className="p-6 glass">
-      <h2 className="text-xl font-semibold mb-4 text-foreground">Today's Tasks</h2>
-      
-      <div className="space-y-3">
-        {tasks.length > 0 ? (
-          tasks.map((task) => (
+    <div className="space-y-8">
+      {tasks.length === 0 ? (
+        <div className="text-center py-16">
+          <div className="elevated-card w-32 h-32 mx-auto mb-6 rounded-3xl flex items-center justify-center">
+            <CheckCircle className="h-16 w-16 text-primary/70" />
+          </div>
+          <h3 className="text-2xl font-semibold text-foreground mb-3">Ready for your first task</h3>
+          <p className="text-lg text-muted-foreground font-light max-w-md mx-auto">
+            Use voice commands or workflow recording to get started
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {tasks.map((task) => (
             <div
               key={task.id}
               className={cn(
-                "flex items-center space-x-3 py-3 px-4 rounded-lg border transition-all duration-200",
-                task.status 
-                  ? "bg-primary/5 border-primary/20" 
-                  : "bg-background border-border hover:border-primary/30"
+                "elevated-card p-6 rounded-2xl transition-all duration-300",
+                task.status && "opacity-70"
               )}
             >
-              <Checkbox
-                checked={task.status}
-                onCheckedChange={() => toggleTaskStatus(task.id, task.status)}
-                className="flex-shrink-0"
-              />
-              <div className="flex-1">
-                <p className={cn(
-                  "text-sm transition-all duration-200",
-                  task.status 
-                    ? "line-through text-muted-foreground" 
-                    : "text-foreground"
-                )}>
-                  {task.title}
-                </p>
-                {task.scheduled_time && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {new Date(task.scheduled_time).toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </p>
+              <div className="flex items-center gap-5">
+                <button
+                  onClick={() => toggleTaskStatus(task.id, task.status)}
+                  className={cn(
+                    "flex-shrink-0 w-6 h-6 rounded-full border-2 transition-all duration-300 flex items-center justify-center",
+                    task.status
+                      ? "bg-green-500 border-green-500 text-white shadow-lg shadow-green-500/25"
+                      : "border-muted-foreground/40 hover:border-primary hover:shadow-md hover:shadow-primary/20"
+                  )}
+                >
+                  {task.status && <Check className="h-4 w-4" />}
+                </button>
+
+                <div className="flex-1 min-w-0">
+                  <h3 className={cn(
+                    "text-lg font-medium text-foreground",
+                    task.status && "line-through text-muted-foreground"
+                  )}>
+                    {task.title}
+                  </h3>
+                  {task.scheduled_time && (
+                    <p className="text-sm text-muted-foreground mt-2 font-light">
+                      {formatDistanceToNow(new Date(task.scheduled_time), { addSuffix: true })}
+                    </p>
+                  )}
+                </div>
+
+                {task.status && (
+                  <button
+                    onClick={() => deleteTask(task.id)}
+                    className="flex-shrink-0 p-3 text-muted-foreground hover:text-destructive transition-all duration-200 rounded-xl hover:bg-destructive/10"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
                 )}
               </div>
-              {task.status && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => deleteTask(task.id)}
-                  className="flex-shrink-0 h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
             </div>
-          ))
-        ) : (
-          renderEmptyTasks()
-        )}
-      </div>
-    </Card>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
