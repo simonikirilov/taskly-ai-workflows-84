@@ -92,7 +92,7 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
           
           {/* Robot container with mobile-optimized design */}
           <div className={cn(
-            "relative transition-all duration-500 cursor-pointer animate-float-slow w-full max-w-[250px] mx-auto mt-2",
+            "relative transition-all duration-500 cursor-pointer animate-float-slow w-full max-w-[190px] mx-auto",
             isListening 
               ? "scale-105" 
               : "hover:scale-[1.02]"
@@ -100,9 +100,9 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
           onClick={handleBotClick}
           >
             <img 
-              src="/lovable-uploads/b8cb5ad1-add8-45d1-bebd-46a2306c9585.png"
+              src="/lovable-uploads/d9e422aa-ea2c-4619-8ac2-3818edd8bcb3.png"
               alt="Taskly AI Assistant"
-              className="w-full h-auto object-contain animate-float-slow"
+              className="w-full h-auto object-contain animate-float-slow p-0 m-0 max-w-full"
               style={{ filter: 'drop-shadow(0 0 20px rgba(59, 130, 246, 0.3))' }}
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
@@ -130,7 +130,7 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
         </div>
 
       {/* Action Buttons - Mobile Optimized */}
-      <div className="flex gap-3 relative z-10 w-full max-w-sm justify-center mt-1">
+      <div className="flex gap-3 relative z-10 w-full max-w-sm justify-center -mt-2">
         <Button
           onClick={handleBotClick}
           size="default"

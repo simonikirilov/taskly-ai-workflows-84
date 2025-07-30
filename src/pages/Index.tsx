@@ -160,9 +160,9 @@ const Index = () => {
               {/* Left Side - Logo */}
               <div className="flex items-center">
                 <img 
-                  src="/lovable-uploads/639fac81-b138-47c8-a044-534c21a207e1.png"
+                  src="/lovable-uploads/3ad45411-4019-40bd-b405-dea680df3c25.png"
                   alt="Taskly"
-                  className="h-12 w-auto object-contain"
+                  className="h-16 w-auto object-contain p-0 m-0 max-w-full"
                 />
               </div>
               
@@ -243,8 +243,8 @@ const Index = () => {
           </header>
 
           {/* Hero Section - Mobile Optimized */}
-          <div className="w-full px-4 py-2 max-w-lg mx-auto">
-            <section className="text-center space-y-2">
+          <div className="w-full px-4 py-1 max-w-lg mx-auto">
+            <section className="text-center space-y-1">
               {/* Welcome Text */}
               <div className="space-y-1">
                  <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight">
