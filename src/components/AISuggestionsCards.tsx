@@ -135,7 +135,7 @@ export function AISuggestionsCards({ isVisible, onClose }: AISuggestionsCardsPro
 
   return (
     <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="relative w-full max-w-4xl">
+      <div className="relative w-full max-w-md">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
@@ -162,95 +162,52 @@ export function AISuggestionsCards({ isVisible, onClose }: AISuggestionsCardsPro
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         ) : (
-          <div className="relative">
-            {/* Navigation Buttons */}
-            {suggestions.length > 3 && (
-              <>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={prevSlide}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full glass hover:bg-primary/10"
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={nextSlide}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full glass hover:bg-primary/10"
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </Button>
-              </>
-            )}
+          <div className="relative max-h-96 overflow-y-auto">
 
-            {/* Cards Container */}
-            <div className="overflow-hidden px-12">
-              <div 
-                className="flex gap-4 transition-transform duration-500 ease-out"
-                style={{ transform: `translateX(-${currentIndex * 33.333}%)` }}
-              >
-                {suggestions.map((suggestion, index) => {
-                  const cardType = cardTypes[suggestion.type as keyof typeof cardTypes] || cardTypes.AI_tip;
-                  const Icon = cardType.icon;
-                  
-                  return (
-                    <Card
-                      key={suggestion.id}
-                      className={cn(
-                        "flex-shrink-0 w-80 glass hover:shadow-lg transition-all duration-300 border-0 overflow-hidden group cursor-pointer",
-                        "hover:scale-105 animate-[slide-up_0.5s_ease-out]"
-                      )}
-                      style={{ animationDelay: `${index * 100}ms` }}
-                    >
-                      <div className={cn("h-2 bg-gradient-to-r", cardType.color)} />
-                      <CardContent className="p-6">
-                        <div className="flex items-start gap-4">
-                          <div className={cn(
-                            "h-12 w-12 rounded-xl bg-gradient-to-r flex items-center justify-center flex-shrink-0",
-                            cardType.color
-                          )}>
-                            <Icon className="h-6 w-6 text-white" />
-                          </div>
-                          <div className="flex-1 space-y-3">
-                            <div className="flex items-center justify-between">
-                              <Badge 
-                                variant="secondary" 
-                                className="text-xs font-medium"
-                              >
-                                {cardType.label}
-                              </Badge>
-                            </div>
-                            <p className="text-sm leading-relaxed text-foreground group-hover:text-primary transition-colors">
-                              {suggestion.content}
-                            </p>
-                          </div>
+            {/* Cards Container - Vertical Stack */}
+            <div className="space-y-4 px-4">
+              {suggestions.map((suggestion, index) => {
+                const cardType = cardTypes[suggestion.type as keyof typeof cardTypes] || cardTypes.AI_tip;
+                const Icon = cardType.icon;
+                
+                return (
+                  <Card
+                    key={suggestion.id}
+                    className={cn(
+                      "w-full glass hover:shadow-lg transition-all duration-300 border-0 overflow-hidden group cursor-pointer",
+                      "hover:scale-[1.02] animate-[slide-up_0.5s_ease-out]"
+                    )}
+                    style={{ animationDelay: `${index * 100}ms` }}
+                  >
+                    <div className={cn("h-1 bg-gradient-to-r", cardType.color)} />
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-3">
+                        <div className={cn(
+                          "h-10 w-10 rounded-lg bg-gradient-to-r flex items-center justify-center flex-shrink-0",
+                          cardType.color
+                        )}>
+                          <Icon className="h-5 w-5 text-white" />
                         </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <Badge 
+                              variant="secondary" 
+                              className="text-xs font-medium"
+                            >
+                              {cardType.label}
+                            </Badge>
+                          </div>
+                          <p className="text-sm leading-relaxed text-foreground group-hover:text-primary transition-colors">
+                            {suggestion.content}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
 
-            {/* Dots Indicator */}
-            {suggestions.length > 3 && (
-              <div className="flex justify-center gap-2 mt-6">
-                {Array.from({ length: Math.max(1, suggestions.length - 2) }).map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentIndex(index)}
-                    className={cn(
-                      "h-2 w-2 rounded-full transition-all duration-300",
-                      index === currentIndex 
-                        ? "bg-primary w-6" 
-                        : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
-                    )}
-                  />
-                ))}
-              </div>
-            )}
           </div>
         )}
       </div>

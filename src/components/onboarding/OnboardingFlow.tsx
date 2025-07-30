@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { LaunchAnimation } from './LaunchAnimation';
 import { SetupFlow } from './SetupFlow';
 import { TutorialFlow } from './TutorialFlow';
@@ -11,6 +11,11 @@ interface OnboardingFlowProps {
 
 export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   const [currentStep, setCurrentStep] = useState<OnboardingStep>('launch');
+
+  // Set dark mode by default for onboarding
+  useEffect(() => {
+    document.documentElement.classList.add('dark');
+  }, []);
 
   const handleStepComplete = (nextStep: OnboardingStep) => {
     if (nextStep === 'complete') {

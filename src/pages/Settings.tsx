@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -7,11 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { LogOut, Settings as SettingsIcon, Moon, Bell, Mic, MessageCircle } from 'lucide-react';
+import { LogOut, Settings as SettingsIcon, Moon, Bell, Mic, MessageCircle, ArrowLeft } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 const Settings = () => {
   const { user, loading, signOut } = useAuth();
+  const navigate = useNavigate();
   const [darkMode, setDarkMode] = useState(false);
   const [taskReminders, setTaskReminders] = useState(true);
   const [autoProcessVoice, setAutoProcessVoice] = useState(true);
@@ -108,6 +109,14 @@ const Settings = () => {
       <div className="container mx-auto px-6 py-8 max-w-2xl">
         {/* Header */}
         <div className="flex items-center gap-3 mb-8">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate(-1)}
+            className="h-8 w-8 rounded-lg glass hover:bg-primary/10"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
           <SettingsIcon className="h-8 w-8 text-primary" />
           <h1 className="text-3xl font-bold text-foreground">Settings</h1>
         </div>

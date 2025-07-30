@@ -88,7 +88,7 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
           
           {/* Robot container with elevated design */}
           <div className={cn(
-            "relative p-6 rounded-3xl elevated-card transition-all duration-500 cursor-pointer",
+            "relative transition-all duration-500 cursor-pointer",
             isListening 
               ? "scale-105" 
               : "hover:scale-[1.02]"
@@ -98,7 +98,7 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
             <img 
               src="/lovable-uploads/7ba10efd-7292-470a-aa74-e3333f5c0ee5.png"
               alt="Taskly AI Assistant"
-              className="w-64 h-64 object-contain"
+              className="w-80 h-80 object-contain"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.style.display = 'none';
@@ -107,8 +107,8 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
             />
             
             {/* Fallback Bot icon in rounded container */}
-            <div className="hidden w-64 h-64 bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center">
-              <Bot className="h-16 w-16 text-white" />
+            <div className="hidden w-80 h-80 bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center">
+              <Bot className="h-20 w-20 text-white" />
             </div>
             
             {/* Listening indicator - minimalistic */}

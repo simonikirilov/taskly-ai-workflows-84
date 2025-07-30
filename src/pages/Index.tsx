@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Search, Menu, Lightbulb, Home, BarChart3, User, Settings } from "lucide-react";
+import { Search, Menu, Lightbulb, Home, BarChart3, User, Settings, Mic } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
@@ -147,100 +147,96 @@ const Index = () => {
   return (
     <SidebarProvider defaultOpen={false}>
       <div className="min-h-screen flex w-full bg-background">
-        <AppSidebar />
+        
         
         <main className="flex-1 overflow-auto relative">
           {/* Header with Logo and Navigation */}
           <header className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-xl">
             <div className="flex h-16 items-center justify-between px-6">
-              {/* Left Side - Logo and Sidebar */}
-              <div className="flex items-center gap-4">
-                <SidebarTrigger className="glass">
-                  <Menu className="h-4 w-4" />
-                </SidebarTrigger>
-                
-                {/* Taskly Logo */}
-                <Link to="/" className="flex items-center gap-2">
+              {/* Left Side - Logo Only */}
+              <div className="flex items-center">
+                <Link to="/" className="flex items-center">
                   <img 
                     src="/lovable-uploads/d6ce5d45-f66c-43ab-9c0b-b20a8aee2675.png"
                     alt="Taskly"
-                    className="w-8 h-8 object-contain"
+                    className="w-10 h-10 object-contain"
                   />
-                  <span className="text-xl font-semibold text-foreground">Taskly</span>
                 </Link>
-                
-                <div className="relative max-w-sm ml-4">
+              </div>
+              
+              {/* Center - Search Bar */}
+              <div className="flex-1 flex justify-center max-w-md mx-auto">
+                <div className="relative w-full max-w-sm">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Search tasks..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 glass border-0"
+                    className="pl-10 pr-12 glass border-0"
                   />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 hover:bg-primary/10"
+                  >
+                    <Mic className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
               
-              {/* Right Side - Navigation */}
-              <nav className="flex items-center gap-1">
-                <Link to="/">
-                  <Button variant="ghost" size="sm" className={cn(
-                    "h-9 px-3",
-                    location.pathname === "/" && "bg-primary/10 text-primary"
-                  )}>
-                    <Home className="h-4 w-4 mr-2" />
-                    Home
-                  </Button>
-                </Link>
-                
-                <Link to="/dashboard">
-                  <Button variant="ghost" size="sm" className={cn(
-                    "h-9 px-3",
-                    location.pathname === "/dashboard" && "bg-primary/10 text-primary"
-                  )}>
-                    <BarChart3 className="h-4 w-4 mr-2" />
-                    Dashboard
-                  </Button>
-                </Link>
-                
-                <Link to="/account">
-                  <Button variant="ghost" size="sm" className={cn(
-                    "h-9 px-3",
-                    location.pathname === "/account" && "bg-primary/10 text-primary"
-                  )}>
-                    <User className="h-4 w-4 mr-2" />
-                    Account
-                  </Button>
-                </Link>
-                
-                <Link to="/settings">
-                  <Button variant="ghost" size="sm" className={cn(
-                    "h-9 px-3",
-                    location.pathname === "/settings" && "bg-primary/10 text-primary"
-                  )}>
-                    <Settings className="h-4 w-4 mr-2" />
-                    Settings
-                  </Button>
-                </Link>
-                
+              {/* Right Side - Hamburger Menu */}
+              <div className="flex items-center">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-9 w-9 ml-2">
-                      <Lightbulb className="h-4 w-4" />
-                      <span className="sr-only">Quick Actions</span>
+                    <Button variant="ghost" size="icon" className="h-10 w-10">
+                      <Menu className="h-5 w-5" />
+                      <span className="sr-only">Menu</span>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuContent align="end" className="w-48 glass bg-card/95 backdrop-blur-xl border-border/20">
+                    <DropdownMenuItem asChild>
+                      <Link to="/" className={cn(
+                        "flex items-center w-full",
+                        location.pathname === "/" && "bg-primary/10 text-primary"
+                      )}>
+                        <Home className="h-4 w-4 mr-2" />
+                        Home
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/dashboard" className={cn(
+                        "flex items-center w-full",
+                        location.pathname === "/dashboard" && "bg-primary/10 text-primary"
+                      )}>
+                        <BarChart3 className="h-4 w-4 mr-2" />
+                        Dashboard
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/account" className={cn(
+                        "flex items-center w-full",
+                        location.pathname === "/account" && "bg-primary/10 text-primary"
+                      )}>
+                        <User className="h-4 w-4 mr-2" />
+                        Account
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/settings" className={cn(
+                        "flex items-center w-full",
+                        location.pathname === "/settings" && "bg-primary/10 text-primary"
+                      )}>
+                        <Settings className="h-4 w-4 mr-2" />
+                        Settings
+                      </Link>
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setShowSuggestions(true)}>
                       <Lightbulb className="mr-2 h-4 w-4" />
                       AI Tips & Shortcuts
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => toast({ title: "Feature coming soon!", description: "Quick stats will be available in the next update." })}>
-                      <Search className="mr-2 h-4 w-4" />
-                      Weekly Stats
-                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-              </nav>
+              </div>
             </div>
           </header>
 
@@ -250,10 +246,10 @@ const Index = () => {
             <section className="text-center space-y-16 mb-20">
               <div className="space-y-6">
                 <h1 className="text-5xl font-bold text-foreground tracking-tight">
-                  Welcome {userName || 'to Taskly'}
+                  Welcome {userName ? userName : 'to Taskly'}
                 </h1>
                 <p className="text-xl text-muted-foreground font-light max-w-2xl mx-auto leading-relaxed">
-                  Streamline your workflow with intelligent automation, voice commands, and seamless task management.
+                  Record. Learn. Automate.
                 </p>
               </div>
               
