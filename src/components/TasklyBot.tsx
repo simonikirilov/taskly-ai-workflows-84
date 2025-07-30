@@ -100,7 +100,7 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
           onClick={handleBotClick}
           >
             <img 
-              src="/lovable-uploads/38D37F6B-FF0F-4149-B8B2-C3681A0FF7B6.jpeg"
+              src="/lovable-uploads/b8cb5ad1-add8-45d1-bebd-46a2306c9585.png"
               alt="Taskly AI Assistant"
               className="w-[1200px] h-[1200px] object-contain animate-float-slow"
               onError={(e) => {

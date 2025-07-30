@@ -161,9 +161,9 @@ const Index = () => {
               <div className="flex items-center">
                 <Link to="/" className="flex items-center">
                    <img 
-                     src="/lovable-uploads/d6ce5d45-f66c-43ab-9c0b-b20a8aee2675.png"
+                     src="/lovable-uploads/639fac81-b138-47c8-a044-534c21a207e1.png"
                      alt="Taskly"
-                     className="w-24 h-24 object-contain"
+                     className="w-48 h-48 object-contain"
                    />
                 </Link>
               </div>
