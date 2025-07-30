@@ -83,16 +83,16 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
       <div className="flex flex-col items-center relative">
         {/* Littlebird.ai inspired layout - no greeting, focus on interaction */}
 
-        {/* Taskly Robot - Enhanced with glow and animation */}
+        {/* Taskly Robot - Mobile Optimized */}
         <div className="relative flex items-center justify-center">
-          {/* Soft background glow using robot's eye color */}
+          {/* Subtle background glow */}
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-[750px] h-[750px] bg-gradient-radial from-blue-400/20 via-blue-400/10 to-transparent rounded-full blur-3xl opacity-60" />
+            <div className="w-full max-w-[350px] aspect-square bg-gradient-radial from-blue-400/10 via-blue-400/5 to-transparent rounded-full blur-2xl opacity-40" />
           </div>
           
-          {/* Robot container with enhanced design and animation */}
+          {/* Robot container with mobile-optimized design */}
           <div className={cn(
-            "relative transition-all duration-500 cursor-pointer animate-float",
+            "relative transition-all duration-500 cursor-pointer animate-float-slow w-full max-w-[300px] mx-auto",
             isListening 
               ? "scale-105" 
               : "hover:scale-[1.02]"
@@ -102,7 +102,8 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
             <img 
               src="/lovable-uploads/b8cb5ad1-add8-45d1-bebd-46a2306c9585.png"
               alt="Taskly AI Assistant"
-              className="w-[1200px] h-[1200px] object-contain animate-float-slow"
+              className="w-full h-auto object-contain animate-float-slow"
+              style={{ filter: 'drop-shadow(0 0 20px rgba(59, 130, 246, 0.3))' }}
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.style.display = 'none';
@@ -110,9 +111,9 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
               }}
             />
             
-            {/* Fallback Bot icon in rounded container */}
-            <div className="hidden w-[900px] h-[900px] bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center">
-              <Bot className="h-48 w-48 text-white" />
+            {/* Fallback Bot icon */}
+            <div className="hidden w-full aspect-square bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center max-w-[300px]">
+              <Bot className="h-24 w-24 text-white" />
             </div>
             
             {/* Listening indicator - minimalistic */}
@@ -128,34 +129,34 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
           </div>
         </div>
 
-      {/* Action Buttons - Littlebird.ai style */}
-      <div className="flex gap-6 relative z-10 w-full max-w-md justify-center -mt-16">
+      {/* Action Buttons - Mobile Optimized */}
+      <div className="flex gap-3 relative z-10 w-full max-w-sm justify-center mt-2">
         <Button
           onClick={handleBotClick}
-          size="lg"
+          size="default"
           className={cn(
-            "elevated-card h-16 px-8 text-lg font-medium transition-all duration-300 rounded-2xl border-0",
+            "h-12 px-6 text-sm font-medium transition-all duration-300 rounded-xl border-0 flex-1",
             isListening
               ? "bg-gradient-to-r from-primary to-primary/80 text-white shadow-lg shadow-primary/25"
               : "bg-gradient-to-r from-secondary to-muted text-foreground hover:from-secondary/90 hover:to-muted/90"
           )}
         >
-          <Mic className="h-5 w-5 mr-3" />
+          <Mic className="h-4 w-4 mr-2" />
           {isListening ? "Listening..." : "Speak"}
         </Button>
         
         <Button
           onClick={handleRecordFlow}
-          size="lg"
+          size="default"
           variant="outline"
           className={cn(
-            "elevated-card h-16 px-8 text-lg font-medium transition-all duration-300 rounded-2xl border border-border",
+            "h-12 px-6 text-sm font-medium transition-all duration-300 rounded-xl border border-border flex-1",
             isRecording 
               ? "bg-gradient-to-r from-destructive/20 to-destructive/10 border-destructive/30 text-destructive-foreground" 
               : "bg-gradient-to-r from-card to-muted/50 hover:from-card/90 hover:to-muted/70"
           )}
         >
-          <Video className={cn("h-5 w-5 mr-3", isRecording && "text-destructive")} />
+          <Video className={cn("h-4 w-4 mr-2", isRecording && "text-destructive")} />
           {isRecording ? "Stop" : "Record"}
         </Button>
       </div>

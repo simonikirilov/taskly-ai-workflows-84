@@ -154,19 +154,11 @@ const Index = () => {
         
         
         <main className="flex-1 overflow-auto relative">
-          {/* Header with Logo and Navigation */}
+          {/* Header with Navigation Only */}
           <header className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-xl">
-            <div className="flex h-16 items-center justify-between px-6">
-              {/* Left Side - Logo Only */}
-              <div className="flex items-center">
-                <Link to="/" className="flex items-center">
-                   <img 
-                     src="/lovable-uploads/639fac81-b138-47c8-a044-534c21a207e1.png"
-                     alt="Taskly"
-                     className="w-48 h-48 object-contain"
-                   />
-                </Link>
-              </div>
+            <div className="flex h-12 items-center justify-between px-4">
+              {/* Empty left side */}
+              <div className="w-10"></div>
               
               {/* Center - Search Bar */}
               <div className="flex-1 flex justify-center max-w-md mx-auto">
@@ -244,19 +236,29 @@ const Index = () => {
             </div>
           </header>
 
-          {/* Littlebird.ai inspired layout */}
-          <div className="container mx-auto px-8 py-12 max-w-5xl">
-            {/* Hero Section - Center-aligned with no spacing */}
-            <section className="text-center mb-20">
-              <div>
-                 <h1 className="text-5xl font-bold text-foreground tracking-tight">
+          {/* Hero Section - Mobile Optimized */}
+          <div className="w-full px-4 py-4 max-w-lg mx-auto">
+            <section className="text-center space-y-1">
+              {/* Logo */}
+              <div className="flex justify-center mb-2">
+                <img 
+                  src="/lovable-uploads/639fac81-b138-47c8-a044-534c21a207e1.png"
+                  alt="Taskly"
+                  className="h-16 w-auto object-contain"
+                />
+              </div>
+
+              {/* Welcome Text */}
+              <div className="space-y-1">
+                 <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">
                    Welcome {userName ? userName : 'to Taskly'}
                  </h1>
-                 <p className="text-xl text-muted-foreground font-light max-w-2xl mx-auto leading-relaxed">
+                 <p className="text-sm md:text-base text-muted-foreground font-light leading-tight">
                    Record. Learn. Automate.
                  </p>
               </div>
               
+              {/* Robot and Buttons */}
               <TasklyBot 
                 onVoiceCommand={handleVoiceCommand}
                 onRecordFlow={handleRecordFlow}
@@ -265,8 +267,10 @@ const Index = () => {
                 voiceHistory={voiceHistory}
               />
             </section>
+          </div>
 
-            {/* Tasks Section - Elevated design */}
+          {/* Tasks Section - Elevated design */}
+          <div className="container mx-auto px-4 py-8 max-w-4xl">
             <section className="space-y-8">
               <div className="text-center space-y-4 mb-12">
                 <h2 className="text-3xl font-semibold text-foreground">Today's Focus</h2>
