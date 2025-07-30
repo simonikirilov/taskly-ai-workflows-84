@@ -154,11 +154,17 @@ const Index = () => {
         
         
         <main className="flex-1 overflow-auto relative">
-          {/* Header with Navigation Only */}
+          {/* Header with Logo and Navigation */}
           <header className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-xl">
-            <div className="flex h-12 items-center justify-between px-4">
-              {/* Empty left side */}
-              <div className="w-10"></div>
+            <div className="flex h-16 items-center justify-between px-4">
+              {/* Left Side - Logo */}
+              <div className="flex items-center">
+                <img 
+                  src="/lovable-uploads/639fac81-b138-47c8-a044-534c21a207e1.png"
+                  alt="Taskly"
+                  className="h-12 w-auto object-contain"
+                />
+              </div>
               
               {/* Center - Search Bar */}
               <div className="flex-1 flex justify-center max-w-md mx-auto">
@@ -237,24 +243,15 @@ const Index = () => {
           </header>
 
           {/* Hero Section - Mobile Optimized */}
-          <div className="w-full px-4 py-4 max-w-lg mx-auto">
-            <section className="text-center space-y-1">
-              {/* Logo */}
-              <div className="flex justify-center mb-2">
-                <img 
-                  src="/lovable-uploads/639fac81-b138-47c8-a044-534c21a207e1.png"
-                  alt="Taskly"
-                  className="h-16 w-auto object-contain"
-                />
-              </div>
-
+          <div className="w-full px-4 py-2 max-w-lg mx-auto">
+            <section className="text-center space-y-2">
               {/* Welcome Text */}
               <div className="space-y-1">
-                 <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">
-                   Welcome {userName ? userName : 'to Taskly'}
+                 <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight">
+                   Welcome Simoni
                  </h1>
-                 <p className="text-sm md:text-base text-muted-foreground font-light leading-tight">
-                   Record. Learn. Automate.
+                 <p className="text-base md:text-lg text-muted-foreground font-light leading-tight">
+                   Record. Label. Automate.
                  </p>
               </div>
               

@@ -92,7 +92,7 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
           
           {/* Robot container with mobile-optimized design */}
           <div className={cn(
-            "relative transition-all duration-500 cursor-pointer animate-float-slow w-full max-w-[300px] mx-auto",
+            "relative transition-all duration-500 cursor-pointer animate-float-slow w-full max-w-[250px] mx-auto mt-2",
             isListening 
               ? "scale-105" 
               : "hover:scale-[1.02]"
@@ -130,7 +130,7 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
         </div>
 
       {/* Action Buttons - Mobile Optimized */}
-      <div className="flex gap-3 relative z-10 w-full max-w-sm justify-center mt-2">
+      <div className="flex gap-3 relative z-10 w-full max-w-sm justify-center mt-1">
         <Button
           onClick={handleBotClick}
           size="default"
@@ -162,15 +162,15 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
       </div>
 
       {/* Instructions and Voice History */}
-      <div className="relative z-10 max-w-2xl text-center space-y-6">
+      <div className="relative z-10 max-w-2xl text-center space-y-4 mt-4">
         {/* Ready for First Task Section */}
-        <div className="flex items-center justify-center gap-4 p-6 rounded-2xl bg-card/50 border border-border/50">
-          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-            <Sparkles className="h-6 w-6 text-primary" />
+        <div className="flex items-center justify-center gap-4 p-4 rounded-2xl bg-card/50 border border-border/50">
+          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+            <Sparkles className="h-5 w-5 text-primary" />
           </div>
           <div className="text-left">
-            <h3 className="text-lg font-medium text-foreground">Ready for Your First Task</h3>
-            <p className="text-sm text-muted-foreground">Use voice commands or workflow recording to get started</p>
+            <h3 className="text-base font-medium text-foreground">Ready for Your First Task</h3>
+            <p className="text-xs text-muted-foreground">Use voice commands or workflow recording to get started</p>
           </div>
         </div>
 
