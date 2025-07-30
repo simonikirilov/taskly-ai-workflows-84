@@ -92,7 +92,7 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
           
           {/* Robot container with mobile-optimized design */}
           <div className={cn(
-            "relative transition-all duration-500 cursor-pointer animate-float-slow w-full max-w-[190px] mx-auto",
+            "relative transition-all duration-500 cursor-pointer animate-float-slow w-full max-w-[380px] mx-auto",
             isListening 
               ? "scale-105" 
               : "hover:scale-[1.02]"

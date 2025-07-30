@@ -162,7 +162,7 @@ const Index = () => {
                 <img 
                   src="/lovable-uploads/3ad45411-4019-40bd-b405-dea680df3c25.png"
                   alt="Taskly"
-                  className="h-16 w-auto object-contain p-0 m-0 max-w-full"
+                  className="h-24 w-auto object-contain p-0 m-0 max-w-full"
                 />
               </div>
               

@@ -113,8 +113,12 @@ export default function Auth() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md space-y-6">
         <div className="flex flex-col items-center space-y-2">
-          <Bot className="h-12 w-12 text-primary" />
-          <h1 className="text-3xl font-bold">Taskly</h1>
+          <img 
+            src="/lovable-uploads/3ad45411-4019-40bd-b405-dea680df3c25.png"
+            alt="Taskly"
+            className="h-16 w-auto object-contain p-0 m-0 max-w-full"
+          />
+          <h1 className="text-3xl font-bold text-foreground">Taskly</h1>
           <p className="text-muted-foreground text-center">
             Your AI-powered productivity assistant
           </p>

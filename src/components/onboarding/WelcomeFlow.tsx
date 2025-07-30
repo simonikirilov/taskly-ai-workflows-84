@@ -55,9 +55,9 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-6">
           <img 
-            src="/lovable-uploads/0439ea59-9c9e-46ac-9527-cf18c3162602.png"
+            src="/lovable-uploads/d9e422aa-ea2c-4619-8ac2-3818edd8bcb3.png"
             alt="Taskly AI"
-            className="w-32 h-32 mx-auto object-contain"
+            className="w-32 h-32 mx-auto object-contain p-0 m-0 max-w-full"
           />
           <div className="flex items-center gap-3 text-xl font-medium text-foreground">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -74,9 +74,9 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
         <Card className="w-full max-w-md p-8 space-y-6 glass">
           <div className="text-center space-y-4">
             <img 
-              src="/lovable-uploads/0439ea59-9c9e-46ac-9527-cf18c3162602.png"
+              src="/lovable-uploads/d9e422aa-ea2c-4619-8ac2-3818edd8bcb3.png"
               alt="Taskly AI"
-              className="w-24 h-24 mx-auto object-contain"
+              className="w-24 h-24 mx-auto object-contain p-0 m-0 max-w-full"
             />
             <h1 className="text-2xl font-semibold text-foreground">
               What's your name?
