@@ -80,7 +80,7 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
         onStop={stopRecording}
       />
       
-      <div className="flex flex-col items-center space-y-6 relative">
+      <div className="flex flex-col items-center space-y-2 relative">
         {/* Littlebird.ai inspired layout - no greeting, focus on interaction */}
 
         {/* Taskly Robot - Enhanced with glow and animation */}
@@ -129,7 +129,7 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
         </div>
 
       {/* Action Buttons - Littlebird.ai style */}
-      <div className="flex gap-6 relative z-10 w-full max-w-md justify-center -mt-4">
+      <div className="flex gap-6 relative z-10 w-full max-w-md justify-center -mt-8">
         <Button
           onClick={handleBotClick}
           size="lg"
