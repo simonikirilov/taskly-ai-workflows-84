@@ -247,11 +247,11 @@ const Index = () => {
           <div className="w-full px-4 py-1 max-w-lg mx-auto">
             <section className="text-center space-y-1">
               {/* Welcome Text */}
-              <div className="space-y-1">
-                 <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight">
+              <div className="space-y-3">
+                 <h1 className="text-4xl md:text-5xl font-bold text-foreground tracking-tight">
                    Welcome Simoni
                  </h1>
-                 <p className="text-base md:text-lg text-muted-foreground font-light leading-tight">
+                 <p className="text-lg md:text-xl text-muted-foreground font-light leading-tight">
                    Record. Label. Automate.
                  </p>
               </div>
@@ -265,8 +265,8 @@ const Index = () => {
                  voiceHistory={voiceHistory}
                />
                
-               {/* Today's Focus Section */}
-               <TodaysFocus className="mt-6" />
+                {/* Today's Focus Section */}
+                <TodaysFocus className="mb-4" />
              </section>
            </div>
 

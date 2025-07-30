@@ -6,14 +6,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { 
-  Lightbulb, 
-  Sparkles, 
-  Clock, 
-  Target, 
-  Zap, 
-  X,
-  ChevronLeft,
-  ChevronRight 
+  Brain, 
+  Workflow, 
+  Calendar, 
+  Repeat, 
+  ChevronRight, 
+  Sparkles,
+  X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -30,11 +29,10 @@ interface AISuggestionsCardsProps {
 }
 
 const cardTypes = {
-  'AI_tip': { icon: Lightbulb, color: 'from-blue-500 to-cyan-500', label: 'AI Tip' },
-  'productivity': { icon: Target, color: 'from-purple-500 to-pink-500', label: 'Productivity' },
-  'workflow': { icon: Zap, color: 'from-orange-500 to-red-500', label: 'Workflow' },
-  'time_hack': { icon: Clock, color: 'from-green-500 to-blue-500', label: 'Time Hack' },
-  'daily_insight': { icon: Sparkles, color: 'from-yellow-500 to-orange-500', label: 'Daily Insight' }
+  workflow: { icon: Workflow, gradient: 'from-blue-400 to-blue-600', label: 'Workflow Pattern' },
+  automation: { icon: Repeat, gradient: 'from-purple-400 to-purple-600', label: 'Automation Opportunity' },
+  productivity: { icon: Brain, gradient: 'from-green-400 to-green-600', label: 'Productivity Insight' },
+  schedule: { icon: Calendar, gradient: 'from-amber-400 to-amber-600', label: 'Schedule Pattern' }
 };
 
 export function AISuggestionsCards({ isVisible, onClose }: AISuggestionsCardsProps) {
@@ -72,24 +70,16 @@ export function AISuggestionsCards({ isVisible, onClose }: AISuggestionsCardsPro
     const addDefaultSuggestions = async () => {
       const defaultSuggestions = [
         {
-          content: "Try voice commands like 'Schedule daily standup at 9 AM' to create recurring workflows",
-          type: "AI_tip"
+          content: 'Taskly noticed you upload reports every Thursday — want to automate this recurring workflow?',
+          type: 'automation'
         },
         {
-          content: "Batch similar tasks together to increase focus and reduce context switching",
-          type: "productivity"
+          content: 'You frequently switch between voice commands and manual input. Try setting up voice shortcuts for common tasks.',
+          type: 'productivity'
         },
         {
-          content: "Use the 2-minute rule: if it takes less than 2 minutes, do it now",
-          type: "time_hack"
-        },
-        {
-          content: "Create morning and evening routine workflows to bookend your day",
-          type: "workflow"
-        },
-        {
-          content: "Your peak focus hours are typically 2-4 hours after waking up",
-          type: "daily_insight"
+          content: 'Pattern detected: You work most efficiently between 10-11 AM. Consider scheduling important tasks during this window.',
+          type: 'schedule'
         }
       ];
 
@@ -139,21 +129,21 @@ export function AISuggestionsCards({ isVisible, onClose }: AISuggestionsCardsPro
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-[var(--gradient-primary)] flex items-center justify-center">
-              <Sparkles className="h-5 w-5 text-white" />
+            <div className="p-2 bg-primary/20 rounded-lg">
+              <Sparkles className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h2 className="text-xl font-semibold">AI Insights</h2>
-              <p className="text-sm text-muted-foreground">Personalized tips to boost your productivity</p>
+              <h2 className="text-xl font-semibold text-foreground">AI Suggestions</h2>
+              <p className="text-sm text-muted-foreground">Personalized Tips to Boost Your Productivity</p>
             </div>
           </div>
           <Button
             variant="ghost"
-            size="icon"
+            size="sm"
             onClick={onClose}
-            className="rounded-full hover:bg-muted"
+            className="text-muted-foreground hover:text-foreground"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </Button>
         </div>
 
@@ -165,45 +155,28 @@ export function AISuggestionsCards({ isVisible, onClose }: AISuggestionsCardsPro
           <div className="relative max-h-96 overflow-y-auto">
 
             {/* Cards Container - Vertical Stack */}
-            <div className="space-y-4 px-4">
+            <div className="space-y-3 px-4">
               {suggestions.map((suggestion, index) => {
-                const cardType = cardTypes[suggestion.type as keyof typeof cardTypes] || cardTypes.AI_tip;
-                const Icon = cardType.icon;
+                const cardType = cardTypes[suggestion.type as keyof typeof cardTypes] || cardTypes.productivity;
+                const IconComponent = cardType.icon;
                 
                 return (
-                  <Card
-                    key={suggestion.id}
-                    className={cn(
-                      "w-full glass hover:shadow-lg transition-all duration-300 border-0 overflow-hidden group cursor-pointer",
-                      "hover:scale-[1.02] animate-[slide-up_0.5s_ease-out]"
-                    )}
-                    style={{ animationDelay: `${index * 100}ms` }}
-                  >
-                    <div className={cn("h-1 bg-gradient-to-r", cardType.color)} />
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-3">
-                        <div className={cn(
-                          "h-10 w-10 rounded-lg bg-gradient-to-r flex items-center justify-center flex-shrink-0",
-                          cardType.color
-                        )}>
-                          <Icon className="h-5 w-5 text-white" />
-                        </div>
-                        <div className="flex-1 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <Badge 
-                              variant="secondary" 
-                              className="text-xs font-medium"
-                            >
-                              {cardType.label}
-                            </Badge>
-                          </div>
-                          <p className="text-sm leading-relaxed text-foreground group-hover:text-primary transition-colors">
-                            {suggestion.content}
-                          </p>
-                        </div>
+                  <div key={suggestion.id} className="bg-card/30 border border-muted/20 rounded-xl p-4 hover:bg-card/50 transition-all duration-200 hover:border-primary/30">
+                    <div className="flex items-start gap-3">
+                      <div className={`p-2 bg-gradient-to-br ${cardType.gradient} rounded-lg flex-shrink-0`}>
+                        <IconComponent className="h-4 w-4 text-white" />
                       </div>
-                    </CardContent>
-                  </Card>
+                      <div className="flex-1 space-y-2">
+                        <Badge variant="secondary" className="text-xs font-medium">
+                          {cardType.label}
+                        </Badge>
+                        <p className="text-sm text-foreground leading-relaxed">
+                          {suggestion.content}
+                        </p>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-1" />
+                    </div>
+                  </div>
                 );
               })}
             </div>

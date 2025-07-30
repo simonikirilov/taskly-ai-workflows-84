@@ -46,13 +46,14 @@ export function TodaysFocus({ className }: TodaysFocusProps) {
   };
 
   return (
-    <div className={cn("w-full max-w-lg mx-auto space-y-4", className)}>
-      <div className="text-center">
-        <h3 className="text-xl font-semibold text-foreground mb-2">Today's Focus</h3>
-        <p className="text-sm text-muted-foreground mb-4">
-          Select up to 3 areas to focus on today
-        </p>
-      </div>
+    <div className={cn("w-full max-w-lg mx-auto", className)}>
+      <div className="bg-muted/20 rounded-xl p-6 backdrop-blur-sm border border-muted/30">
+        <div className="text-center mb-4">
+          <h3 className="text-xl font-semibold text-foreground mb-2">Today's Focus</h3>
+          <p className="text-sm text-muted-foreground">
+            Select up to 3 areas to focus on today
+          </p>
+        </div>
 
       <div className="flex flex-wrap gap-3 justify-center">
         {focusAreas.map((area) => (
@@ -120,13 +121,14 @@ export function TodaysFocus({ className }: TodaysFocusProps) {
         )}
       </div>
 
-      {selectedAreas.length > 0 && (
-        <div className="text-center">
-          <p className="text-xs text-muted-foreground">
-            {selectedAreas.length}/3 focus areas selected
-          </p>
-        </div>
-      )}
+        {selectedAreas.length > 0 && (
+          <div className="text-center mt-4">
+            <p className="text-xs text-muted-foreground">
+              {selectedAreas.length}/3 focus areas selected
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
