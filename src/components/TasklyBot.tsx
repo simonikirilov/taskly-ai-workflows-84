@@ -80,7 +80,7 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
         onStop={stopRecording}
       />
       
-      <div className="flex flex-col items-center space-y-12 relative">
+      <div className="flex flex-col items-center space-y-6 relative">
         {/* Littlebird.ai inspired layout - no greeting, focus on interaction */}
 
         {/* Taskly Robot - Enhanced with glow and animation */}
@@ -102,7 +102,7 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
             <img 
               src="/lovable-uploads/7ba10efd-7292-470a-aa74-e3333f5c0ee5.png"
               alt="Taskly AI Assistant"
-              className="w-[600px] h-[600px] object-contain animate-breathe"
+              className="w-[800px] h-[800px] object-contain animate-float-slow"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.style.display = 'none';
@@ -129,7 +129,7 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
         </div>
 
       {/* Action Buttons - Littlebird.ai style */}
-      <div className="flex gap-6 relative z-10 w-full max-w-md justify-center">
+      <div className="flex gap-6 relative z-10 w-full max-w-md justify-center -mt-4">
         <Button
           onClick={handleBotClick}
           size="lg"

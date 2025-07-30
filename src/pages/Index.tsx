@@ -160,11 +160,11 @@ const Index = () => {
               {/* Left Side - Logo Only */}
               <div className="flex items-center">
                 <Link to="/" className="flex items-center">
-                  <img 
-                    src="/lovable-uploads/d6ce5d45-f66c-43ab-9c0b-b20a8aee2675.png"
-                    alt="Taskly"
-                    className="w-20 h-20 object-contain"
-                  />
+                   <img 
+                     src="/lovable-uploads/d6ce5d45-f66c-43ab-9c0b-b20a8aee2675.png"
+                     alt="Taskly"
+                     className="w-24 h-24 object-contain"
+                   />
                 </Link>
               </div>
               
@@ -249,12 +249,12 @@ const Index = () => {
             {/* Hero Section - Center-aligned with generous spacing */}
             <section className="text-center space-y-16 mb-20">
               <div className="space-y-6">
-                <h1 className="text-5xl font-bold text-foreground tracking-tight">
-                  Welcome {userName ? userName : 'to Taskly'}
-                </h1>
-                <p className="text-xl text-muted-foreground font-light max-w-2xl mx-auto leading-relaxed">
-                  Record. Learn. Automate.
-                </p>
+                 <h1 className="text-5xl font-bold text-foreground tracking-tight">
+                   Welcome {userName ? userName : 'to Taskly'}
+                 </h1>
+                 <p className="text-xl text-muted-foreground font-light max-w-2xl mx-auto leading-relaxed mb-4">
+                   Record. Learn. Automate.
+                 </p>
               </div>
               
               <TasklyBot 
