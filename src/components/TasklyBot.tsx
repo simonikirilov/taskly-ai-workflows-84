@@ -187,16 +187,16 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
       {/* Floating AI Assistant with Taskly Robot */}
       <button
         onClick={onShowSuggestions}
-        className="fixed bottom-8 right-8 z-50 h-20 w-20 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 backdrop-blur-sm border border-primary/30 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 overflow-hidden"
+        className="fixed bottom-8 right-8 z-50 transition-all duration-300 hover:scale-105"
       >
-        <div className="relative flex items-center justify-center h-full">
+        <div className="relative">
           <img 
             src="/lovable-uploads/d9e422aa-ea2c-4619-8ac2-3818edd8bcb3.png"
             alt="AI Assistant"
-            className="w-12 h-12 object-contain"
+            className="w-36 h-36 object-contain"
           />
           {suggestionCount > 0 && (
-            <span className="absolute -top-1 -right-1 h-6 w-6 bg-accent text-accent-foreground text-xs font-semibold rounded-full flex items-center justify-center border-2 border-background">
+            <span className="absolute -top-2 -right-2 h-8 w-8 bg-accent text-accent-foreground text-sm font-semibold rounded-full flex items-center justify-center border-2 border-background shadow-lg">
               {suggestionCount}
             </span>
           )}

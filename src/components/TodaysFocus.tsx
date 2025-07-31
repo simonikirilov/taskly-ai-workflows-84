@@ -55,31 +55,30 @@ export function TodaysFocus({ className }: TodaysFocusProps) {
           </p>
         </div>
 
-      <div className="flex flex-wrap gap-3 justify-center">
+      <div className="space-y-3">
         {focusAreas.map((area) => (
-          <div key={area} className="relative group">
-            <Badge
-              variant={selectedAreas.includes(area) ? "default" : "outline"}
+          <div key={area} className="relative group w-full">
+            <div
               className={cn(
-                "text-sm py-2 px-4 cursor-pointer transition-all duration-200",
-                "hover:scale-105 hover:shadow-lg",
+                "flex items-center justify-between w-full p-3 rounded-lg cursor-pointer transition-all duration-200",
+                "border text-sm hover:shadow-md",
                 selectedAreas.includes(area)
-                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
+                  ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/25"
                   : "bg-card/50 text-foreground border-border/50 hover:bg-card/80"
               )}
               onClick={() => handleSelectArea(area)}
             >
-              {area}
+              <span className="font-medium">{area}</span>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   handleRemoveArea(area);
                 }}
-                className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity hover:text-destructive"
+                className="opacity-0 group-hover:opacity-100 transition-opacity hover:text-destructive p-1 rounded"
               >
-                <X className="h-3 w-3" />
+                <X className="h-4 w-4" />
               </button>
-            </Badge>
+            </div>
           </div>
         ))}
 

@@ -260,37 +260,39 @@ const Index = () => {
           {/* Hero Section - Mobile Optimized */}
           <div className="w-full px-4 py-1 max-w-lg mx-auto">
             <section className="text-center space-y-1">
-              {/* Welcome Text */}
-              <div className="space-y-4">
-                 <h1 className="text-4xl md:text-5xl font-bold text-foreground tracking-tight">
-                   Welcome Simoni
-                 </h1>
-                 <p className="text-lg md:text-xl text-muted-foreground font-light leading-tight">
-                   Record. Label. Automate.
-                 </p>
-              </div>
+               {/* Welcome Text */}
+               <div className="space-y-6">
+                  <h1 className="text-5xl md:text-6xl font-bold text-foreground tracking-tight">
+                    Welcome Simoni
+                  </h1>
+                  <p className="text-lg md:text-xl text-muted-foreground font-light leading-tight">
+                    Record. Label. Automate.
+                  </p>
+               </div>
               
-               {/* Robot and Buttons */}
-               <TasklyBot 
-                 onVoiceCommand={handleVoiceCommand}
-                 onRecordFlow={handleRecordFlow}
-                 suggestionCount={3}
-                 onShowSuggestions={() => setShowSuggestions(true)}
-                 voiceHistory={voiceHistory}
-               />
-               
-                {/* Today's Focus Section */}
-                <TodaysFocus className="mb-4" />
+                {/* Robot and Buttons */}
+                <TasklyBot 
+                  onVoiceCommand={handleVoiceCommand}
+                  onRecordFlow={handleRecordFlow}
+                  suggestionCount={3}
+                  onShowSuggestions={() => setShowSuggestions(true)}
+                  voiceHistory={voiceHistory}
+                />
+                
+                 {/* Today's Focus Section */}
+                 <div className="mt-8">
+                   <TodaysFocus className="mb-4" />
+                 </div>
              </section>
            </div>
 
            {/* Tasks Section - Elevated design */}
            <div className="container mx-auto px-4 py-8 max-w-4xl">
              <section className="space-y-8">
-               <div className="text-center space-y-4 mb-12">
-                 <h2 className="text-3xl font-semibold text-foreground">Today's Tasks</h2>
-                 <p className="text-muted-foreground font-light">Keep track of your priorities and accomplish more</p>
-               </div>
+                <div className="text-center space-y-4 mb-12">
+                  <h2 className="text-3xl font-semibold text-foreground">Today's Tasks</h2>
+                  <p className="text-muted-foreground font-light">Your priority tasks — one checkbox at a time.</p>
+                </div>
                <TaskList refreshTrigger={refreshTrigger} />
              </section>
            </div>
