@@ -18,7 +18,9 @@ import {
   Tag,
   Plus,
   Workflow,
-  Star
+  Star,
+  Mic,
+  Settings
 } from 'lucide-react';
 
 interface WorkflowItem {
@@ -162,17 +164,8 @@ export default function Workflows() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-xl">
-        <div className="flex h-16 items-center justify-between px-6">
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/')}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Home
-          </Button>
-          <h1 className="text-lg font-semibold">Workflows</h1>
-          <div /> {/* Spacer for center alignment */}
+        <div className="flex h-20 items-center justify-center px-6">
+          <h1 className="text-3xl font-bold text-foreground text-center">Workflows</h1>
         </div>
       </header>
 
@@ -191,17 +184,28 @@ export default function Workflows() {
         </Card>
 
         {/* Workflows List */}
-        <div className="space-y-4">
+        <div className="space-y-6">
           {workflows.length === 0 ? (
-            <Card className="glass p-8 text-center">
-              <div className="space-y-4">
-                <Workflow className="h-12 w-12 mx-auto text-muted-foreground" />
-                <div>
-                  <h3 className="text-lg font-semibold">No workflows yet</h3>
-                  <p className="text-muted-foreground">Record your first workflow to get started</p>
+            <Card className="glass text-center p-12 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
+              <div className="max-w-md mx-auto space-y-6">
+                <div className="w-24 h-24 mx-auto bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center shadow-lg">
+                  <Workflow className="h-12 w-12 text-white" />
                 </div>
-                <Button onClick={() => navigate('/')} className="mt-4">
-                  Go to Home
+                <div className="space-y-3">
+                  <h3 className="text-2xl font-bold text-foreground">No workflows yet</h3>
+                  <p className="text-lg text-muted-foreground">
+                    Speak or type a task to create your first automation
+                  </p>
+                  <p className="text-sm text-muted-foreground/80">
+                    Say: "Record my workflow" or click below to get started
+                  </p>
+                </div>
+                <Button 
+                  onClick={() => navigate('/')}
+                  className="mt-6 px-8 py-3 text-lg bg-gradient-to-r from-primary to-accent hover:shadow-lg transition-all duration-300"
+                >
+                  <Clock className="h-5 w-5 mr-2" />
+                  Record Your First Workflow
                 </Button>
               </div>
             </Card>
@@ -211,110 +215,109 @@ export default function Workflows() {
               const isNew = isNewWorkflow(workflow.created_at);
               
               return (
-                <Card key={workflow.id} className="glass hover:bg-card/60 transition-colors">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <CardTitle className="text-lg">
-                            {workflow.title || "Untitled Workflow"}
-                          </CardTitle>
-                          {isNew && (
-                            <Badge className="bg-primary/20 text-primary border-primary/30">
-                              <Star className="h-3 w-3 mr-1" />
-                              New
-                            </Badge>
-                          )}
-                        </div>
-                        <CardDescription>
-                          {workflow.description || "No description provided"}
-                        </CardDescription>
+                <Card key={workflow.id} className="glass p-6 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 group border-primary/10 bg-gradient-to-br from-background/80 to-primary/5">
+                  <div className="flex justify-between items-start mb-6">
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 bg-gradient-to-br from-primary via-accent to-secondary rounded-xl flex items-center justify-center shadow-lg">
+                        <Workflow className="h-7 w-7 text-white" />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setSelectedWorkflow(workflow)}
-                            >
-                              <Calendar className="h-4 w-4 mr-1" />
-                              Schedule
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Schedule Workflow</DialogTitle>
-                            </DialogHeader>
-                            <div className="space-y-4 p-4">
-                              <div>
-                                <Label htmlFor="frequency">Frequency</Label>
-                                <select
-                                  id="frequency"
-                                  className="w-full p-2 border rounded-md bg-background"
-                                  value={scheduleForm.frequency}
-                                  onChange={(e) => setScheduleForm(prev => ({ ...prev, frequency: e.target.value }))}
-                                >
-                                  <option value="daily">Daily</option>
-                                  <option value="weekly">Weekly</option>
-                                  <option value="monthly">Monthly</option>
-                                </select>
-                              </div>
-                              <div>
-                                <Label htmlFor="time">Time</Label>
-                                <Input
-                                  id="time"
-                                  type="time"
-                                  value={scheduleForm.time}
-                                  onChange={(e) => setScheduleForm(prev => ({ ...prev, time: e.target.value }))}
-                                />
-                              </div>
-                              <Button onClick={createSchedule} className="w-full">
-                                Create Schedule
-                              </Button>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-muted-foreground" />
-                        <span>Duration: {formatDuration(workflow.created_at)}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Play className="h-4 w-4 text-muted-foreground" />
-                        <span>{formatSteps()} steps</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span>{new Date(workflow.created_at).toLocaleDateString()}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {workflow.category && (
-                          <>
-                            <Tag className="h-4 w-4 text-muted-foreground" />
-                            <Badge variant="secondary">{workflow.category}</Badge>
-                          </>
-                        )}
+                      <div>
+                        <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">
+                          {workflow.title || "Untitled Workflow"}
+                        </h3>
+                        <p className="text-muted-foreground mt-1">
+                          {workflow.description || "Intelligent automation workflow"}
+                        </p>
                       </div>
                     </div>
                     
-                    {schedule && (
-                      <div className="mt-4 p-3 bg-primary/5 border border-primary/10 rounded-lg">
-                        <div className="flex items-center gap-2 text-sm">
-                          <Calendar className="h-4 w-4 text-primary" />
-                          <span className="font-medium">Scheduled:</span>
-                          <span>{schedule.frequency} at {schedule.time}</span>
-                        </div>
-                      </div>
+                    {isNew && (
+                      <Badge className="bg-gradient-to-r from-primary to-accent text-white border-0 shadow-lg animate-pulse">
+                        ✨ New
+                      </Badge>
                     )}
-                  </CardContent>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4 mb-6">
+                    <div className="text-center p-4 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
+                      <div className="text-lg font-bold text-primary">{formatDuration(workflow.created_at)}</div>
+                      <div className="text-xs text-muted-foreground mt-1">Duration</div>
+                    </div>
+                    <div className="text-center p-4 rounded-xl bg-gradient-to-br from-accent/10 to-accent/5 border border-accent/20">
+                      <div className="text-lg font-bold text-accent">{formatSteps()}</div>
+                      <div className="text-xs text-muted-foreground mt-1">Steps</div>
+                    </div>
+                    <div className="text-center p-4 rounded-xl bg-gradient-to-br from-secondary/10 to-secondary/5 border border-secondary/20">
+                      <div className="text-lg font-bold text-secondary-foreground">
+                        {schedules.filter(s => s.workflow_id === workflow.id && s.is_active).length}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">Schedules</div>
+                    </div>
+                  </div>
+
+                  {/* Active Schedules */}
+                  {schedule && (
+                    <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20">
+                      <h4 className="text-sm font-semibold text-primary mb-3 flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        Active Schedule:
+                      </h4>
+                      <div className="text-sm text-muted-foreground bg-background/50 p-2 rounded-lg">
+                        🔄 {schedule.frequency} at {schedule.time}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex gap-3">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => setSelectedWorkflow(workflow)}
+                          className="flex-1 bg-gradient-to-r from-primary/10 to-accent/10 border-primary/30 hover:bg-gradient-to-r hover:from-primary/20 hover:to-accent/20"
+                        >
+                          <Calendar className="h-4 w-4 mr-2" />
+                          Schedule Automation
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Schedule Workflow</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4 p-4">
+                          <div>
+                            <Label htmlFor="frequency">Frequency</Label>
+                            <select
+                              id="frequency"
+                              className="w-full p-2 border rounded-md bg-background"
+                              value={scheduleForm.frequency}
+                              onChange={(e) => setScheduleForm(prev => ({ ...prev, frequency: e.target.value }))}
+                            >
+                              <option value="daily">Daily</option>
+                              <option value="weekly">Weekly</option>
+                              <option value="monthly">Monthly</option>
+                            </select>
+                          </div>
+                          <div>
+                            <Label htmlFor="time">Time</Label>
+                            <Input
+                              id="time"
+                              type="time"
+                              value={scheduleForm.time}
+                              onChange={(e) => setScheduleForm(prev => ({ ...prev, time: e.target.value }))}
+                            />
+                          </div>
+                          <Button onClick={createSchedule} className="w-full">
+                            Create Schedule
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                    <Button variant="outline" size="sm" className="px-4 hover:bg-primary/10">
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </Card>
               );
             })

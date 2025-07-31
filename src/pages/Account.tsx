@@ -29,19 +29,10 @@ export default function Account() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header with Back Button */}
+      {/* Header */}
       <header className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-xl">
-        <div className="flex h-16 items-center justify-between px-6">
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/')}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Home
-          </Button>
-          <h1 className="text-lg font-semibold">Account</h1>
-          <div /> {/* Spacer for center alignment */}
+        <div className="flex h-20 items-center justify-center px-6">
+          <h1 className="text-3xl font-bold text-foreground text-center">Account</h1>
         </div>
       </header>
 

@@ -108,17 +108,8 @@ const Settings = () => {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-6 py-8 max-w-2xl">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-8">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate(-1)}
-            className="h-8 w-8 rounded-lg glass hover:bg-primary/10"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <SettingsIcon className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold text-foreground">Settings</h1>
+        <div className="flex items-center justify-center mb-8">
+          <h1 className="text-3xl font-bold text-foreground text-center">Settings</h1>
         </div>
 
         <div className="space-y-6">
