@@ -11,6 +11,7 @@ import Auth from "./pages/Auth";
 import Account from "./pages/Account";
 import Settings from "./pages/Settings";
 import Dashboard from "./pages/Dashboard";
+import Workflows from "./pages/Workflows";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ const App = () => {
               <Route path="/account" element={<Account />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/workflows" element={<Workflows />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

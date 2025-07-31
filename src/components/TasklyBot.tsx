@@ -4,12 +4,13 @@ import { Bot, Mic, MicOff, Video, Sparkles } from 'lucide-react';
 import { useVoiceRecognition } from '@/hooks/useVoiceRecognition';
 import { useScreenRecording } from '@/hooks/useScreenRecording';
 import { RecordingIndicator } from '@/components/RecordingIndicator';
+import { WorkflowAnalysis } from '@/components/WorkflowAnalysis';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
 interface TasklyBotProps {
   onVoiceCommand: (command: string) => void;
-  onRecordFlow?: (recordingBlob?: Blob) => void;
+  onRecordFlow?: (recordingBlob?: Blob, duration?: string) => void;
   suggestionCount?: number;
   onShowSuggestions?: () => void;
   voiceHistory?: string[];
@@ -18,6 +19,8 @@ interface TasklyBotProps {
 export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, onShowSuggestions, voiceHistory = [] }: TasklyBotProps) {
   const [lastCommand, setLastCommand] = useState<string>('');
   const [robotImageUrl, setRobotImageUrl] = useState<string>('/public/assets/robot.png'); // Will be updated when user uploads
+  const [showWorkflowAnalysis, setShowWorkflowAnalysis] = useState(false);
+  const [recordingBlob, setRecordingBlob] = useState<Blob | undefined>();
 
   const { isListening, startListening, stopListening } = useVoiceRecognition({
     onResult: (transcript) => {
@@ -41,11 +44,9 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
       });
     },
     onRecordingStop: (blob) => {
-      onRecordFlow?.(blob);
-      toast({
-        title: "Recording saved",
-        description: "Your workflow has been captured and saved locally.",
-      });
+      setRecordingBlob(blob);
+      setShowWorkflowAnalysis(true);
+      onRecordFlow?.(blob, "2:30"); // Mock duration
     },
     onError: (error) => {
       toast({
@@ -78,6 +79,12 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
         isRecording={isRecording} 
         recordingTime={formattedTime}
         onStop={stopRecording}
+      />
+      
+      <WorkflowAnalysis 
+        isVisible={showWorkflowAnalysis}
+        onClose={() => setShowWorkflowAnalysis(false)}
+        recordingData={recordingBlob}
       />
       
       <div className="flex flex-col items-center relative">
@@ -130,7 +137,7 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
         </div>
 
       {/* Action Buttons - Mobile Optimized */}
-      <div className="flex gap-3 relative z-10 w-full max-w-sm justify-center -mt-2">
+      <div className="flex gap-3 relative z-10 w-full max-w-sm justify-center mt-6">
         <Button
           onClick={handleBotClick}
           size="default"
