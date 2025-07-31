@@ -106,11 +106,24 @@ const Settings = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-6 py-8 max-w-2xl">
-        {/* Header */}
-        <div className="flex items-center justify-center mb-8">
-          <h1 className="text-3xl font-bold text-foreground text-center">Settings</h1>
+      {/* Header */}
+      <header className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-xl">
+        <div className="flex h-20 items-center justify-between px-6">
+          <button 
+            onClick={() => navigate('/')} 
+            className="p-2 hover:bg-muted rounded-lg transition-colors"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
         </div>
+      </header>
+
+      {/* Page Title */}
+      <div className="flex justify-center py-6">
+        <h1 className="text-4xl font-bold text-foreground">Settings</h1>
+      </div>
+
+      <div className="container mx-auto px-6 pb-8 max-w-2xl">
 
         <div className="space-y-6">
           {/* Appearance Settings */}
