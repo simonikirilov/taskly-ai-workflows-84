@@ -13,6 +13,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Search, Menu, Lightbulb, Home, BarChart3, User, Settings, Mic } from "lucide-react";
+import { ConsciousnessStatus } from "@/components/os/ConsciousnessStatus";
+import { PlanSection } from "@/components/os/PlanSection";
+import { SmartSuggestions } from "@/components/os/SmartSuggestions";
+import { DashboardMetrics } from "@/components/os/DashboardMetrics";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
@@ -192,8 +196,9 @@ const Index = () => {
                 </div>
               </div>
               
-              {/* Right Side - Hamburger Menu */}
-      <div className="flex items-center">
+              {/* Right Side - Consciousness Status + Menu */}
+      <div className="flex items-center gap-3">
+        <ConsciousnessStatus />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="h-10 w-10">
@@ -279,23 +284,41 @@ const Index = () => {
                   voiceHistory={voiceHistory}
                 />
                 
-                 {/* Today's Focus Section */}
-                 <div className="mt-8">
-                   <TodaysFocus className="mb-4" />
-                 </div>
-             </section>
-           </div>
+              </section>
+            </div>
 
-           {/* Tasks Section - Elevated design */}
-           <div className="container mx-auto px-4 py-8 max-w-4xl">
-             <section className="space-y-8">
-                <div className="text-center space-y-4 mb-12">
-                  <h2 className="text-3xl font-semibold text-foreground">Today's Tasks</h2>
-                  <p className="text-muted-foreground font-light">Your priority tasks — one checkbox at a time.</p>
+            {/* AI Operating System Layout */}
+            <div className="container mx-auto px-4 py-8 max-w-5xl space-y-8">
+              
+              {/* Plan Section */}
+              <div className="bg-card/30 rounded-2xl p-6 border border-border/20 backdrop-blur-sm">
+                <PlanSection />
+              </div>
+
+              {/* Smart Suggestions */}
+              <div className="bg-card/30 rounded-2xl p-6 border border-border/20 backdrop-blur-sm">
+                <SmartSuggestions />
+              </div>
+
+              {/* Dashboard Metrics */}
+              <div className="bg-card/30 rounded-2xl p-6 border border-border/20 backdrop-blur-sm">
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-foreground mb-2">System Status</h3>
+                  <p className="text-sm text-muted-foreground">Real-time performance metrics</p>
                 </div>
-               <TaskList refreshTrigger={refreshTrigger} />
-             </section>
-           </div>
+                <DashboardMetrics />
+              </div>
+
+              {/* Tasks Section - Integrated */}
+              <div className="bg-card/30 rounded-2xl p-6 border border-border/20 backdrop-blur-sm">
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-foreground mb-2">Today's Tasks</h3>
+                  <p className="text-sm text-muted-foreground">Your priority tasks — one checkbox at a time.</p>
+                </div>
+                <TaskList refreshTrigger={refreshTrigger} />
+              </div>
+
+            </div>
         </main>
 
         {/* AI Suggestions Overlay */}

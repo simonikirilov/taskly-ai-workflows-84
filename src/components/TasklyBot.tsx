@@ -136,36 +136,52 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
           </div>
         </div>
 
-      {/* Action Buttons - Mobile Optimized */}
-      <div className="flex gap-3 relative z-10 w-full max-w-sm justify-center mt-6">
+      {/* AI OS Action Buttons */}
+      <div className="flex flex-col items-center gap-4 w-full max-w-md mx-auto mt-8">
+        {/* Primary Speak Button - Glowing Circle with Robot */}
         <Button
           onClick={handleBotClick}
           size="default"
           className={cn(
-            "h-12 px-6 text-sm font-medium transition-all duration-300 rounded-xl border-0 flex-1",
+            "w-20 h-20 rounded-full p-0 border-0 transition-all duration-500 relative overflow-hidden",
             isListening
-              ? "bg-gradient-to-r from-primary to-primary/80 text-white shadow-lg shadow-primary/25"
-              : "bg-gradient-to-r from-secondary to-muted text-foreground hover:from-secondary/90 hover:to-muted/90"
+              ? "bg-gradient-to-r from-primary via-blue-500 to-primary shadow-lg shadow-primary/50 scale-110"
+              : "bg-gradient-to-r from-primary/80 to-primary hover:from-primary hover:to-primary/90 shadow-md hover:shadow-lg hover:shadow-primary/30 hover:scale-105"
           )}
         >
-          <Mic className="h-4 w-4 mr-2" />
-          {isListening ? "Listening..." : "Speak"}
-        </Button>
-        
-        <Button
-          onClick={handleRecordFlow}
-          size="default"
-          variant="outline"
-          className={cn(
-            "h-12 px-6 text-sm font-medium transition-all duration-300 rounded-xl border border-border flex-1",
-            isRecording 
-              ? "bg-gradient-to-r from-destructive/20 to-destructive/10 border-destructive/30 text-destructive-foreground" 
-              : "bg-gradient-to-r from-card to-muted/50 hover:from-card/90 hover:to-muted/70"
+          {isListening && (
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-blue-400/30 rounded-full animate-pulse" />
           )}
-        >
-          <Video className={cn("h-4 w-4 mr-2", isRecording && "text-destructive")} />
-          {isRecording ? "Stop" : "Record"}
+          <Bot className={cn("h-8 w-8 text-white relative z-10", isListening && "animate-pulse")} />
         </Button>
+
+        {/* Secondary Actions Row */}
+        <div className="flex gap-3 w-full justify-center">
+          <Button
+            onClick={handleRecordFlow}
+            size="default"
+            variant="outline"
+            className={cn(
+              "h-12 px-6 text-sm font-medium transition-all duration-300 rounded-xl border border-border/30 backdrop-blur-sm",
+              isRecording 
+                ? "bg-gradient-to-r from-red-500/20 to-red-600/20 border-red-500/40 text-red-400 shadow-lg shadow-red-500/25" 
+                : "bg-card/30 hover:bg-card/50 hover:border-border/50"
+            )}
+          >
+            <Video className={cn("h-4 w-4 mr-2", isRecording && "text-red-400")} />
+            {isRecording ? "Stop Recording" : "Record"}
+          </Button>
+          
+          <Button
+            onClick={() => {/* Open workflows */}}
+            size="default"
+            variant="outline"
+            className="h-12 px-6 text-sm font-medium transition-all duration-300 rounded-xl border border-border/30 bg-card/30 hover:bg-card/50 hover:border-border/50 backdrop-blur-sm"
+          >
+            <Sparkles className="h-4 w-4 mr-2" />
+            Automate
+          </Button>
+        </div>
       </div>
 
       {/* Voice History - Only show if there's history */}
@@ -184,19 +200,19 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
         </div>
       )}
 
-      {/* Floating AI Assistant with Taskly Robot */}
+      {/* Floating AI Assistant with Taskly Robot - Larger & Closer */}
       <button
         onClick={onShowSuggestions}
-        className="fixed bottom-8 right-8 z-50 transition-all duration-300 hover:scale-105"
+        className="fixed bottom-6 right-6 z-50 transition-all duration-300 hover:scale-105"
       >
         <div className="relative">
           <img 
             src="/lovable-uploads/d9e422aa-ea2c-4619-8ac2-3818edd8bcb3.png"
             alt="AI Assistant"
-            className="w-36 h-36 object-contain"
+            className="w-28 h-28 object-contain filter drop-shadow-lg"
           />
           {suggestionCount > 0 && (
-            <span className="absolute -top-2 -right-2 h-8 w-8 bg-accent text-accent-foreground text-sm font-semibold rounded-full flex items-center justify-center border-2 border-background shadow-lg">
+            <span className="absolute -top-1 -right-1 h-6 w-6 bg-gradient-to-r from-primary to-blue-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-lg animate-pulse">
               {suggestionCount}
             </span>
           )}
