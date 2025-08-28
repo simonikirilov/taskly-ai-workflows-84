@@ -9,7 +9,6 @@ import { WorkflowAnalysis } from "@/components/WorkflowAnalysis";
 import { TodaysFocus } from "@/components/TodaysFocus";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Search, Menu, Lightbulb, Home, BarChart3, User, Settings, Mic } from "lucide-react";
@@ -21,7 +20,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { cn } from "@/lib/utils";
 
 const Index = () => {
-  const { user, loading } = useAuth();
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -42,17 +40,7 @@ const Index = () => {
     }
   }, []);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="h-12 w-12 border-b-2 border-primary rounded-full animate-spin"></div>
-      </div>
-    );
-  }
 
-  if (!user) {
-    return <Navigate to="/auth" replace />;
-  }
 
   const handleVoiceCommand = async (command: string, duration: string = '0:00') => {
     // Add to voice history
@@ -67,7 +55,7 @@ const Index = () => {
         const { error } = await supabase
           .from('tasks')
           .insert({
-            user_id: user.id,
+            user_id: 'local-user', // Use a default user ID for local storage
             title: taskData.title,
             status: false,
             scheduled_time: taskData.scheduledTime
@@ -267,9 +255,9 @@ const Index = () => {
             <section className="text-center space-y-1">
                {/* Welcome Text */}
                <div className="space-y-6">
-                  <h1 className="text-5xl md:text-6xl font-bold text-foreground tracking-tight">
-                    Welcome Simoni
-                  </h1>
+                   <h1 className="text-5xl md:text-6xl font-bold text-foreground tracking-tight">
+                     Welcome {userName || 'User'}
+                   </h1>
                   <p className="text-lg md:text-xl text-muted-foreground font-light leading-tight">
                     Record. Label. Automate.
                   </p>

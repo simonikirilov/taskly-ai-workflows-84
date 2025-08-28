@@ -3,7 +3,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { 
   Brain, 
@@ -39,17 +38,14 @@ export function AISuggestionsCards({ isVisible, onClose }: AISuggestionsCardsPro
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const { user } = useAuth();
 
   useEffect(() => {
     const fetchSuggestions = async () => {
-      if (!user) return;
-
       try {
         const { data, error } = await supabase
           .from('suggestions')
           .select('*')
-          .eq('user_id', user.id)
+          .eq('user_id', 'local-user')
           .order('created_at', { ascending: false })
           .limit(8);
 
@@ -89,7 +85,7 @@ export function AISuggestionsCards({ isVisible, onClose }: AISuggestionsCardsPro
           .insert(
             defaultSuggestions.map(suggestion => ({
               ...suggestion,
-              user_id: user.id
+              user_id: 'local-user'
             }))
           );
 
@@ -98,7 +94,7 @@ export function AISuggestionsCards({ isVisible, onClose }: AISuggestionsCardsPro
         const { data } = await supabase
           .from('suggestions')
           .select('*')
-          .eq('user_id', user.id)
+          .eq('user_id', 'local-user')
           .order('created_at', { ascending: false })
           .limit(8);
         
@@ -111,7 +107,7 @@ export function AISuggestionsCards({ isVisible, onClose }: AISuggestionsCardsPro
     if (isVisible) {
       fetchSuggestions();
     }
-  }, [user, isVisible]);
+  }, [isVisible]);
 
   const nextSlide = () => {
     setCurrentIndex((prev) => (prev + 1) % Math.max(1, suggestions.length - 2));
