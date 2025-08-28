@@ -97,22 +97,22 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
         recordingData={recordingBlob}
       />
       
-      <div className="flex flex-col items-center relative">
+      <div className="flex flex-col items-center relative -mt-8 md:-mt-12">
         {/* Littlebird.ai inspired layout - no greeting, focus on interaction */}
 
-        {/* Taskly Robot - Mobile Optimized */}
+        {/* Taskly Robot - Mobile Optimized and Moved Up */}
         <div className="relative flex items-center justify-center">
           {/* Subtle background glow */}
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-full max-w-[350px] aspect-square bg-gradient-radial from-blue-400/10 via-blue-400/5 to-transparent rounded-full blur-2xl opacity-40" />
+            <div className="w-full max-w-[400px] aspect-square bg-gradient-radial from-blue-400/15 via-blue-400/8 to-transparent rounded-full blur-3xl opacity-50" />
           </div>
           
-          {/* Robot container with mobile-optimized design */}
+          {/* Robot container with enhanced prominence */}
           <div className={cn(
-            "relative transition-all duration-500 cursor-pointer animate-float-slow w-full max-w-[380px] mx-auto",
+            "relative transition-all duration-500 cursor-pointer animate-float-slow w-full max-w-[420px] mx-auto",
             isListening 
-              ? "scale-105" 
-              : "hover:scale-[1.02]"
+              ? "scale-110" 
+              : "hover:scale-[1.05]"
           )}
           onClick={handleBotClick}
           >
@@ -120,7 +120,7 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
               src="/lovable-uploads/d9e422aa-ea2c-4619-8ac2-3818edd8bcb3.png"
               alt="Taskly AI Assistant"
               className="w-full h-auto object-contain animate-float-slow p-0 m-0 max-w-full"
-              style={{ filter: 'drop-shadow(0 0 20px rgba(59, 130, 246, 0.3))' }}
+              style={{ filter: 'drop-shadow(0 0 25px rgba(59, 130, 246, 0.4))' }}
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.style.display = 'none';
@@ -129,25 +129,25 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
             />
             
             {/* Fallback Bot icon */}
-            <div className="hidden w-full aspect-square bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center max-w-[300px]">
-              <Bot className="h-24 w-24 text-white" />
+            <div className="hidden w-full aspect-square bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center max-w-[350px]">
+              <Bot className="h-28 w-28 text-white" />
             </div>
             
-            {/* Listening indicator - minimalistic */}
+            {/* Listening indicator - enhanced visibility */}
             {isListening && (
-              <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2">
-                <div className="flex gap-1 px-4 py-2 bg-primary/20 rounded-full backdrop-blur-sm">
-                  <div className="w-2 h-6 bg-primary animate-pulse rounded-full" />
-                  <div className="w-2 h-6 bg-primary animate-pulse rounded-full" style={{ animationDelay: '0.2s' }} />
-                  <div className="w-2 h-6 bg-primary animate-pulse rounded-full" style={{ animationDelay: '0.4s' }} />
+              <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2">
+                <div className="flex gap-1 px-5 py-3 bg-primary/25 rounded-full backdrop-blur-sm border border-primary/20">
+                  <div className="w-2 h-7 bg-primary animate-pulse rounded-full" />
+                  <div className="w-2 h-7 bg-primary animate-pulse rounded-full" style={{ animationDelay: '0.2s' }} />
+                  <div className="w-2 h-7 bg-primary animate-pulse rounded-full" style={{ animationDelay: '0.4s' }} />
                 </div>
               </div>
             )}
           </div>
         </div>
 
-      {/* Action Buttons Row */}
-      <div className="flex gap-3 w-full justify-center max-w-md mx-auto mt-8">
+      {/* Action Buttons Row - Closer to robot */}
+      <div className="flex gap-3 w-full justify-center max-w-md mx-auto mt-6">
         <Button
           onClick={handleRecordFlow}
           size="default"
