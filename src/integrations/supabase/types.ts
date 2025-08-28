@@ -7,146 +7,14 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.12 (cd3cf9e)"
+    PostgrestVersion: "13.0.4"
   }
   public: {
     Tables: {
-      schedule_rules: {
-        Row: {
-          created_at: string
-          frequency: string
-          id: string
-          is_active: boolean
-          time: string
-          user_id: string
-          workflow_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          frequency: string
-          id?: string
-          is_active?: boolean
-          time: string
-          user_id: string
-          workflow_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          frequency?: string
-          id?: string
-          is_active?: boolean
-          time?: string
-          user_id?: string
-          workflow_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "schedule_rules_workflow_id_fkey"
-            columns: ["workflow_id"]
-            isOneToOne: false
-            referencedRelation: "workflows"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      suggestions: {
-        Row: {
-          content: string
-          created_at: string
-          id: string
-          type: string
-          user_id: string
-        }
-        Insert: {
-          content: string
-          created_at?: string
-          id?: string
-          type?: string
-          user_id: string
-        }
-        Update: {
-          content?: string
-          created_at?: string
-          id?: string
-          type?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      tasks: {
-        Row: {
-          created_at: string
-          id: string
-          scheduled_time: string | null
-          status: boolean
-          title: string
-          updated_at: string
-          user_id: string
-          workflow_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          scheduled_time?: string | null
-          status?: boolean
-          title: string
-          updated_at?: string
-          user_id: string
-          workflow_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          scheduled_time?: string | null
-          status?: boolean
-          title?: string
-          updated_at?: string
-          user_id?: string
-          workflow_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tasks_workflow_id_fkey"
-            columns: ["workflow_id"]
-            isOneToOne: false
-            referencedRelation: "workflows"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      workflows: {
-        Row: {
-          category: string | null
-          created_at: string
-          description: string | null
-          id: string
-          title: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          category?: string | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          title: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          category?: string | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          title?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Views: {
       [_ in never]: never
