@@ -1,311 +1,78 @@
-import { useState, useEffect } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+
+import { useState, useEffect } from "react";
+import { Navigate } from "react-router-dom";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/Sidebar";
 import { TasklyBot } from "@/components/TasklyBot";
 import { TaskList } from "@/components/TaskList";
-import { AISuggestionsCards } from "@/components/AISuggestionsCards";
-import { WorkflowAnalysis } from "@/components/WorkflowAnalysis";
-import { TodaysFocus } from "@/components/TodaysFocus";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
-import { Search, Menu, Lightbulb, Home, BarChart3, User, Settings, Mic, Workflow } from "lucide-react";
-import { TodaysTasks } from "@/components/TodaysTasks";
-import { SmartSuggestions } from "@/components/os/SmartSuggestions";
-import { DashboardMetrics } from "@/components/os/DashboardMetrics";
-import { SystemStatus } from "@/components/SystemStatus";
 import { CompletedTasks } from "@/components/CompletedTasks";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
+import { AISuggestionsCards } from "@/components/AISuggestionsCards";
+import { useAuth } from "@/hooks/useAuth";
 
 const Index = () => {
-  const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
+  const { user, loading } = useAuth();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [showWorkflowAnalysis, setShowWorkflowAnalysis] = useState(false);
-  const [userName, setUserName] = useState<string>('');
-  const [recordingData, setRecordingData] = useState<{
-    duration: string;
-    type: 'voice' | 'screen';
-  } | null>(null);
-  const [voiceHistory, setVoiceHistory] = useState<string[]>([]);
-  const [watchingEnabled, setWatchingEnabled] = useState(true);
 
-  // Load user preferences on mount
   useEffect(() => {
-    const preferences = localStorage.getItem('taskly-user-preferences');
-    if (preferences) {
-      const parsed = JSON.parse(preferences);
-      if (parsed.name) {
-        setUserName(parsed.name);
-      }
+    // Show suggestions after 3 seconds if user is authenticated
+    if (user) {
+      const timer = setTimeout(() => {
+        setShowSuggestions(true);
+      }, 3000);
+      return () => clearTimeout(timer);
     }
-    
-    // Load watching state
-    const watchingState = localStorage.getItem('taskly-watching-enabled');
-    if (watchingState) {
-      setWatchingEnabled(JSON.parse(watchingState));
-    }
-  }, []);
+  }, [user]);
 
-
-
-  const handleVoiceCommand = async (command: string, duration: string = '0:00') => {
-    // Add to voice history
-    setVoiceHistory(prev => [...prev, command]);
-    
-    try {
-      // Extract tasks using AI analysis
-      const extractedTasks = extractTasksFromVoice(command);
-      
-      // Create tasks in database
-      for (const taskData of extractedTasks) {
-        const { error } = await supabase
-          .from('tasks')
-          .insert({
-            user_id: 'local-user', // Use a default user ID for local storage
-            title: taskData.title,
-            status: false,
-            scheduled_time: taskData.scheduledTime
-          });
-
-        if (error) throw error;
-      }
-      
-      setRefreshTrigger(prev => prev + 1);
-      
-      toast({
-        title: "Tasks created successfully!",
-        description: `Added ${extractedTasks.length} task(s) from your voice command.`,
-      });
-      
-    } catch (error) {
-      console.error('Error processing voice command:', error);
-      toast({
-        title: "Error processing command",
-        description: "Failed to process your voice command. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // AI function to extract structured tasks from voice command
-  const extractTasksFromVoice = (command: string) => {
-    const tasks = [];
-    const lowerCommand = command.toLowerCase();
-    
-    // Simple AI logic to extract tasks and times
-    if (lowerCommand.includes('post') && lowerCommand.includes('reels')) {
-      const times = command.match(/(\d{1,2})\s*(am|pm)/gi) || [];
-      const projectMatch = command.match(/for\s+([^,\s]+(?:\s+[^,\s]+)*)/i);
-      const project = projectMatch ? projectMatch[1] : 'Project';
-      
-      if (times.length > 0) {
-        times.forEach((time, index) => {
-          const today = new Date();
-          const [hour, period] = time.toLowerCase().split(/\s*(am|pm)/);
-          let hourNum = parseInt(hour);
-          if (period === 'pm' && hourNum !== 12) hourNum += 12;
-          if (period === 'am' && hourNum === 12) hourNum = 0;
-          
-          today.setHours(hourNum, 0, 0, 0);
-          
-          tasks.push({
-            title: `Post reel ${index + 1} for ${project}`,
-            scheduledTime: today.toISOString()
-          });
-        });
-      } else {
-        tasks.push({
-          title: `Post reels for ${project}`,
-          scheduledTime: null
-        });
-      }
-    } else {
-      // Generic task creation
-      tasks.push({
-        title: command,
-        scheduledTime: null
-      });
-    }
-    
-    return tasks;
-  };
-
-  const handleRecordFlow = (recordingBlob?: Blob, duration?: string) => {
-    if (recordingBlob && duration) {
-      // Show workflow analysis for screen recording
-      setRecordingData({
-        duration,
-        type: 'screen'
-      });
-      setShowWorkflowAnalysis(true);
-      
-      toast({
-        title: "Workflow Recorded",
-        description: "Analyzing your workflow...",
-      });
-    }
+  const handleTaskCreated = () => {
     setRefreshTrigger(prev => prev + 1);
   };
 
+  // Show loading spinner while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="h-12 w-12 border-b-2 border-primary rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  // Redirect to auth page if not authenticated
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+
   return (
-    <SidebarProvider defaultOpen={false}>
-      <div className="min-h-screen flex w-full bg-background">
-        
-        
-        <main className="flex-1 overflow-auto relative">
-          {/* Header with Logo and Navigation */}
-          <header className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-xl">
-            <div className="flex h-16 items-center justify-between px-4">
-              {/* Left Side - Logo */}
-              <div className="flex items-center">
-                <button 
-                  onClick={() => window.location.href = '/'}
-                  className="transition-transform hover:scale-105"
-                >
-                  <img 
-                    src="/lovable-uploads/3ad45411-4019-40bd-b405-dea680df3c25.png"
-                    alt="Taskly"
-                    className="h-24 w-auto object-contain p-0 m-0 max-w-full cursor-pointer"
-                  />
-                </button>
-              </div>
-              
-              {/* Center - Search Bar */}
-              <div className="flex-1 flex justify-center max-w-md mx-auto">
-                <div className="relative w-full max-w-sm">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search tasks..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 pr-12 glass border-0"
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 hover:bg-primary/10"
-                  >
-                    <Mic className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-              
-              {/* Right Side - Watching Toggle + Menu */}
-      <div className="flex items-center gap-3">
-        {/* Watching Toggle */}
-        <div className="flex items-center gap-2 px-3 py-2 bg-card/50 rounded-xl border border-border/20 backdrop-blur-sm">
-          <div className={`w-2 h-2 rounded-full ${watchingEnabled ? 'bg-green-400 animate-pulse' : 'bg-muted'}`} />
-          <button 
-            onClick={() => {
-              const newState = !watchingEnabled;
-              setWatchingEnabled(newState);
-              localStorage.setItem('taskly-watching-enabled', JSON.stringify(newState));
-            }}
-            className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Watching: {watchingEnabled ? 'ON' : 'OFF'}
-          </button>
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+          <div className="flex items-center justify-between space-y-2">
+            <div>
+              <h2 className="text-3xl font-bold tracking-tight">Welcome back!</h2>
+              <p className="text-muted-foreground">
+                Here's what's happening with your tasks today.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:gap-8 lg:grid-cols-4">
+            <div className="col-span-full lg:col-span-3">
+              <TaskList refreshTrigger={refreshTrigger} />
+            </div>
+            <div className="lg:col-span-1 space-y-4">
+              <CompletedTasks />
+            </div>
+          </div>
+
+          <TasklyBot onTaskCreated={handleTaskCreated} />
+          
+          <AISuggestionsCards 
+            isVisible={showSuggestions}
+            onClose={() => setShowSuggestions(false)}
+          />
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-10 w-10">
-              <Menu className="h-5 w-5" />
-              <span className="sr-only">Menu</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48 glass bg-card/95 backdrop-blur-xl border-border/20">
-            <DropdownMenuItem onClick={() => navigate('/')} className="flex items-center gap-2 cursor-pointer">
-              <Home className="h-4 w-4" />
-              Home
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate('/workflows')} className="flex items-center gap-2 cursor-pointer">
-              <Workflow className="h-4 w-4" />
-              Workflows
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate('/dashboard')} className="flex items-center gap-2 cursor-pointer">
-              <BarChart3 className="h-4 w-4" />
-              Dashboard
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate('/account')} className="flex items-center gap-2 cursor-pointer">
-              <User className="h-4 w-4" />
-              Account
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate('/settings')} className="flex items-center gap-2 cursor-pointer">
-              <Settings className="h-4 w-4" />
-              Settings
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setShowSuggestions(true)}>
-              <Lightbulb className="mr-2 h-4 w-4" />
-              AI Tips & Shortcuts
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-            </div>
-          </header>
-
-          {/* Hero Section - Mobile Optimized */}
-          <div className="w-full px-4 py-1 max-w-lg mx-auto">
-            <section className="text-center space-y-1">
-               {/* Welcome Text */}
-               <div className="space-y-6">
-                   <h1 className="text-5xl md:text-6xl font-bold text-foreground tracking-tight">
-                     Welcome {userName || 'User'}
-                   </h1>
-                  <p className="text-lg md:text-xl text-muted-foreground font-light leading-tight">
-                    Record. Label. Automate.
-                  </p>
-               </div>
-              
-                {/* Robot and Buttons */}
-                <TasklyBot 
-                  onVoiceCommand={handleVoiceCommand}
-                  onRecordFlow={handleRecordFlow}
-                  suggestionCount={3}
-                  onShowSuggestions={() => setShowSuggestions(true)}
-                  voiceHistory={voiceHistory}
-                />
-                
-              </section>
-            </div>
-
-            {/* AI Operating System Layout */}
-            <div className="container mx-auto px-4 py-8 max-w-5xl space-y-8">
-              
-              {/* Today's Plan (Auto) Section */}
-              <div className="bg-card/30 rounded-2xl p-6 border border-border/20 backdrop-blur-sm">
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-foreground mb-2">Today's Plan (Auto)</h3>
-                  <p className="text-sm text-muted-foreground">Repetitive tasks that will be automatically executed today</p>
-                </div>
-                <TodaysTasks />
-              </div>
-
-              {/* System Status Section */}
-              <div className="bg-card/30 rounded-2xl p-6 border border-border/20 backdrop-blur-sm">
-                <SystemStatus />
-              </div>
-
-            </div>
-        </main>
-
-        {/* AI Suggestions Overlay */}
-        <AISuggestionsCards 
-          isVisible={showSuggestions}
-          onClose={() => setShowSuggestions(false)}
-        />
-
-        {/* Workflow Analysis Overlay */}
-        <WorkflowAnalysis
-          isVisible={showWorkflowAnalysis}
-          onClose={() => setShowWorkflowAnalysis(false)}
-        />
-      </div>
+      </SidebarInset>
     </SidebarProvider>
   );
 };

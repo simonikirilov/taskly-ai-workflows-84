@@ -1,8 +1,10 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { 
   Brain, 
@@ -37,15 +39,20 @@ const cardTypes = {
 export function AISuggestionsCards({ isVisible, onClose }: AISuggestionsCardsProps) {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchSuggestions = async () => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+      
       try {
         const { data, error } = await supabase
           .from('suggestions')
           .select('*')
-          .eq('user_id', 'local-user')
+          .eq('user_id', user.id)
           .order('created_at', { ascending: false })
           .limit(8);
 
@@ -64,6 +71,8 @@ export function AISuggestionsCards({ isVisible, onClose }: AISuggestionsCardsPro
     };
 
     const addDefaultSuggestions = async () => {
+      if (!user) return;
+      
       const defaultSuggestions = [
         {
           content: 'Taskly noticed you upload reports every Thursday — want to automate this recurring workflow?',
@@ -85,7 +94,7 @@ export function AISuggestionsCards({ isVisible, onClose }: AISuggestionsCardsPro
           .insert(
             defaultSuggestions.map(suggestion => ({
               ...suggestion,
-              user_id: 'local-user'
+              user_id: user.id
             }))
           );
 
@@ -94,7 +103,7 @@ export function AISuggestionsCards({ isVisible, onClose }: AISuggestionsCardsPro
         const { data } = await supabase
           .from('suggestions')
           .select('*')
-          .eq('user_id', 'local-user')
+          .eq('user_id', user.id)
           .order('created_at', { ascending: false })
           .limit(8);
         
@@ -107,15 +116,7 @@ export function AISuggestionsCards({ isVisible, onClose }: AISuggestionsCardsPro
     if (isVisible) {
       fetchSuggestions();
     }
-  }, [isVisible]);
-
-  const nextSlide = () => {
-    setCurrentIndex((prev) => (prev + 1) % Math.max(1, suggestions.length - 2));
-  };
-
-  const prevSlide = () => {
-    setCurrentIndex((prev) => (prev - 1 + Math.max(1, suggestions.length - 2)) % Math.max(1, suggestions.length - 2));
-  };
+  }, [isVisible, user]);
 
   if (!isVisible) return null;
 
@@ -143,13 +144,16 @@ export function AISuggestionsCards({ isVisible, onClose }: AISuggestionsCardsPro
           </Button>
         </div>
 
-        {loading ? (
+        {!user ? (
+          <div className="text-center p-8 bg-card/30 border border-muted/20 rounded-xl">
+            <p className="text-muted-foreground">Please sign in to view AI suggestions</p>
+          </div>
+        ) : loading ? (
           <div className="flex items-center justify-center p-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         ) : (
           <div className="relative max-h-96 overflow-y-auto">
-
             {/* Cards Container - Vertical Stack */}
             <div className="space-y-3 px-4">
               {suggestions.map((suggestion, index) => {
@@ -176,7 +180,6 @@ export function AISuggestionsCards({ isVisible, onClose }: AISuggestionsCardsPro
                 );
               })}
             </div>
-
           </div>
         )}
       </div>
