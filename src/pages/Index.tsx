@@ -13,6 +13,7 @@ const Index = () => {
   const { user, loading } = useAuth();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [voiceHistory, setVoiceHistory] = useState<string[]>([]);
 
   useEffect(() => {
     // Show suggestions after 3 seconds if user is authenticated
@@ -24,8 +25,15 @@ const Index = () => {
     }
   }, [user]);
 
-  const handleTaskCreated = () => {
+  const handleVoiceCommand = (command: string) => {
+    setVoiceHistory(prev => [...prev, command]);
+    // Here you could add logic to process voice commands and create tasks
     setRefreshTrigger(prev => prev + 1);
+  };
+
+  const handleRecordFlow = (recordingBlob?: Blob, duration?: string) => {
+    // Handle workflow recording
+    console.log('Workflow recorded:', { recordingBlob, duration });
   };
 
   // Show loading spinner while checking authentication
@@ -65,7 +73,13 @@ const Index = () => {
             </div>
           </div>
 
-          <TasklyBot onTaskCreated={handleTaskCreated} />
+          <TasklyBot 
+            onVoiceCommand={handleVoiceCommand}
+            onRecordFlow={handleRecordFlow}
+            suggestionCount={0}
+            onShowSuggestions={() => setShowSuggestions(true)}
+            voiceHistory={voiceHistory}
+          />
           
           <AISuggestionsCards 
             isVisible={showSuggestions}
