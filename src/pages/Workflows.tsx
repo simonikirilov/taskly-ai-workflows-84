@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -25,9 +26,8 @@ import {
 
 interface WorkflowItem {
   id: string;
-  title: string;
+  name: string;
   description?: string;
-  category?: string;
   created_at: string;
   updated_at: string;
   user_id: string;
@@ -35,9 +35,9 @@ interface WorkflowItem {
 
 interface ScheduleRule {
   id: string;
-  workflow_id: string;
-  frequency: string;
-  time: string;
+  name: string;
+  rule_type: string;
+  schedule_pattern: string;
   is_active: boolean;
 }
 
@@ -59,13 +59,11 @@ export default function Workflows() {
   }, [user]);
 
   const fetchWorkflows = async () => {
-    if (!user) return;
-
     try {
       const { data, error } = await supabase
         .from('workflows')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', 'local-user')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -81,13 +79,11 @@ export default function Workflows() {
   };
 
   const fetchSchedules = async () => {
-    if (!user) return;
-
     try {
       const { data, error } = await supabase
         .from('schedule_rules')
         .select('*')
-        .eq('user_id', user.id);
+        .eq('user_id', 'local-user');
 
       if (error) throw error;
       setSchedules(data || []);
@@ -99,16 +95,16 @@ export default function Workflows() {
   };
 
   const createSchedule = async () => {
-    if (!selectedWorkflow || !user) return;
+    if (!selectedWorkflow) return;
 
     try {
       const { error } = await supabase
         .from('schedule_rules')
         .insert({
-          workflow_id: selectedWorkflow.id,
-          user_id: user.id,
-          frequency: scheduleForm.frequency,
-          time: scheduleForm.time,
+          name: `${selectedWorkflow.name} Schedule`,
+          rule_type: 'workflow',
+          schedule_pattern: `${scheduleForm.frequency} at ${scheduleForm.time}`,
+          user_id: 'local-user',
           is_active: true
         });
 
@@ -116,7 +112,7 @@ export default function Workflows() {
 
       toast({
         title: "Schedule created",
-        description: `Workflow "${selectedWorkflow.title}" scheduled to run ${scheduleForm.frequency} at ${scheduleForm.time}`,
+        description: `Workflow "${selectedWorkflow.name}" scheduled to run ${scheduleForm.frequency} at ${scheduleForm.time}`,
       });
 
       fetchSchedules();
@@ -221,7 +217,7 @@ export default function Workflows() {
             </Card>
           ) : (
             workflows.map((workflow) => {
-              const schedule = schedules.find(s => s.workflow_id === workflow.id && s.is_active);
+              const schedule = schedules.find(s => s.name.includes(workflow.name) && s.is_active);
               const isNew = isNewWorkflow(workflow.created_at);
               
               return (
@@ -233,7 +229,7 @@ export default function Workflows() {
                       </div>
                       <div>
                         <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">
-                          {workflow.title || "Untitled Workflow"}
+                          {workflow.name || "Untitled Workflow"}
                         </h3>
                         <p className="text-muted-foreground mt-1">
                           {workflow.description || "Intelligent automation workflow"}
@@ -259,7 +255,7 @@ export default function Workflows() {
                     </div>
                     <div className="text-center p-4 rounded-xl bg-gradient-to-br from-secondary/10 to-secondary/5 border border-secondary/20">
                       <div className="text-lg font-bold text-secondary-foreground">
-                        {schedules.filter(s => s.workflow_id === workflow.id && s.is_active).length}
+                        {schedules.filter(s => s.name.includes(workflow.name) && s.is_active).length}
                       </div>
                       <div className="text-xs text-muted-foreground mt-1">Schedules</div>
                     </div>
@@ -273,7 +269,7 @@ export default function Workflows() {
                         Active Schedule:
                       </h4>
                       <div className="text-sm text-muted-foreground bg-background/50 p-2 rounded-lg">
-                        🔄 {schedule.frequency} at {schedule.time}
+                        🔄 {schedule.schedule_pattern}
                       </div>
                     </div>
                   )}
