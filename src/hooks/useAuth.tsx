@@ -29,28 +29,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(session?.user ?? null);
         setLoading(false);
 
-        // If user just signed in, try to link with stored onboarding data
+        // If user just signed in, we can still use the stored onboarding data
         if (event === 'SIGNED_IN' && session?.user) {
           const storedUserName = localStorage.getItem('taskly_user_name');
-          if (storedUserName) {
-            // Store user profile data in Supabase
-            try {
-              const { error } = await supabase
-                .from('profiles')
-                .upsert({
-                  id: session.user.id,
-                  email: session.user.email,
-                  display_name: storedUserName,
-                  updated_at: new Date().toISOString()
-                });
-              
-              if (error) {
-                console.log('Profile update error (expected if table does not exist):', error);
-              }
-            } catch (error) {
-              console.log('Profile update error:', error);
-            }
-          }
+          console.log('User signed in with stored name:', storedUserName);
         }
       }
     );
