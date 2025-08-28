@@ -136,52 +136,37 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
           </div>
         </div>
 
-      {/* AI OS Action Buttons */}
-      <div className="flex flex-col items-center gap-4 w-full max-w-md mx-auto mt-8">
-        {/* Primary Speak Button - Glowing Circle with Robot */}
+      {/* Action Buttons Row */}
+      <div className="flex gap-3 w-full justify-center max-w-md mx-auto mt-8">
+        <Button
+          onClick={handleRecordFlow}
+          size="default"
+          variant="outline"
+          className={cn(
+            "h-12 px-6 text-sm font-medium transition-all duration-300 rounded-xl border border-border/30 backdrop-blur-sm",
+            isRecording 
+              ? "bg-gradient-to-r from-red-500/20 to-red-600/20 border-red-500/40 text-red-400 shadow-lg shadow-red-500/25" 
+              : "bg-card/30 hover:bg-card/50 hover:border-border/50"
+          )}
+        >
+          <Video className={cn("h-4 w-4 mr-2", isRecording && "text-red-400")} />
+          {isRecording ? "⏹ Stop Recording" : "⏺ Record"}
+        </Button>
+        
         <Button
           onClick={handleBotClick}
           size="default"
+          variant="outline"
           className={cn(
-            "w-20 h-20 rounded-full p-0 border-0 transition-all duration-500 relative overflow-hidden",
-            isListening
-              ? "bg-gradient-to-r from-primary via-blue-500 to-primary shadow-lg shadow-primary/50 scale-110"
-              : "bg-gradient-to-r from-primary/80 to-primary hover:from-primary hover:to-primary/90 shadow-md hover:shadow-lg hover:shadow-primary/30 hover:scale-105"
+            "h-12 px-6 text-sm font-medium transition-all duration-300 rounded-xl border border-border/30 backdrop-blur-sm",
+            isListening 
+              ? "bg-gradient-to-r from-primary/20 to-blue-500/20 border-primary/40 text-primary shadow-lg shadow-primary/25" 
+              : "bg-card/30 hover:bg-card/50 hover:border-border/50"
           )}
         >
-          {isListening && (
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-blue-400/30 rounded-full animate-pulse" />
-          )}
-          <Bot className={cn("h-8 w-8 text-white relative z-10", isListening && "animate-pulse")} />
+          <Mic className={cn("h-4 w-4 mr-2", isListening && "text-primary animate-pulse")} />
+          {isListening ? "🎤 Listening..." : "🎤 Speak"}
         </Button>
-
-        {/* Secondary Actions Row */}
-        <div className="flex gap-3 w-full justify-center">
-          <Button
-            onClick={handleRecordFlow}
-            size="default"
-            variant="outline"
-            className={cn(
-              "h-12 px-6 text-sm font-medium transition-all duration-300 rounded-xl border border-border/30 backdrop-blur-sm",
-              isRecording 
-                ? "bg-gradient-to-r from-red-500/20 to-red-600/20 border-red-500/40 text-red-400 shadow-lg shadow-red-500/25" 
-                : "bg-card/30 hover:bg-card/50 hover:border-border/50"
-            )}
-          >
-            <Video className={cn("h-4 w-4 mr-2", isRecording && "text-red-400")} />
-            {isRecording ? "Stop Recording" : "Record"}
-          </Button>
-          
-          <Button
-            onClick={() => {/* Open workflows */}}
-            size="default"
-            variant="outline"
-            className="h-12 px-6 text-sm font-medium transition-all duration-300 rounded-xl border border-border/30 bg-card/30 hover:bg-card/50 hover:border-border/50 backdrop-blur-sm"
-          >
-            <Sparkles className="h-4 w-4 mr-2" />
-            Automate
-          </Button>
-        </div>
       </div>
 
       {/* Voice History - Only show if there's history */}

@@ -16,6 +16,8 @@ import { ConsciousnessStatus } from "@/components/os/ConsciousnessStatus";
 import { PlanSection } from "@/components/os/PlanSection";
 import { SmartSuggestions } from "@/components/os/SmartSuggestions";
 import { DashboardMetrics } from "@/components/os/DashboardMetrics";
+import { SystemStatus } from "@/components/SystemStatus";
+import { CompletedTasks } from "@/components/CompletedTasks";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
@@ -278,32 +280,32 @@ const Index = () => {
             {/* AI Operating System Layout */}
             <div className="container mx-auto px-4 py-8 max-w-5xl space-y-8">
               
-              {/* Plan Section */}
+              {/* Today's Plan (Auto) Section */}
               <div className="bg-card/30 rounded-2xl p-6 border border-border/20 backdrop-blur-sm">
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-foreground mb-2">Today's Plan (Auto)</h3>
+                  <p className="text-sm text-muted-foreground">Repetitive tasks that will be automatically executed today</p>
+                </div>
                 <PlanSection />
               </div>
 
-              {/* Smart Suggestions */}
-              <div className="bg-card/30 rounded-2xl p-6 border border-border/20 backdrop-blur-sm">
-                <SmartSuggestions />
-              </div>
-
-              {/* Dashboard Metrics */}
-              <div className="bg-card/30 rounded-2xl p-6 border border-border/20 backdrop-blur-sm">
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-foreground mb-2">System Status</h3>
-                  <p className="text-sm text-muted-foreground">Real-time performance metrics</p>
-                </div>
-                <DashboardMetrics />
-              </div>
-
-              {/* Tasks Section - Integrated */}
+              {/* Today's Tasks Section */}
               <div className="bg-card/30 rounded-2xl p-6 border border-border/20 backdrop-blur-sm">
                 <div className="mb-6">
                   <h3 className="text-lg font-semibold text-foreground mb-2">Today's Tasks</h3>
-                  <p className="text-sm text-muted-foreground">Your priority tasks — one checkbox at a time.</p>
+                  <p className="text-sm text-muted-foreground">Your one-time tasks — check them off as you go</p>
                 </div>
                 <TaskList refreshTrigger={refreshTrigger} />
+              </div>
+
+              {/* Completed Tasks Section */}
+              <div className="bg-card/30 rounded-2xl p-6 border border-border/20 backdrop-blur-sm">
+                <CompletedTasks />
+              </div>
+
+              {/* System Status Section */}
+              <div className="bg-card/30 rounded-2xl p-6 border border-border/20 backdrop-blur-sm">
+                <SystemStatus />
               </div>
 
             </div>
