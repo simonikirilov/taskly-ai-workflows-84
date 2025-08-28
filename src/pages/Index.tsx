@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Navigate, Link, useLocation } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/Sidebar";
 import { TasklyBot } from "@/components/TasklyBot";
@@ -11,9 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Search, Menu, Lightbulb, Home, BarChart3, User, Settings, Mic } from "lucide-react";
-import { ConsciousnessStatus } from "@/components/os/ConsciousnessStatus";
-import { PlanSection } from "@/components/os/PlanSection";
+import { Search, Menu, Lightbulb, Home, BarChart3, User, Settings, Mic, Workflow } from "lucide-react";
+import { TodaysTasks } from "@/components/TodaysTasks";
 import { SmartSuggestions } from "@/components/os/SmartSuggestions";
 import { DashboardMetrics } from "@/components/os/DashboardMetrics";
 import { SystemStatus } from "@/components/SystemStatus";
@@ -22,7 +21,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { cn } from "@/lib/utils";
 
 const Index = () => {
-  const location = useLocation();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -33,12 +32,22 @@ const Index = () => {
     type: 'voice' | 'screen';
   } | null>(null);
   const [voiceHistory, setVoiceHistory] = useState<string[]>([]);
+  const [watchingEnabled, setWatchingEnabled] = useState(true);
 
-  // Get user name from localStorage (stored during onboarding)
+  // Load user preferences on mount
   useEffect(() => {
-    const storedUserName = localStorage.getItem('taskly_user_name');
-    if (storedUserName) {
-      setUserName(storedUserName);
+    const preferences = localStorage.getItem('taskly-user-preferences');
+    if (preferences) {
+      const parsed = JSON.parse(preferences);
+      if (parsed.name) {
+        setUserName(parsed.name);
+      }
+    }
+    
+    // Load watching state
+    const watchingState = localStorage.getItem('taskly-watching-enabled');
+    if (watchingState) {
+      setWatchingEnabled(JSON.parse(watchingState));
     }
   }, []);
 
@@ -186,9 +195,22 @@ const Index = () => {
                 </div>
               </div>
               
-              {/* Right Side - Consciousness Status + Menu */}
+              {/* Right Side - Watching Toggle + Menu */}
       <div className="flex items-center gap-3">
-        <ConsciousnessStatus />
+        {/* Watching Toggle */}
+        <div className="flex items-center gap-2 px-3 py-2 bg-card/50 rounded-xl border border-border/20 backdrop-blur-sm">
+          <div className={`w-2 h-2 rounded-full ${watchingEnabled ? 'bg-green-400 animate-pulse' : 'bg-muted'}`} />
+          <button 
+            onClick={() => {
+              const newState = !watchingEnabled;
+              setWatchingEnabled(newState);
+              localStorage.setItem('taskly-watching-enabled', JSON.stringify(newState));
+            }}
+            className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Watching: {watchingEnabled ? 'ON' : 'OFF'}
+          </button>
+        </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="h-10 w-10">
@@ -197,50 +219,25 @@ const Index = () => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48 glass bg-card/95 backdrop-blur-xl border-border/20">
-            <DropdownMenuItem asChild>
-              <Link to="/" className={cn(
-                "flex items-center w-full",
-                location.pathname === "/" && "bg-primary/10 text-primary"
-              )}>
-                <Home className="h-4 w-4 mr-2" />
-                Home
-              </Link>
+            <DropdownMenuItem onClick={() => navigate('/')} className="flex items-center gap-2 cursor-pointer">
+              <Home className="h-4 w-4" />
+              Home
             </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="/workflows" className={cn(
-                "flex items-center w-full",
-                location.pathname === "/workflows" && "bg-primary/10 text-primary"
-              )}>
-                <Search className="h-4 w-4 mr-2" />
-                Workflows
-              </Link>
+            <DropdownMenuItem onClick={() => navigate('/workflows')} className="flex items-center gap-2 cursor-pointer">
+              <Workflow className="h-4 w-4" />
+              Workflows
             </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="/dashboard" className={cn(
-                "flex items-center w-full",
-                location.pathname === "/dashboard" && "bg-primary/10 text-primary"
-              )}>
-                <BarChart3 className="h-4 w-4 mr-2" />
-                Dashboard
-              </Link>
+            <DropdownMenuItem onClick={() => navigate('/dashboard')} className="flex items-center gap-2 cursor-pointer">
+              <BarChart3 className="h-4 w-4" />
+              Dashboard
             </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="/account" className={cn(
-                "flex items-center w-full",
-                location.pathname === "/account" && "bg-primary/10 text-primary"
-              )}>
-                <User className="h-4 w-4 mr-2" />
-                Account
-              </Link>
+            <DropdownMenuItem onClick={() => navigate('/account')} className="flex items-center gap-2 cursor-pointer">
+              <User className="h-4 w-4" />
+              Account
             </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="/settings" className={cn(
-                "flex items-center w-full",
-                location.pathname === "/settings" && "bg-primary/10 text-primary"
-              )}>
-                <Settings className="h-4 w-4 mr-2" />
-                Settings
-              </Link>
+            <DropdownMenuItem onClick={() => navigate('/settings')} className="flex items-center gap-2 cursor-pointer">
+              <Settings className="h-4 w-4" />
+              Settings
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setShowSuggestions(true)}>
               <Lightbulb className="mr-2 h-4 w-4" />
@@ -286,21 +283,7 @@ const Index = () => {
                   <h3 className="text-lg font-semibold text-foreground mb-2">Today's Plan (Auto)</h3>
                   <p className="text-sm text-muted-foreground">Repetitive tasks that will be automatically executed today</p>
                 </div>
-                <PlanSection />
-              </div>
-
-              {/* Today's Tasks Section */}
-              <div className="bg-card/30 rounded-2xl p-6 border border-border/20 backdrop-blur-sm">
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-foreground mb-2">Today's Tasks</h3>
-                  <p className="text-sm text-muted-foreground">Your one-time tasks — check them off as you go</p>
-                </div>
-                <TaskList refreshTrigger={refreshTrigger} />
-              </div>
-
-              {/* Completed Tasks Section */}
-              <div className="bg-card/30 rounded-2xl p-6 border border-border/20 backdrop-blur-sm">
-                <CompletedTasks />
+                <TodaysTasks />
               </div>
 
               {/* System Status Section */}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Bot, Mic, MicOff, Video, Sparkles } from 'lucide-react';
 import { useVoiceRecognition } from '@/hooks/useVoiceRecognition';
@@ -21,6 +21,16 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
   const [robotImageUrl, setRobotImageUrl] = useState<string>('/public/assets/robot.png'); // Will be updated when user uploads
   const [showWorkflowAnalysis, setShowWorkflowAnalysis] = useState(false);
   const [recordingBlob, setRecordingBlob] = useState<Blob | undefined>();
+  const [showSpeakButton, setShowSpeakButton] = useState(false);
+
+  // Load speak button preference
+  useEffect(() => {
+    const preferences = localStorage.getItem('taskly-user-preferences');
+    if (preferences) {
+      const parsed = JSON.parse(preferences);
+      setShowSpeakButton(parsed.showSpeakButton ?? false);
+    }
+  }, []);
 
   const { isListening, startListening, stopListening } = useVoiceRecognition({
     onResult: (transcript) => {
@@ -150,23 +160,25 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
           )}
         >
           <Video className={cn("h-4 w-4 mr-2", isRecording && "text-red-400")} />
-          {isRecording ? "⏹ Stop Recording" : "⏺ Record"}
+          {isRecording ? "Stop Recording" : "Record"}
         </Button>
         
-        <Button
-          onClick={handleBotClick}
-          size="default"
-          variant="outline"
-          className={cn(
-            "h-12 px-6 text-sm font-medium transition-all duration-300 rounded-xl border border-border/30 backdrop-blur-sm",
-            isListening 
-              ? "bg-gradient-to-r from-primary/20 to-blue-500/20 border-primary/40 text-primary shadow-lg shadow-primary/25" 
-              : "bg-card/30 hover:bg-card/50 hover:border-border/50"
-          )}
-        >
-          <Mic className={cn("h-4 w-4 mr-2", isListening && "text-primary animate-pulse")} />
-          {isListening ? "🎤 Listening..." : "🎤 Speak"}
-        </Button>
+        {showSpeakButton && (
+          <Button
+            onClick={handleBotClick}
+            size="default"
+            variant="outline"
+            className={cn(
+              "h-12 px-6 text-sm font-medium transition-all duration-300 rounded-xl border border-border/30 backdrop-blur-sm",
+              isListening 
+                ? "bg-gradient-to-r from-primary/20 to-blue-500/20 border-primary/40 text-primary shadow-lg shadow-primary/25" 
+                : "bg-card/30 hover:bg-card/50 hover:border-border/50"
+            )}
+          >
+            <Mic className={cn("h-4 w-4 mr-2", isListening && "text-primary animate-pulse")} />
+            {isListening ? "Listening..." : "Speak"}
+          </Button>
+        )}
       </div>
 
       {/* Voice History - Only show if there's history */}

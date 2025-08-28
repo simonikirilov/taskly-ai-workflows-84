@@ -72,12 +72,12 @@ export function SystemStatus() {
           </div>
         </Card>
 
-        {/* AEUW Score */}
+        {/* Actions This Week */}
         <Card className="p-4 bg-card/30 border-border/20 hover:bg-card/40 transition-colors">
           <div className="text-center space-y-2">
             <Clock className="h-6 w-6 mx-auto text-accent" />
             <div className="text-2xl font-bold text-foreground">{stats.aeuwScore}%</div>
-            <div className="text-xs text-muted-foreground">AEUW Score</div>
+            <div className="text-xs text-muted-foreground">Actions This Week</div>
           </div>
         </Card>
       </div>

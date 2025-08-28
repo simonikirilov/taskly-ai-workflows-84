@@ -17,6 +17,7 @@ const Settings = () => {
   const [taskReminders, setTaskReminders] = useState(true);
   const [autoProcessVoice, setAutoProcessVoice] = useState(true);
   const [assistantTone, setAssistantTone] = useState('friendly');
+  const [showSpeakButton, setShowSpeakButton] = useState(false);
 
   useEffect(() => {
     // Check current dark mode state
@@ -30,6 +31,7 @@ const Settings = () => {
       setTaskReminders(preferences.taskReminders ?? true);
       setAutoProcessVoice(preferences.autoProcessVoice ?? true);
       setAssistantTone(preferences.assistantTone ?? 'friendly');
+      setShowSpeakButton(preferences.showSpeakButton ?? false);
     }
   }, []);
 
@@ -79,6 +81,15 @@ const Settings = () => {
     toast({
       title: "Assistant tone updated",
       description: `Taskly will now use a ${tone} tone in responses`,
+    });
+  };
+
+  const handleShowSpeakButtonToggle = (enabled: boolean) => {
+    setShowSpeakButton(enabled);
+    savePreferences({ showSpeakButton: enabled });
+    toast({
+      title: enabled ? "Speak button enabled" : "Speak button hidden",
+      description: enabled ? "Speak button will now appear alongside Record button" : "Tap the robot to use voice commands",
     });
   };
 
@@ -229,6 +240,24 @@ const Settings = () => {
                   id="auto-process-voice"
                   checked={autoProcessVoice}
                   onCheckedChange={handleAutoProcessToggle}
+                />
+              </div>
+
+              <Separator />
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="show-speak-button" className="text-base font-medium">
+                    Show Speak Button
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Display speak button alongside record button (tap robot to speak when off)
+                  </p>
+                </div>
+                <Switch
+                  id="show-speak-button"
+                  checked={showSpeakButton}
+                  onCheckedChange={handleShowSpeakButtonToggle}
                 />
               </div>
 
