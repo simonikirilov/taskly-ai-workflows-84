@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Bot, Mic, MicOff, Video, Sparkles } from 'lucide-react';
+import { Mic, Video } from 'lucide-react';
 import { useVoiceRecognition } from '@/hooks/useVoiceRecognition';
 import { useScreenRecording } from '@/hooks/useScreenRecording';
 import { RecordingIndicator } from '@/components/RecordingIndicator';
 import { WorkflowAnalysis } from '@/components/WorkflowAnalysis';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { AnimatedRobot } from './AnimatedRobot';
 
 interface TasklyBotProps {
   onVoiceCommand: (command: string) => void;
@@ -98,53 +99,12 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
       />
       
       <div className="flex flex-col items-center relative -mt-8 md:-mt-12">
-        {/* Littlebird.ai inspired layout - no greeting, focus on interaction */}
-
-        {/* Taskly Robot - Mobile Optimized and Moved Up */}
-        <div className="relative flex items-center justify-center">
-          {/* Subtle background glow */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-full max-w-[400px] aspect-square bg-gradient-radial from-blue-400/15 via-blue-400/8 to-transparent rounded-full blur-3xl opacity-50" />
-          </div>
-          
-          {/* Robot container with enhanced prominence */}
-          <div className={cn(
-            "relative transition-all duration-500 cursor-pointer animate-float-slow w-full max-w-[420px] mx-auto",
-            isListening 
-              ? "scale-110" 
-              : "hover:scale-[1.05]"
-          )}
+        {/* Animated Robot with Alive Features */}
+        <AnimatedRobot 
+          isListening={isListening}
           onClick={handleBotClick}
-          >
-            <img 
-              src="/lovable-uploads/d9e422aa-ea2c-4619-8ac2-3818edd8bcb3.png"
-              alt="Taskly AI Assistant"
-              className="w-full h-auto object-contain animate-float-slow p-0 m-0 max-w-full"
-              style={{ filter: 'drop-shadow(0 0 25px rgba(59, 130, 246, 0.4))' }}
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.style.display = 'none';
-                target.nextElementSibling?.classList.remove('hidden');
-              }}
-            />
-            
-            {/* Fallback Bot icon */}
-            <div className="hidden w-full aspect-square bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center max-w-[350px]">
-              <Bot className="h-28 w-28 text-white" />
-            </div>
-            
-            {/* Listening indicator - enhanced visibility */}
-            {isListening && (
-              <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2">
-                <div className="flex gap-1 px-5 py-3 bg-primary/25 rounded-full backdrop-blur-sm border border-primary/20">
-                  <div className="w-2 h-7 bg-primary animate-pulse rounded-full" />
-                  <div className="w-2 h-7 bg-primary animate-pulse rounded-full" style={{ animationDelay: '0.2s' }} />
-                  <div className="w-2 h-7 bg-primary animate-pulse rounded-full" style={{ animationDelay: '0.4s' }} />
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+          className="mb-6"
+        />
 
       {/* Action Buttons Row - Closer to robot */}
       <div className="flex gap-3 w-full justify-center max-w-md mx-auto mt-6">
@@ -197,20 +157,23 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
         </div>
       )}
 
-      {/* Floating AI Assistant with Taskly Robot - Larger & Closer */}
+      {/* Floating AI Suggestions Robot - Bottom Right */}
       <button
         onClick={onShowSuggestions}
-        className="fixed bottom-6 right-6 z-50 transition-all duration-300 hover:scale-105"
+        className="fixed bottom-6 right-6 z-50 transition-all duration-300 hover:scale-105 animate-float-slow"
+        title="Click for AI Suggestions"
       >
         <div className="relative">
-          <img 
-            src="/lovable-uploads/d9e422aa-ea2c-4619-8ac2-3818edd8bcb3.png"
-            alt="AI Assistant"
-            className="w-28 h-28 object-contain filter drop-shadow-lg"
-          />
+          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center backdrop-blur-sm border border-primary/20 shadow-lg">
+            <img 
+              src="/lovable-uploads/d9e422aa-ea2c-4619-8ac2-3818edd8bcb3.png"
+              alt="AI Suggestions"
+              className="w-12 h-12 object-contain"
+            />
+          </div>
           {suggestionCount > 0 && (
-            <span className="absolute -top-1 -right-1 h-6 w-6 bg-gradient-to-r from-primary to-blue-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-lg animate-pulse">
-              {suggestionCount}
+            <span className="absolute -top-1 -right-1 h-5 w-5 bg-gradient-to-r from-primary to-blue-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-lg animate-pulse">
+              {suggestionCount > 9 ? '9+' : suggestionCount}
             </span>
           )}
         </div>

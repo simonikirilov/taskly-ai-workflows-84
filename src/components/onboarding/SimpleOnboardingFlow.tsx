@@ -47,7 +47,7 @@ export function SimpleOnboardingFlow({ onComplete }: SimpleOnboardingFlowProps) 
       {currentStep === 'name' && (
         <Card className="w-full max-w-md glass space-y-8 p-8">
           <div className="text-center space-y-4">
-            <div className="mx-auto w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center mb-6">
+            <div className="mx-auto w-20 h-20 flex items-center justify-center mb-6">
               <img 
                 src="/lovable-uploads/d9e422aa-ea2c-4619-8ac2-3818edd8bcb3.png"
                 alt="Taskly Robot"
