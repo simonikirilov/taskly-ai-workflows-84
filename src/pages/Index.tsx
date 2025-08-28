@@ -39,8 +39,13 @@ const Index = () => {
     const storedUserName = localStorage.getItem('taskly_user_name');
     if (storedUserName) {
       setUserName(storedUserName);
+    } else if (user?.email) {
+      // Fallback to email first name if no stored name
+      const emailName = user.email.split('@')[0];
+      const capitalizedName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
+      setUserName(capitalizedName);
     }
-  }, []);
+  }, [user]);
 
   if (loading) {
     return (
@@ -176,89 +181,76 @@ const Index = () => {
                 </button>
               </div>
               
-              {/* Center - Search Bar */}
-              <div className="flex-1 flex justify-center max-w-md mx-auto">
-                <div className="relative w-full max-w-sm">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search tasks..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 pr-12 glass border-0"
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 hover:bg-primary/10"
-                  >
-                    <Mic className="h-4 w-4" />
-                  </Button>
-                </div>
+              {/* Center - Welcome Message */}
+              <div className="flex-1 flex justify-center">
+                <h2 className="text-lg font-medium text-foreground">
+                  Welcome, {userName || 'User'}
+                </h2>
               </div>
               
               {/* Right Side - Consciousness Status + Menu */}
-      <div className="flex items-center gap-3">
-        <ConsciousnessStatus />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-10 w-10">
-              <Menu className="h-5 w-5" />
-              <span className="sr-only">Menu</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48 glass bg-card/95 backdrop-blur-xl border-border/20">
-            <DropdownMenuItem asChild>
-              <Link to="/" className={cn(
-                "flex items-center w-full",
-                location.pathname === "/" && "bg-primary/10 text-primary"
-              )}>
-                <Home className="h-4 w-4 mr-2" />
-                Home
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="/workflows" className={cn(
-                "flex items-center w-full",
-                location.pathname === "/workflows" && "bg-primary/10 text-primary"
-              )}>
-                <Search className="h-4 w-4 mr-2" />
-                Workflows
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="/dashboard" className={cn(
-                "flex items-center w-full",
-                location.pathname === "/dashboard" && "bg-primary/10 text-primary"
-              )}>
-                <BarChart3 className="h-4 w-4 mr-2" />
-                Dashboard
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="/account" className={cn(
-                "flex items-center w-full",
-                location.pathname === "/account" && "bg-primary/10 text-primary"
-              )}>
-                <User className="h-4 w-4 mr-2" />
-                Account
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="/settings" className={cn(
-                "flex items-center w-full",
-                location.pathname === "/settings" && "bg-primary/10 text-primary"
-              )}>
-                <Settings className="h-4 w-4 mr-2" />
-                Settings
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setShowSuggestions(true)}>
-              <Lightbulb className="mr-2 h-4 w-4" />
-              AI Tips & Shortcuts
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+              <div className="flex items-center gap-3">
+                <ConsciousnessStatus />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-10 w-10">
+                      <Menu className="h-5 w-5" />
+                      <span className="sr-only">Menu</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48 glass bg-card/95 backdrop-blur-xl border-border/20">
+                    <DropdownMenuItem asChild>
+                      <Link to="/" className={cn(
+                        "flex items-center w-full",
+                        location.pathname === "/" && "bg-primary/10 text-primary"
+                      )}>
+                        <Home className="h-4 w-4 mr-2" />
+                        Home
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/workflows" className={cn(
+                        "flex items-center w-full",
+                        location.pathname === "/workflows" && "bg-primary/10 text-primary"
+                      )}>
+                        <Search className="h-4 w-4 mr-2" />
+                        Workflows
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/dashboard" className={cn(
+                        "flex items-center w-full",
+                        location.pathname === "/dashboard" && "bg-primary/10 text-primary"
+                      )}>
+                        <BarChart3 className="h-4 w-4 mr-2" />
+                        Dashboard
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/account" className={cn(
+                        "flex items-center w-full",
+                        location.pathname === "/account" && "bg-primary/10 text-primary"
+                      )}>
+                        <User className="h-4 w-4 mr-2" />
+                        Account
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/settings" className={cn(
+                        "flex items-center w-full",
+                        location.pathname === "/settings" && "bg-primary/10 text-primary"
+                      )}>
+                        <Settings className="h-4 w-4 mr-2" />
+                        Settings
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setShowSuggestions(true)}>
+                      <Lightbulb className="mr-2 h-4 w-4" />
+                      AI Tips & Shortcuts
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
           </header>
 
@@ -268,7 +260,7 @@ const Index = () => {
                {/* Welcome Text */}
                <div className="space-y-6">
                   <h1 className="text-5xl md:text-6xl font-bold text-foreground tracking-tight">
-                    Welcome Simoni
+                    Welcome {userName || 'User'}
                   </h1>
                   <p className="text-lg md:text-xl text-muted-foreground font-light leading-tight">
                     Record. Label. Automate.

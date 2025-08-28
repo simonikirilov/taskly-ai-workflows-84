@@ -1,3 +1,4 @@
+
 import { useState, useEffect, createContext, useContext } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,56 +23,138 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+
+        // If user just signed in, try to link with stored onboarding data
+        if (event === 'SIGNED_IN' && session?.user) {
+          const storedUserName = localStorage.getItem('taskly_user_name');
+          if (storedUserName) {
+            // Store user profile data in Supabase
+            try {
+              const { error } = await supabase
+                .from('profiles')
+                .upsert({
+                  id: session.user.id,
+                  email: session.user.email,
+                  display_name: storedUserName,
+                  updated_at: new Date().toISOString()
+                });
+              
+              if (error) {
+                console.log('Profile update error (expected if table does not exist):', error);
+              }
+            } catch (error) {
+              console.log('Profile update error:', error);
+            }
+          }
+        }
       }
     );
 
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    const getInitialSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Error getting initial session:', error);
+        }
+        console.log('Initial session:', session?.user?.email);
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      } catch (error) {
+        console.error('Unexpected error getting session:', error);
+        setLoading(false);
+      }
+    };
+
+    getInitialSession();
 
     return () => subscription.unsubscribe();
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error };
+    try {
+      console.log('Attempting to sign in with:', email);
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+      
+      if (error) {
+        console.error('Sign in error:', error);
+      } else {
+        console.log('Sign in successful');
+      }
+      
+      return { error };
+    } catch (error) {
+      console.error('Unexpected sign in error:', error);
+      return { error };
+    }
   };
 
   const signUp = async (email: string, password: string) => {
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl
+    try {
+      console.log('Attempting to sign up with:', email);
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: {
+          emailRedirectTo: redirectUrl
+        }
+      });
+      
+      if (error) {
+        console.error('Sign up error:', error);
+      } else {
+        console.log('Sign up successful - please check email for verification');
       }
-    });
-    return { error };
+      
+      return { error };
+    } catch (error) {
+      console.error('Unexpected sign up error:', error);
+      return { error };
+    }
   };
 
   const signInWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/`
+    try {
+      console.log('Attempting Google sign in');
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/`
+        }
+      });
+      
+      if (error) {
+        console.error('Google sign in error:', error);
       }
-    });
-    return { error };
+      
+      return { error };
+    } catch (error) {
+      console.error('Unexpected Google sign in error:', error);
+      return { error };
+    }
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      console.log('Signing out');
+      await supabase.auth.signOut();
+      // Clear any stored user data
+      localStorage.removeItem('taskly_user_name');
+      localStorage.removeItem('taskly-user-preferences');
+    } catch (error) {
+      console.error('Sign out error:', error);
+    }
   };
 
   const value = {
