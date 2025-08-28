@@ -1,174 +1,216 @@
-import { useState } from 'react';
-import { BottomNavigation } from '@/components/BottomNavigation';
-import { AppMenu } from '@/components/AppMenu';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, User, Edit2 } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
+import { useAuth } from '@/hooks/useAuth';
+import { User, Mail, Calendar, LogOut, ArrowLeft, Settings, Download, Shield, Mic, Palette, Flame, TrendingUp, Clock } from 'lucide-react';
+import { format } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 
 export default function Account() {
-  const [isEditing, setIsEditing] = useState(false);
-  const [name, setName] = useState(localStorage.getItem('taskly_user_name') || '');
-  const [useCases, setUseCases] = useState<string[]>(() => {
-    const stored = localStorage.getItem('taskly_use_cases');
-    return stored ? JSON.parse(stored) : [];
-  });
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
-  const availableUseCases = [
-    { id: 'job', label: 'Job Tasks', icon: '💼' },
-    { id: 'projects', label: 'Projects', icon: '📋' },
-    { id: 'clients', label: 'Client Work', icon: '🤝' },
-    { id: 'daily', label: 'Daily Life', icon: '🏠' },
-    { id: 'custom', label: 'Custom', icon: '⚙️' }
-  ];
+  if (!user) {
+    return null;
+  }
 
-  const handleSave = () => {
-    localStorage.setItem('taskly_user_name', name);
-    localStorage.setItem('taskly_use_cases', JSON.stringify(useCases));
-    setIsEditing(false);
-    toast({
-      title: "Profile updated",
-      description: "Your information has been saved successfully",
-    });
+  const handleSignOut = () => {
+    signOut();
   };
 
-  const toggleUseCase = (caseId: string) => {
-    setUseCases(prev => 
-      prev.includes(caseId) 
-        ? prev.filter(id => id !== caseId)
-        : [...prev, caseId]
-    );
+  const getProviderBadge = () => {
+    if (user.app_metadata?.provider === 'google') {
+      return <Badge variant="secondary">Google</Badge>;
+    }
+    return <Badge variant="secondary">Email</Badge>;
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-card/80 backdrop-blur-xl border-b border-border">
-        <div className="flex items-center justify-between p-4">
-          <div className="flex items-center gap-3">
-            <img 
-              src="/lovable-uploads/d9e422aa-ea2c-4619-8ac2-3818edd8bcb3.png"
-              alt="Taskly"
-              className="w-8 h-8"
-            />
-            <span className="font-semibold text-lg">Account</span>
-          </div>
-          <AppMenu />
+      <header className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-xl">
+        <div className="flex h-20 items-center justify-between px-6">
+          <button 
+            onClick={() => navigate('/')} 
+            className="p-2 hover:bg-muted rounded-lg transition-colors"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
         </div>
+      </header>
+
+      {/* Page Title */}
+      <div className="flex justify-center py-6">
+        <h1 className="text-4xl font-bold text-foreground">Account</h1>
       </div>
 
-      {/* Content */}
-      <div className="p-4 space-y-6">
-        <div className="text-center">
-          <User className="w-16 h-16 mx-auto text-primary mb-4" />
-          <h1 className="text-2xl font-bold mb-2">Your Profile</h1>
-          <p className="text-muted-foreground">Manage your account information</p>
-        </div>
-
-        {/* Profile Card */}
-        <Card className="p-6 rounded-xl">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Personal Information</h2>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsEditing(!isEditing)}
-            >
-              <Edit2 className="w-4 h-4 mr-2" />
-              {isEditing ? 'Cancel' : 'Edit'}
-            </Button>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="name">Name</Label>
-              {isEditing ? (
-                <Input
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="mt-1"
-                />
-              ) : (
-                <p className="mt-1 text-lg font-medium">{name || 'Not set'}</p>
-              )}
+      <div className="container mx-auto px-6 py-8 max-w-2xl space-y-8">
+        {/* Top Section: Avatar + Greeting + Streak */}
+        <Card className="glass p-6">
+          <div className="flex items-center space-x-6">
+            <button className="group relative">
+              <Avatar className="h-24 w-24 border-4 border-primary/20 cursor-pointer group-hover:border-primary/40 transition-all">
+                <AvatarImage src="/placeholder.svg" alt="User Avatar" />
+                <AvatarFallback className="bg-[var(--gradient-primary)] text-white text-lg">
+                  <User className="h-10 w-10" />
+                </AvatarFallback>
+              </Avatar>
+              <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <User className="h-6 w-6 text-white" />
+              </div>
+            </button>
+            
+            <div className="flex-1 space-y-3">
+              <div>
+                <h2 className="text-2xl font-bold">Hello, {user?.email?.split('@')[0]?.charAt(0).toUpperCase() + user?.email?.split('@')[0]?.slice(1) || 'User'}! 👋</h2>
+                <p className="text-muted-foreground">{user?.email}</p>
+              </div>
+              
+              <div className="flex items-center gap-4">
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  <Flame className="h-3 w-3" />
+                  5 Day Streak
+                </Badge>
+                <Badge className="bg-primary/10 text-primary border-primary/20">
+                  {user?.email_confirmed_at ? "Verified" : "Free Plan"}
+                </Badge>
+              </div>
             </div>
           </div>
-
-          {isEditing && (
-            <Button onClick={handleSave} className="mt-4 w-full">
-              Save Changes
-            </Button>
-          )}
         </Card>
 
-        {/* Use Cases Card */}
-        <Card className="p-6 rounded-xl">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">How you use Taskly</h2>
-          </div>
+        {/* Account Details Section */}
+        <div className="space-y-6">
+          <Card className="glass p-6">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Mail className="h-5 w-5" />
+              Account Details
+            </h3>
+            
+            <div className="space-y-4">
+              <div className="flex justify-between items-center p-3 rounded-lg bg-muted/20">
+                <span className="text-sm font-medium">📧 Email</span>
+                <span className="text-sm text-muted-foreground">{user?.email}</span>
+              </div>
+              
+              <div className="flex justify-between items-center p-3 rounded-lg bg-muted/20">
+                <span className="text-sm font-medium">💎 Subscription</span>
+                <Badge variant="secondary">Free Plan</Badge>
+              </div>
+              
+              <div className="flex justify-between items-center p-3 rounded-lg bg-muted/20">
+                <span className="text-sm font-medium">⚙️ Total Workflows</span>
+                <span className="text-sm font-bold text-primary">12</span>
+              </div>
+              
+              <div className="flex justify-between items-center p-3 rounded-lg bg-muted/20">
+                <span className="text-sm font-medium">🤖 Agent Activity</span>
+                <span className="text-sm font-bold text-accent">Active</span>
+              </div>
+            </div>
+          </Card>
 
-          {isEditing ? (
+          {/* Preferences */}
+          <Card className="glass p-6">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Settings className="h-5 w-5" />
+              Preferences
+            </h3>
+            
             <div className="space-y-3">
-              {availableUseCases.map((useCase) => (
-                <button
-                  key={useCase.id}
-                  onClick={() => toggleUseCase(useCase.id)}
-                  className={`w-full p-3 rounded-xl border-2 transition-all duration-200 flex items-center gap-3 ${
-                    useCases.includes(useCase.id)
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border hover:border-primary/50 text-foreground"
-                  }`}
-                >
-                  <span className="text-xl">{useCase.icon}</span>
-                  <span className="font-medium">{useCase.label}</span>
-                  {useCases.includes(useCase.id) && (
-                    <CheckCircle className="ml-auto h-5 w-5" />
-                  )}
-                </button>
-              ))}
+              <Button variant="outline" className="w-full justify-start glass border-0">
+                <Mic className="mr-3 h-4 w-4 text-primary" />
+                🎤 Voice Settings
+              </Button>
+              
+              <Button variant="outline" className="w-full justify-start glass border-0">
+                <User className="mr-3 h-4 w-4 text-accent" />
+                🤖 AI Tone & Personality
+              </Button>
+              
+              <Button variant="outline" className="w-full justify-start glass border-0">
+                <Palette className="mr-3 h-4 w-4 text-secondary-foreground" />
+                🎨 Assistant Theme
+              </Button>
+              
+              <Button variant="outline" className="w-full justify-start glass border-0">
+                <Settings className="mr-3 h-4 w-4" />
+                ✏️ Edit Profile
+              </Button>
             </div>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {useCases.map((caseId) => {
-                const useCase = availableUseCases.find(uc => uc.id === caseId);
-                return useCase ? (
-                  <Badge key={caseId} variant="secondary" className="text-sm">
-                    <span className="mr-1">{useCase.icon}</span>
-                    {useCase.label}
-                  </Badge>
-                ) : null;
-              })}
-              {useCases.length === 0 && (
-                <p className="text-muted-foreground">No use cases selected</p>
-              )}
-            </div>
-          )}
-        </Card>
+          </Card>
 
-        {/* Storage Info */}
-        <Card className="p-6 rounded-xl">
-          <h2 className="text-lg font-semibold mb-4">Data Storage</h2>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span>Storage type:</span>
-              <span className="font-medium">Local device storage</span>
+          {/* Analytics */}
+          <Card className="glass p-6">
+            <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Your Analytics
+            </h3>
+            
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="group text-center p-6 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 hover:border-primary/40 transition-all duration-300 cursor-pointer hover:scale-105">
+                <div className="text-3xl font-bold text-primary mb-2 group-hover:scale-110 transition-transform">47</div>
+                <div className="text-sm text-muted-foreground">🗣️ Most Used Commands</div>
+              </div>
+              
+              <div className="group text-center p-6 rounded-xl bg-gradient-to-br from-accent/10 to-accent/5 border border-accent/20 hover:border-accent/40 transition-all duration-300 cursor-pointer hover:scale-105">
+                <div className="text-3xl font-bold text-accent mb-2 group-hover:scale-110 transition-transform">3.2h</div>
+                <div className="text-sm text-muted-foreground">⏱️ Daily Average</div>
+              </div>
+              
+              <div className="group text-center p-6 rounded-xl bg-gradient-to-br from-secondary/10 to-secondary/5 border border-secondary/20 hover:border-secondary/40 transition-all duration-300 cursor-pointer hover:scale-105">
+                <div className="text-3xl font-bold text-secondary mb-2 group-hover:scale-110 transition-transform">36%</div>
+                <div className="text-sm text-muted-foreground">📊 Top Category</div>
+              </div>
+              
+              <div className="group text-center p-6 rounded-xl bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-500/20 hover:border-green-500/40 transition-all duration-300 cursor-pointer hover:scale-105">
+                <div className="text-3xl font-bold text-green-500 mb-2 group-hover:scale-110 transition-transform">92%</div>
+                <div className="text-sm text-muted-foreground">✅ Completion Rate</div>
+              </div>
             </div>
-            <div className="flex justify-between">
-              <span>Data sync:</span>
-              <span className="font-medium">Device only</span>
+            
+            <Separator className="my-4" />
+            
+            <div className="space-y-3">
+              <Button variant="outline" className="w-full justify-start glass border-0">
+                <Download className="mr-3 h-4 w-4" />
+                Export My Data
+              </Button>
+              
+              <Button variant="outline" className="w-full justify-start glass border-0">
+                <Shield className="mr-3 h-4 w-4" />
+                Privacy Settings
+              </Button>
+              
+              <Separator className="my-4" />
+              
+              <Button 
+                variant="destructive" 
+                onClick={handleSignOut}
+                className="w-full justify-start"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign Out
+              </Button>
             </div>
-            <p className="text-muted-foreground mt-3">
-              Your data is stored locally on this device for privacy and speed.
-            </p>
-          </div>
-        </Card>
+          </Card>
+        </div>
+
+        {!user.email_confirmed_at && (
+          <Card className="border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-2 text-yellow-800 dark:text-yellow-200">
+                <Mail className="h-4 w-4" />
+                <span className="text-sm font-medium">
+                  Please check your email to verify your account
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
-
-      <BottomNavigation />
     </div>
   );
 }

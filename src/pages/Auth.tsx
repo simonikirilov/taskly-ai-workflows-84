@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -8,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
-import { Mail, Loader2 } from 'lucide-react';
+import { Bot, Mail } from 'lucide-react';
 
 export default function Auth() {
   const { user, signIn, signUp, signInWithGoogle } = useAuth();
@@ -33,38 +32,18 @@ export default function Auth() {
     }
 
     setIsLoading(true);
-    try {
-      const { error } = await signIn(email, password);
-      
-      if (error) {
-        console.error('Sign in error:', error);
-        let errorMessage = "Sign in failed. Please try again.";
-        
-        if (error.message.includes('Invalid login credentials')) {
-          errorMessage = "Invalid email or password. Please check your credentials.";
-        } else if (error.message.includes('Email not confirmed')) {
-          errorMessage = "Please check your email and confirm your account before signing in.";
-        } else if (error.message.includes('too many requests')) {
-          errorMessage = "Too many attempts. Please wait a moment before trying again.";
-        }
-        
-        toast({
-          title: "Sign in failed",
-          description: errorMessage,
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Welcome back!",
-          description: "You've been signed in successfully.",
-        });
-      }
-    } catch (error) {
-      console.error('Unexpected error during sign in:', error);
+    const { error } = await signIn(email, password);
+    
+    if (error) {
       toast({
-        title: "Connection error",
-        description: "Unable to connect to authentication service. Please check your internet connection.",
+        title: "Sign in failed",
+        description: error.message,
         variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Welcome back!",
+        description: "You've been signed in successfully.",
       });
     }
     setIsLoading(false);
@@ -91,41 +70,26 @@ export default function Auth() {
     }
 
     setIsLoading(true);
-    try {
-      const { error } = await signUp(email, password);
-      
-      if (error) {
-        console.error('Sign up error:', error);
-        let errorMessage = "Account creation failed. Please try again.";
-        
-        if (error.message.includes('already registered') || error.message.includes('already been registered')) {
-          errorMessage = "This email is already registered. Try signing in instead.";
-        } else if (error.message.includes('Password should be')) {
-          errorMessage = "Password must be at least 6 characters long.";
-        } else if (error.message.includes('Invalid email')) {
-          errorMessage = "Please enter a valid email address.";
-        }
-        
+    const { error } = await signUp(email, password);
+    
+    if (error) {
+      if (error.message.includes('already registered')) {
         toast({
-          title: "Sign up failed",
-          description: errorMessage,
+          title: "Account already exists",
+          description: "This email is already registered. Try signing in instead.",
           variant: "destructive",
         });
       } else {
         toast({
-          title: "Account created!",
-          description: "Please check your email to verify your account, then sign in.",
+          title: "Sign up failed",
+          description: error.message,
+          variant: "destructive",
         });
-        // Clear the form after successful signup
-        setEmail('');
-        setPassword('');
       }
-    } catch (error) {
-      console.error('Unexpected error during sign up:', error);
+    } else {
       toast({
-        title: "Connection error",
-        description: "Unable to connect to authentication service. Please check your internet connection.",
-        variant: "destructive",
+        title: "Account created!",
+        description: "Please check your email to verify your account.",
       });
     }
     setIsLoading(false);
@@ -133,22 +97,12 @@ export default function Auth() {
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
-    try {
-      const { error } = await signInWithGoogle();
-      
-      if (error) {
-        console.error('Google sign in error:', error);
-        toast({
-          title: "Google sign in failed",
-          description: "Unable to sign in with Google. Please try again or use email/password.",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error('Unexpected error during Google sign in:', error);
+    const { error } = await signInWithGoogle();
+    
+    if (error) {
       toast({
-        title: "Connection error",
-        description: "Unable to connect to Google. Please check your internet connection.",
+        title: "Google sign in failed",
+        description: error.message,
         variant: "destructive",
       });
     }
@@ -177,7 +131,7 @@ export default function Auth() {
           </TabsList>
 
           <TabsContent value="signin">
-            <Card className="glass border-border/20">
+            <Card>
               <CardHeader>
                 <CardTitle>Welcome back</CardTitle>
                 <CardDescription>
@@ -195,7 +149,6 @@ export default function Auth() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       disabled={isLoading}
-                      className="glass"
                     />
                   </div>
                   <div className="space-y-2">
@@ -207,18 +160,10 @@ export default function Auth() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       disabled={isLoading}
-                      className="glass"
                     />
                   </div>
                   <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Signing in...
-                      </>
-                    ) : (
-                      "Sign In"
-                    )}
+                    {isLoading ? "Signing in..." : "Sign In"}
                   </Button>
                 </form>
 
@@ -235,7 +180,7 @@ export default function Auth() {
 
                 <Button
                   variant="outline"
-                  className="w-full glass"
+                  className="w-full"
                   onClick={handleGoogleSignIn}
                   disabled={isLoading}
                 >
@@ -247,7 +192,7 @@ export default function Auth() {
           </TabsContent>
 
           <TabsContent value="signup">
-            <Card className="glass border-border/20">
+            <Card>
               <CardHeader>
                 <CardTitle>Create an account</CardTitle>
                 <CardDescription>
@@ -265,7 +210,6 @@ export default function Auth() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       disabled={isLoading}
-                      className="glass"
                     />
                   </div>
                   <div className="space-y-2">
@@ -277,18 +221,10 @@ export default function Auth() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       disabled={isLoading}
-                      className="glass"
                     />
                   </div>
                   <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Creating account...
-                      </>
-                    ) : (
-                      "Create Account"
-                    )}
+                    {isLoading ? "Creating account..." : "Create Account"}
                   </Button>
                 </form>
 
@@ -305,7 +241,7 @@ export default function Auth() {
 
                 <Button
                   variant="outline"
-                  className="w-full glass"
+                  className="w-full"
                   onClick={handleGoogleSignIn}
                   disabled={isLoading}
                 >
