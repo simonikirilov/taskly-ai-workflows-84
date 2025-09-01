@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -11,11 +11,14 @@ interface BrowserSupportCheck {
   isSupported: boolean;
   reason?: string;
   canUseServerFallback: boolean;
+  hasNativeSupport: boolean;
+  hasMediaRecorder: boolean;
+  permissionStatus: 'unknown' | 'granted' | 'denied' | 'prompt';
 }
 
 export function useVoiceRecognition({ onResult, onError }: UseVoiceRecognitionOptions) {
   const [isListening, setIsListening] = useState(false);
-  const [isSupported, setIsSupported] = useState(false);
+  const [isSupported, setIsSupported] = useState<boolean | null>(null); // null = checking, true/false = result
   const [supportStatus, setSupportStatus] = useState<BrowserSupportCheck | null>(null);
   const [useServerFallback, setUseServerFallback] = useState(false);
   const recognitionRef = useRef<any>(null);
@@ -23,40 +26,107 @@ export function useVoiceRecognition({ onResult, onError }: UseVoiceRecognitionOp
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
-  const checkBrowserSupport = useCallback((): BrowserSupportCheck => {
+  const checkBrowserSupport = useCallback(async (): Promise<BrowserSupportCheck> => {
+    console.log('🔍 Checking browser support for voice recognition...');
+    
+    const isHttps = location.protocol === 'https:' || location.hostname === 'localhost';
+    const hasNativeSupport = ('webkitSpeechRecognition' in window) || ('SpeechRecognition' in window);
+    const hasMediaDevices = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+    const hasMediaRecorder = typeof MediaRecorder !== 'undefined';
+    
+    let permissionStatus: 'unknown' | 'granted' | 'denied' | 'prompt' = 'unknown';
+    
+    // Check microphone permissions if possible
+    if (navigator.permissions && navigator.permissions.query) {
+      try {
+        const permission = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+        permissionStatus = permission.state;
+        console.log('🎤 Microphone permission status:', permission.state);
+      } catch (error) {
+        console.log('⚠️ Could not check microphone permissions:', error);
+      }
+    }
+
+    console.log('📊 Browser capabilities:', {
+      isHttps,
+      hasNativeSupport,
+      hasMediaDevices,
+      hasMediaRecorder,
+      permissionStatus
+    });
+
     // Check HTTPS requirement
-    if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+    if (!isHttps) {
       return {
         isSupported: false,
         reason: 'Voice recognition requires HTTPS or localhost',
-        canUseServerFallback: true
+        canUseServerFallback: hasMediaDevices && hasMediaRecorder,
+        hasNativeSupport: false,
+        hasMediaRecorder,
+        permissionStatus
       };
     }
 
-    // Check for Speech Recognition API
-    const hasSpeechRecognition = ('webkitSpeechRecognition' in window) || ('SpeechRecognition' in window);
-    if (!hasSpeechRecognition) {
+    // Check for MediaDevices API (required for all voice features)
+    if (!hasMediaDevices) {
       return {
         isSupported: false,
-        reason: 'Speech Recognition API not supported in this browser',
-        canUseServerFallback: true
+        reason: 'Microphone access not supported in this browser',
+        canUseServerFallback: false,
+        hasNativeSupport: false,
+        hasMediaRecorder,
+        permissionStatus
       };
     }
 
-    // Check for MediaDevices API (required for microphone access)
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    // Check for MediaRecorder (required for server fallback)
+    if (!hasMediaRecorder) {
       return {
-        isSupported: false,
-        reason: 'Microphone access not supported',
-        canUseServerFallback: false
+        isSupported: hasNativeSupport,
+        reason: hasNativeSupport ? undefined : 'Voice recognition not supported in this browser',
+        canUseServerFallback: false,
+        hasNativeSupport,
+        hasMediaRecorder: false,
+        permissionStatus
       };
     }
 
+    // All capabilities available
     return {
-      isSupported: true,
-      canUseServerFallback: true
+      isSupported: hasNativeSupport || hasMediaRecorder,
+      reason: hasNativeSupport ? undefined : 'Using server-based voice recognition',
+      canUseServerFallback: hasMediaRecorder,
+      hasNativeSupport,
+      hasMediaRecorder,
+      permissionStatus
     };
   }, []);
+
+  // Check browser support on component mount
+  useEffect(() => {
+    const initializeSupportCheck = async () => {
+      console.log('🚀 Initializing voice recognition support check...');
+      try {
+        const support = await checkBrowserSupport();
+        setSupportStatus(support);
+        setIsSupported(support.isSupported);
+        console.log('✅ Initial support check complete:', support);
+      } catch (error) {
+        console.error('❌ Error checking browser support:', error);
+        setIsSupported(false);
+        setSupportStatus({
+          isSupported: false,
+          reason: 'Error checking browser capabilities',
+          canUseServerFallback: false,
+          hasNativeSupport: false,
+          hasMediaRecorder: false,
+          permissionStatus: 'unknown'
+        });
+      }
+    };
+
+    initializeSupportCheck();
+  }, [checkBrowserSupport]);
 
   const startServerVoiceRecognition = useCallback(async () => {
     try {
@@ -158,12 +228,16 @@ export function useVoiceRecognition({ onResult, onError }: UseVoiceRecognitionOp
   }, [onResult, onError]);
 
   const startListening = useCallback(async () => {
+    console.log('🎙️ Starting voice recognition...');
+    
     // Check browser support when user actually tries to use voice
-    const support = checkBrowserSupport();
+    const support = await checkBrowserSupport();
     setSupportStatus(support);
+    console.log('🔍 Current support status:', support);
 
     if (!support.isSupported) {
       if (support.canUseServerFallback) {
+        console.log('📡 Using server fallback for voice recognition');
         setUseServerFallback(true);
         toast({
           title: "Using server voice recognition",
@@ -172,6 +246,7 @@ export function useVoiceRecognition({ onResult, onError }: UseVoiceRecognitionOp
         await startServerVoiceRecognition();
         return;
       } else {
+        console.log('❌ Voice recognition not supported, no fallback available');
         onError?.(support.reason || "Voice recognition not supported");
         toast({
           title: "Voice not supported",
@@ -183,10 +258,14 @@ export function useVoiceRecognition({ onResult, onError }: UseVoiceRecognitionOp
     }
 
     // Try native Speech Recognition first
+    console.log('🎤 Attempting to access microphone for native recognition...');
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true });
+      console.log('✅ Microphone access granted');
     } catch (error) {
+      console.log('❌ Microphone access denied:', error);
       if (support.canUseServerFallback) {
+        console.log('📡 Falling back to server voice recognition');
         setUseServerFallback(true);
         toast({
           title: "Using server voice recognition",
@@ -196,10 +275,16 @@ export function useVoiceRecognition({ onResult, onError }: UseVoiceRecognitionOp
         return;
       } else {
         onError?.("Microphone access denied");
+        toast({
+          title: "Microphone access denied",
+          description: "Please allow microphone access or use the type option instead.",
+          variant: "destructive",
+        });
         return;
       }
     }
 
+    console.log('🚀 Starting native speech recognition...');
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
 
@@ -208,11 +293,13 @@ export function useVoiceRecognition({ onResult, onError }: UseVoiceRecognitionOp
     recognition.lang = 'en-US';
 
     recognition.onstart = () => {
+      console.log('🎙️ Native speech recognition started');
       setIsListening(true);
       setUseServerFallback(false);
       // Auto-stop after 5 seconds of no speech
       timeoutRef.current = setTimeout(() => {
         if (recognitionRef.current) {
+          console.log('⏰ Auto-stopping due to timeout');
           recognitionRef.current.stop();
         }
       }, 5000);
@@ -223,6 +310,8 @@ export function useVoiceRecognition({ onResult, onError }: UseVoiceRecognitionOp
         clearTimeout(timeoutRef.current);
       }
       const transcript = event.results[0][0].transcript;
+      console.log('✅ Speech recognition result:', transcript);
+      
       // Store in localStorage
       const voiceHistory = JSON.parse(localStorage.getItem('taskly-voice-history') || '[]');
       voiceHistory.push({ text: transcript, timestamp: new Date().toISOString() });
@@ -232,19 +321,22 @@ export function useVoiceRecognition({ onResult, onError }: UseVoiceRecognitionOp
       setIsListening(false);
     };
 
-    recognition.onerror = (event) => {
+    recognition.onerror = async (event) => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
 
+      console.log('❌ Native speech recognition error:', event.error);
+
       // If native recognition fails and server fallback is possible, use it
       if (support.canUseServerFallback && event.error !== 'aborted') {
+        console.log('📡 Switching to server fallback due to error');
         setUseServerFallback(true);
         toast({
           title: "Switching to server voice recognition",
           description: "Native voice recognition failed. Using server fallback.",
         });
-        startServerVoiceRecognition();
+        await startServerVoiceRecognition();
         return;
       }
 
@@ -262,6 +354,7 @@ export function useVoiceRecognition({ onResult, onError }: UseVoiceRecognitionOp
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
+      console.log('🔚 Native speech recognition ended');
       setIsListening(false);
     };
 
