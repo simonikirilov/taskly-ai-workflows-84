@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Mic, Video } from 'lucide-react';
+import { Mic, Video, MessageCircle } from 'lucide-react';
 import { useVoiceRecognition } from '@/hooks/useVoiceRecognition';
 import { useScreenRecording } from '@/hooks/useScreenRecording';
 import { RecordingIndicator } from '@/components/RecordingIndicator';
+import { CopilotChat } from './CopilotChat';
 
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -19,6 +20,7 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, voiceHistory = [] }: T
   const [lastCommand, setLastCommand] = useState<string>('');
   const [robotImageUrl, setRobotImageUrl] = useState<string>('/public/assets/robot.png'); // Will be updated when user uploads
   const [showSpeakButton, setShowSpeakButton] = useState(false);
+  const [showCopilotChat, setShowCopilotChat] = useState(false);
 
   // Load speak button preference
   useEffect(() => {
@@ -111,6 +113,16 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, voiceHistory = [] }: T
           <Video className={cn("h-4 w-4 mr-2", isRecording && "text-red-400")} />
           {isRecording ? "Stop Recording" : "Record"}
         </Button>
+
+        <Button
+          onClick={() => setShowCopilotChat(true)}
+          size="default"
+          variant="default"
+          className="h-12 px-6 text-sm font-medium transition-all duration-300 rounded-xl bg-gradient-to-r from-primary to-blue-500 hover:from-primary/90 hover:to-blue-500/90 shadow-lg"
+        >
+          <MessageCircle className="h-4 w-4 mr-2" />
+          AI Copilot
+        </Button>
         
         {showSpeakButton && (
           <Button
@@ -145,6 +157,11 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, voiceHistory = [] }: T
           </div>
         </div>
       )}
+
+      <CopilotChat 
+        isOpen={showCopilotChat}
+        onClose={() => setShowCopilotChat(false)}
+      />
       </div>
     </>
   );
