@@ -67,8 +67,8 @@ export function TasklyBot({ onVoiceCommand, voiceHistory = [], mode }: TasklyBot
 
   const handleSpeakCommand = async () => {
     if (!voiceSupported) {
-      speak('Voice not supported on this device');
-      // Fallback to text input
+      speak('Voice not supported on this device. Please use text input.');
+      // Immediately show text input as fallback
       setShowTextInput(true);
       return;
     }

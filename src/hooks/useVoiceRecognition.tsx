@@ -39,6 +39,11 @@ export function useVoiceRecognition({ onResult, onError, onVolumeChange }: UseVo
     
     const isHttps = location.protocol === 'https:' || location.hostname === 'localhost';
     const hasNativeSupport = ('webkitSpeechRecognition' in window) || ('SpeechRecognition' in window);
+    console.log('🔍 Speech Recognition APIs available:', {
+      webkitSpeechRecognition: 'webkitSpeechRecognition' in window,
+      SpeechRecognition: 'SpeechRecognition' in window,
+      hasNativeSupport
+    });
     const hasMediaDevices = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
     const hasMediaRecorder = typeof MediaRecorder !== 'undefined';
     
@@ -415,22 +420,15 @@ export function useVoiceRecognition({ onResult, onError, onVolumeChange }: UseVo
       return;
     }
 
-    // Only use server fallback if native speech recognition is not available
-    if (support.canUseServerFallback && !support.hasNativeSupport) {
-      console.log('📡 Using server voice recognition with voice activity detection');
-      setUseServerFallback(true);
-      await startServerVoiceRecognition();
-      return;
-    }
-
-    console.log('❌ Voice recognition not supported');
-    onError?.(support.reason || "Voice recognition not supported");  
+    // Since we don't have OpenAI configured for server fallback, show error
+    console.log('❌ No speech recognition available - native not supported and server fallback disabled');
+    onError?.("Speech recognition not available. Please use text input instead.");
     toast({
-      title: "Voice not supported",
-      description: support.reason + ". Please use the type option instead.",
+      title: "Voice Recognition Unavailable",
+      description: "Your browser doesn't support speech recognition. Please use the text input option instead.",
       variant: "destructive",
     });
-  }, [onResult, onError, checkBrowserSupport, startServerVoiceRecognition, startNativeSpeechRecognition]);
+  }, [onResult, onError, checkBrowserSupport, startNativeSpeechRecognition]);
 
   const stopListening = useCallback(() => {
     console.log('🛑 Manually stopping voice recognition');
