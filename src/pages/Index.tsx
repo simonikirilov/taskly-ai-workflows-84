@@ -102,7 +102,7 @@ const Index = () => {
             {/* Robot - Main Focus */}
             <div className="flex flex-col items-center">
               {/* Welcome Message */}
-              <h1 className="text-2xl font-bold text-foreground mb-8 text-center drop-shadow-lg font-sans">
+              <h1 className="text-5xl font-bold text-foreground mb-8 text-center drop-shadow-lg font-sans">
                 Welcome{userName ? `, ${userName}` : ''}
               </h1>
               
