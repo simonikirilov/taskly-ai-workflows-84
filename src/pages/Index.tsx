@@ -97,14 +97,6 @@ const Index = () => {
           <TopAppBar onLogoClick={() => setSidebarOpen(!sidebarOpen)} />
           
           <div className="max-w-4xl mx-auto p-4 space-y-6">
-            {/* Mode Switch - Left under logo */}
-            <div className="flex justify-start">
-              <ModeSwitch 
-                defaultMode="speaking"
-                onModeChange={handleModeChange}
-              />
-            </div>
-
             {/* Welcome & Slogan */}
             <WelcomeSection />
 
@@ -121,6 +113,14 @@ const Index = () => {
               voiceHistory={voiceHistory}
               mode={currentMode}
             />
+
+            {/* Mode Switch - Under avatar */}
+            <div className="mt-4">
+              <ModeSwitch 
+                defaultMode="speaking"
+                onModeChange={handleModeChange}
+              />
+            </div>
           </div>
 
             {/* Today's Tasks */}

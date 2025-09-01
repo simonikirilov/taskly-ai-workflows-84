@@ -18,9 +18,9 @@ export function ModeSwitch({ defaultMode = 'speaking', onModeChange }: ModeSwitc
   };
 
   return (
-    <div className="flex items-center gap-3 p-4 bg-card/50 backdrop-blur-sm rounded-2xl border border-border/30 shadow-lg">
-      <div className="flex items-center gap-2">
-        <Keyboard className="h-4 w-4 text-muted-foreground" />
+    <div className="flex items-center gap-2 p-2 bg-card/50 backdrop-blur-sm rounded-xl border border-border/30 shadow-sm">
+      <div className={`flex items-center gap-2 p-1 rounded-lg transition-colors ${!isSpeakingMode ? 'bg-primary/20 text-primary' : 'text-muted-foreground'}`}>
+        <Keyboard className="h-4 w-4" />
       </div>
       
       <Switch
@@ -30,8 +30,8 @@ export function ModeSwitch({ defaultMode = 'speaking', onModeChange }: ModeSwitc
         className="data-[state=checked]:bg-primary"
       />
       
-      <div className="flex items-center gap-2">
-        <Mic className="h-4 w-4 text-muted-foreground" />
+      <div className={`flex items-center gap-2 p-1 rounded-lg transition-colors ${isSpeakingMode ? 'bg-primary/20 text-primary' : 'text-muted-foreground'}`}>
+        <Mic className="h-4 w-4" />
       </div>
     </div>
   );
