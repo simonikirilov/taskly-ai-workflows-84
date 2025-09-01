@@ -6,7 +6,6 @@ import { AppSidebar } from "@/components/Sidebar";
 import { TopAppBar } from "@/components/TopAppBar";
 import { TasklyBot } from "@/components/TasklyBot";
 import { AISuggestionsCards } from "@/components/AISuggestionsCards";
-import { TodaysTasks } from "@/components/TodaysTasks";
 import { WelcomeSection } from "@/components/WelcomeSection";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -65,9 +64,6 @@ const Index = () => {
               onShowSuggestions={() => setShowSuggestions(true)}
               voiceHistory={voiceHistory}
             />
-
-            {/* Today's Tasks */}
-            <TodaysTasks />
           
             <AISuggestionsCards 
               isVisible={showSuggestions}
