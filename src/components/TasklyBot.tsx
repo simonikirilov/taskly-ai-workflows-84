@@ -65,13 +65,38 @@ export function TasklyBot({ onVoiceCommand, voiceHistory = [], mode }: TasklyBot
     }
   };
 
-  const handleSpeakCommand = () => {
+  const handleSpeakCommand = async () => {
     if (!voiceSupported) {
       speak('Voice not supported on this device');
       return;
     }
     
-    startListening();
+    // First, try to request permission explicitly
+    try {
+      console.log('🎤 Requesting microphone permission...');
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+      
+      // If permission granted, start listening
+      startListening();
+    } catch (error) {
+      console.error('🚫 Permission request failed:', error);
+      
+      if (error.name === 'NotAllowedError') {
+        toast({
+          title: "Microphone Access Required",
+          description: "Please click the microphone icon in your browser's address bar and select 'Allow', then try again.",
+          variant: "destructive",
+        });
+        speak('Please allow microphone access and try again');
+      } else {
+        toast({
+          title: "Microphone Error", 
+          description: "Unable to access microphone. Please check your device settings.",
+          variant: "destructive",
+        });
+        speak('Unable to access microphone');
+      }
+    }
   };
 
 
