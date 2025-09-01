@@ -27,24 +27,19 @@ serve(async (req) => {
     console.log('AI Copilot request:', { message, contextLength: context.length });
     console.log('DeepSeek API Key available:', !!deepseekApiKey);
     console.log('DeepSeek API Key length:', deepseekApiKey?.length || 0);
+    console.log('DeepSeek API Key first 10 chars:', deepseekApiKey?.substring(0, 10) || 'N/A');
 
     if (!deepseekApiKey) {
       console.error('DEEPSEEK_API_KEY environment variable not found');
       throw new Error('DeepSeek API key not configured');
     }
 
-    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${deepseekApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'deepseek-chat',
-        messages: [
-          {
-            role: 'system',
-            content: `You are Taskly AI, an intelligent task management assistant. You help users with:
+    const requestBody = {
+      model: 'deepseek-chat',
+      messages: [
+        {
+          role: 'system',
+          content: `You are Taskly AI, an intelligent task management assistant. You help users with:
 - Creating and organizing tasks
 - Setting priorities and deadlines
 - Breaking down complex projects
@@ -53,12 +48,22 @@ serve(async (req) => {
 - Smart scheduling recommendations
 
 Keep responses concise, actionable, and focused on productivity. If users ask about tasks, suggest specific actions they can take.`
-          },
-          ...context,
-          { role: 'user', content: message }
-        ],
-        max_tokens: 500,
-      }),
+        },
+        ...context,
+        { role: 'user', content: message }
+      ],
+      max_tokens: 500,
+    };
+
+    console.log('DeepSeek request body:', JSON.stringify(requestBody, null, 2));
+
+    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${deepseekApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
