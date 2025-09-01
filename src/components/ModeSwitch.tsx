@@ -1,6 +1,4 @@
 import { useState } from 'react';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 import { Mic, Keyboard } from 'lucide-react';
 
 interface ModeSwitchProps {
@@ -11,28 +9,29 @@ interface ModeSwitchProps {
 export function ModeSwitch({ defaultMode = 'speaking', onModeChange }: ModeSwitchProps) {
   const [isSpeakingMode, setIsSpeakingMode] = useState(defaultMode === 'speaking');
 
-  const handleToggle = (checked: boolean) => {
-    const newMode = checked ? 'speaking' : 'typing';
-    setIsSpeakingMode(checked);
+  const handleIconClick = (mode: 'speaking' | 'typing') => {
+    const newMode = mode;
+    setIsSpeakingMode(mode === 'speaking');
     onModeChange(newMode);
   };
 
   return (
     <div className="flex items-center gap-2 p-2 bg-card/50 backdrop-blur-sm rounded-xl border border-border/30 shadow-sm">
-      <div className={`flex items-center gap-2 p-1 rounded-lg transition-colors ${!isSpeakingMode ? 'bg-primary/20 text-primary' : 'text-muted-foreground'}`}>
+      <button
+        onClick={() => handleIconClick('typing')}
+        className={`flex items-center gap-2 p-1 rounded-lg transition-colors cursor-pointer ${!isSpeakingMode ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+      >
         <Keyboard className="h-4 w-4" />
-      </div>
+      </button>
       
-      <Switch
-        id="mode-switch"
-        checked={isSpeakingMode}
-        onCheckedChange={handleToggle}
-        className="data-[state=checked]:bg-primary"
-      />
+      <span className="text-muted-foreground">/</span>
       
-      <div className={`flex items-center gap-2 p-1 rounded-lg transition-colors ${isSpeakingMode ? 'bg-primary/20 text-primary' : 'text-muted-foreground'}`}>
+      <button
+        onClick={() => handleIconClick('speaking')}
+        className={`flex items-center gap-2 p-1 rounded-lg transition-colors cursor-pointer ${isSpeakingMode ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+      >
         <Mic className="h-4 w-4" />
-      </div>
+      </button>
     </div>
   );
 }
