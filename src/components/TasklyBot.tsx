@@ -4,7 +4,7 @@ import { Mic, Video } from 'lucide-react';
 import { useVoiceRecognition } from '@/hooks/useVoiceRecognition';
 import { useScreenRecording } from '@/hooks/useScreenRecording';
 import { RecordingIndicator } from '@/components/RecordingIndicator';
-import { WorkflowAnalysis } from '@/components/WorkflowAnalysis';
+
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { AnimatedRobot } from './AnimatedRobot';
@@ -20,8 +20,6 @@ interface TasklyBotProps {
 export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, onShowSuggestions, voiceHistory = [] }: TasklyBotProps) {
   const [lastCommand, setLastCommand] = useState<string>('');
   const [robotImageUrl, setRobotImageUrl] = useState<string>('/public/assets/robot.png'); // Will be updated when user uploads
-  const [showWorkflowAnalysis, setShowWorkflowAnalysis] = useState(false);
-  const [recordingBlob, setRecordingBlob] = useState<Blob | undefined>();
   const [showSpeakButton, setShowSpeakButton] = useState(false);
 
   // Load speak button preference
@@ -55,8 +53,6 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
       });
     },
     onRecordingStop: (blob) => {
-      setRecordingBlob(blob);
-      setShowWorkflowAnalysis(true);
       onRecordFlow?.(blob, "2:30"); // Mock duration
     },
     onError: (error) => {
@@ -92,11 +88,6 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
         onStop={stopRecording}
       />
       
-      <WorkflowAnalysis 
-        isVisible={showWorkflowAnalysis}
-        onClose={() => setShowWorkflowAnalysis(false)}
-        recordingData={recordingBlob}
-      />
       
       <div className="flex flex-col items-center relative -mt-8 md:-mt-12">
         {/* Animated Robot with Alive Features */}

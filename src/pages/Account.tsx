@@ -47,10 +47,6 @@ export default function Account() {
   const [showSpeakButton, setShowSpeakButton] = useState(false);
   const [watching, setWatching] = useState(true);
   
-  // Integrations state
-  const [googleCalendar, setGoogleCalendar] = useState(false);
-  const [gmail, setGmail] = useState(false);
-  const [docs, setDocs] = useState(false);
   
   // Notifications state
   const [reminders, setReminders] = useState(true);
@@ -75,7 +71,6 @@ export default function Account() {
     }));
     localStorage.setItem('taskly-settings', JSON.stringify({
       robotVoice, expressions, showSpeakButton, watching,
-      googleCalendar, gmail, docs,
       reminders, preBlockNudge, doneReceipts,
       appLock
     }));
@@ -334,37 +329,6 @@ export default function Account() {
           </div>
         </Card>
 
-        {/* C. Integrations */}
-        <Card className="p-6 space-y-4">
-          <h2 className="text-xl font-semibold">Integrations</h2>
-          
-          <div className="space-y-4">
-            {[
-              { name: 'Google Calendar', icon: Calendar, connected: googleCalendar, setter: setGoogleCalendar },
-              { name: 'Gmail', icon: Mail, connected: gmail, setter: setGmail },
-              { name: 'Docs', icon: FileText, connected: docs, setter: setDocs }
-            ].map((integration) => (
-              <div key={integration.name} className="flex items-center justify-between p-3 border rounded-lg">
-                <div className="flex items-center gap-3">
-                  <integration.icon className="h-5 w-5" />
-                  <div>
-                    <p className="font-medium">{integration.name}</p>
-                    {integration.connected && (
-                      <p className="text-sm text-muted-foreground">Last sync: 2 hours ago</p>
-                    )}
-                  </div>
-                </div>
-                <Button 
-                  size="sm"
-                  variant={integration.connected ? 'destructive' : 'default'}
-                  onClick={() => { integration.setter(!integration.connected); setHasChanges(true); }}
-                >
-                  {integration.connected ? 'Disconnect' : 'Connect'}
-                </Button>
-              </div>
-            ))}
-          </div>
-        </Card>
 
         {/* D. Notifications */}
         <Card className="p-6 space-y-4">
