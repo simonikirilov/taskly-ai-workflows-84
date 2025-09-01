@@ -7,6 +7,8 @@ import { TopAppBar } from "@/components/TopAppBar";
 import { TasklyBot } from "@/components/TasklyBot";
 import { WelcomeSection } from "@/components/WelcomeSection";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { addTaskForUser } from "@/utils/taskUtils";
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -16,10 +18,38 @@ const Index = () => {
 
   // Remove auto-show suggestions - only show when user clicks the floating robot
 
-  const handleVoiceCommand = (command: string) => {
+  const handleVoiceCommand = async (command: string) => {
+    console.log('Voice command received:', command);
     setVoiceHistory(prev => [...prev, command]);
-    // Here you could add logic to process voice commands and create tasks
-    setRefreshTrigger(prev => prev + 1);
+    
+    // Parse the voice command to see if it's a task creation request
+    try {
+      const response = await supabase.functions.invoke('voice-command-parser', {
+        body: { command }
+      });
+
+      if (response.error) {
+        console.error('Error parsing voice command:', response.error);
+        return;
+      }
+
+      const parsedCommand = response.data;
+      
+      if (parsedCommand.isTask && parsedCommand.title && user) {
+        const result = await addTaskForUser(
+          user.id, 
+          parsedCommand.title, 
+          parsedCommand.scheduledTime
+        );
+        
+        if (result.success) {
+          // Trigger a refresh of the task list
+          setRefreshTrigger(prev => prev + 1);
+        }
+      }
+    } catch (error) {
+      console.error('Error processing voice command:', error);
+    }
   };
 
   const handleRecordFlow = (recordingBlob?: Blob, duration?: string) => {
