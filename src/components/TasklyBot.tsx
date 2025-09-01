@@ -45,36 +45,89 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, voiceHistory = [] }: T
 
   const { speak } = useTextToSpeech();
 
+  // Helper function to parse multiple tasks from a single command
+  const parseMultipleTasks = (command: string): string[] => {
+    // Split by common delimiters for multiple tasks
+    const delimiters = [' and ', ' then ', ' also ', ' plus ', ', '];
+    let tasks = [command];
+    
+    for (const delimiter of delimiters) {
+      const newTasks: string[] = [];
+      for (const task of tasks) {
+        if (task.toLowerCase().includes(delimiter)) {
+          newTasks.push(...task.split(new RegExp(delimiter, 'i')));
+        } else {
+          newTasks.push(task);
+        }
+      }
+      tasks = newTasks;
+    }
+    
+    // Clean up and filter out empty or very short tasks
+    return tasks
+      .map(task => task.trim())
+      .filter(task => task.length > 2)
+      .map(task => {
+        // Add task prefix if not already present
+        if (!task.toLowerCase().startsWith('remind') && 
+            !task.toLowerCase().startsWith('create') && 
+            !task.toLowerCase().startsWith('schedule') &&
+            !task.toLowerCase().startsWith('add')) {
+          return task;
+        }
+        return task;
+      });
+  };
+
   const { isListening, isSupported: voiceSupported, startListening, stopListening } = useVoiceRecognition({
     onResult: (transcript) => {
       setLastCommand(transcript);
       setFeedback({ message: 'Processing command...', type: 'thinking', visible: true });
       
-      // Simple confidence check - if transcript is very short or unclear, ask for confirmation
-      if (transcript.length < 5 || transcript.toLowerCase().includes('uh') || transcript.toLowerCase().includes('um')) {
-        setPendingCommand({ text: transcript, task: `Create task: "${transcript}"` });
-        setShowConfirmation(true);
-        setFeedback({ message: 'Not sure about that...', type: 'error', visible: true });
-      } else {
-        onVoiceCommand(transcript);
-        setFeedback({ message: 'Task created!', type: 'success', visible: true });
-        speak('Task created successfully');
-      }
+      // Parse for multiple tasks
+      const tasks = parseMultipleTasks(transcript);
       
-      toast({
-        title: "Voice command received",
-        description: `"${transcript}"`,
-      });
+      if (tasks.length > 1) {
+        // Multiple tasks detected
+        setFeedback({ message: `Creating ${tasks.length} tasks...`, type: 'thinking', visible: true });
+        
+        // Process each task
+        tasks.forEach((task, index) => {
+          setTimeout(() => {
+            onVoiceCommand(task);
+            if (index === tasks.length - 1) {
+              // Last task
+              setFeedback({ message: `✅ Added ${tasks.length} tasks!`, type: 'success', visible: true });
+              speak(`Created ${tasks.length} tasks successfully`);
+            }
+          }, index * 200); // Small delay between tasks
+        });
+        
+        toast({
+          title: `${tasks.length} tasks created`,
+          description: tasks.map(t => `• ${t}`).join('\n'),
+        });
+      } else {
+        // Single task
+        onVoiceCommand(transcript);
+        setFeedback({ message: '✅ Added to Today\'s Tasks!', type: 'success', visible: true });
+        speak('Task created successfully');
+        
+        toast({
+          title: "Task created",
+          description: `"${transcript}"`,
+        });
+      }
     },
     onError: (error) => {
       console.error('Voice recognition error:', error);
-      if (error.includes('not supported')) {
-        setFeedback({ message: "Try typing instead", type: 'error', visible: true });
-        setShowTextInput(true);
-      } else {
-        setFeedback({ message: "Try typing instead", type: 'error', visible: true });
-        setShowTextInput(true);
-      }
+      setFeedback({ message: "Voice recognition failed", type: 'error', visible: true });
+      
+      toast({
+        title: "Voice recognition error",
+        description: error.includes('denied') ? "Microphone access denied" : "Please try again",
+        variant: "destructive",
+      });
     }
   });
 
@@ -99,9 +152,11 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, voiceHistory = [] }: T
 
   const handleBotClick = () => {
     if (!voiceSupported) {
-      // If voice not supported, show text input
-      setShowTextInput(true);
-      setFeedback({ message: 'Type your command', type: 'thinking', visible: true });
+      toast({
+        title: "Voice recognition not available",
+        description: "Please try using a supported browser (Chrome, Safari, Edge)",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -110,7 +165,7 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, voiceHistory = [] }: T
       setFeedback({ message: '', type: 'listening', visible: false });
     } else {
       startListening();
-      setFeedback({ message: 'Listening...', type: 'listening', visible: true });
+      setFeedback({ message: 'Listening... Tap again to stop', type: 'listening', visible: true });
     }
   };
 
@@ -212,27 +267,13 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, voiceHistory = [] }: T
         
         {showSpeakButton && (
           <Button
-            onClick={voiceSupported ? handleBotClick : () => setShowTextInput(true)}
+            onClick={() => setShowTextInput(true)}
             size="default"
             variant="outline"
-            className={cn(
-              "h-12 px-6 text-sm font-medium transition-all duration-300 rounded-xl border border-border/30 backdrop-blur-sm",
-              isListening 
-                ? "bg-gradient-to-r from-primary/20 to-blue-500/20 border-primary/40 text-primary shadow-lg shadow-primary/25" 
-                : "bg-card/30 hover:bg-card/50 hover:border-border/50"
-            )}
+            className="h-12 px-6 text-sm font-medium transition-all duration-300 rounded-xl border border-border/30 backdrop-blur-sm bg-card/30 hover:bg-card/50 hover:border-border/50"
           >
-            {voiceSupported ? (
-              <>
-                <Mic className={cn("h-4 w-4 mr-2", isListening && "text-primary animate-pulse")} />
-                {isListening ? "Listening..." : "Speak"}
-              </>
-            ) : (
-              <>
-                <Type className="h-4 w-4 mr-2" />
-                Type
-              </>
-            )}
+            <Type className="h-4 w-4 mr-2" />
+            Type Command
           </Button>
         )}
       </div>

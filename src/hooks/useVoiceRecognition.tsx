@@ -39,12 +39,12 @@ export function useVoiceRecognition({ onResult, onError }: UseVoiceRecognitionOp
 
     recognition.onstart = () => {
       setIsListening(true);
-      // Auto-stop after 5 seconds of no speech
+      // Auto-stop after 3 seconds of no speech (silence detection)
       timeoutRef.current = setTimeout(() => {
         if (recognitionRef.current) {
           recognitionRef.current.stop();
         }
-      }, 5000);
+      }, 3000);
     };
 
     recognition.onresult = (event) => {
