@@ -16,6 +16,20 @@ const Index = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [voiceHistory, setVoiceHistory] = useState<string[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userName, setUserName] = useState<string>('');
+
+  // Get user name from onboarding data
+  useEffect(() => {
+    const userData = localStorage.getItem('taskly-user-data');
+    if (userData) {
+      try {
+        const parsed = JSON.parse(userData);
+        setUserName(parsed.name || '');
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
+    }
+  }, []);
 
   // Remove auto-show suggestions - only show when user clicks the floating robot
 
@@ -86,11 +100,18 @@ const Index = () => {
             <WelcomeSection />
 
             {/* Robot - Main Focus */}
-            <TasklyBot 
-              onVoiceCommand={handleVoiceCommand}
-              onRecordFlow={handleRecordFlow}
-              voiceHistory={voiceHistory}
-            />
+            <div className="flex flex-col items-center">
+              {/* Welcome Message */}
+              <h1 className="text-2xl font-bold text-foreground mb-8 text-center drop-shadow-lg font-sans">
+                Welcome{userName ? `, ${userName}` : ''}
+              </h1>
+              
+              <TasklyBot 
+                onVoiceCommand={handleVoiceCommand}
+                onRecordFlow={handleRecordFlow}
+                voiceHistory={voiceHistory}
+              />
+            </div>
 
             {/* Today's Tasks */}
             <TodaysTasks refreshTrigger={refreshTrigger} />
