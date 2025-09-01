@@ -25,6 +25,13 @@ serve(async (req) => {
     }
 
     console.log('AI Copilot request:', { message, contextLength: context.length });
+    console.log('DeepSeek API Key available:', !!deepseekApiKey);
+    console.log('DeepSeek API Key length:', deepseekApiKey?.length || 0);
+
+    if (!deepseekApiKey) {
+      console.error('DEEPSEEK_API_KEY environment variable not found');
+      throw new Error('DeepSeek API key not configured');
+    }
 
     const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
@@ -56,8 +63,10 @@ Keep responses concise, actionable, and focused on productivity. If users ask ab
 
     if (!response.ok) {
       const error = await response.text();
-      console.error('DeepSeek API error:', error);
-      throw new Error(`DeepSeek API error: ${response.status}`);
+      console.error('DeepSeek API error response:', error);
+      console.error('DeepSeek API status:', response.status);
+      console.error('DeepSeek API headers:', Object.fromEntries(response.headers.entries()));
+      throw new Error(`DeepSeek API error: ${response.status} - ${error}`);
     }
 
     const data = await response.json();
