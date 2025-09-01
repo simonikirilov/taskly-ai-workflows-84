@@ -68,33 +68,60 @@ export function TasklyBot({ onVoiceCommand, voiceHistory = [], mode }: TasklyBot
   const handleSpeakCommand = async () => {
     if (!voiceSupported) {
       speak('Voice not supported on this device');
+      // Fallback to text input
+      setShowTextInput(true);
       return;
     }
     
-    // First, try to request permission explicitly
+    // Check permission status first
     try {
-      console.log('🎤 Requesting microphone permission...');
-      await navigator.mediaDevices.getUserMedia({ audio: true });
+      const permissionStatus = await navigator.permissions?.query({ name: 'microphone' as PermissionName });
+      console.log('🎤 Current permission status:', permissionStatus?.state);
       
-      // If permission granted, start listening
+      if (permissionStatus?.state === 'denied') {
+        toast({
+          title: "Microphone Access Blocked",
+          description: "Microphone is blocked. Please click the 🔒 lock icon next to the URL, then click 'Site Settings' and allow microphone access.",
+          variant: "destructive",
+          duration: 8000,
+        });
+        speak('Microphone access is blocked. Please check your browser settings and try again, or use text input instead.');
+        // Show text input as fallback
+        setShowTextInput(true);
+        return;
+      }
+      
+      // Try to request permission
+      console.log('🎤 Requesting microphone permission...');
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      
+      // Stop the stream immediately as we only wanted to check permission
+      stream.getTracks().forEach(track => track.stop());
+      
+      // If we get here, permission was granted
       startListening();
+      
     } catch (error) {
       console.error('🚫 Permission request failed:', error);
       
       if (error.name === 'NotAllowedError') {
         toast({
-          title: "Microphone Access Required",
-          description: "Please click the microphone icon in your browser's address bar and select 'Allow', then try again.",
+          title: "Microphone Permission Needed",
+          description: "Click 'Allow' when your browser asks for microphone access, or use text input below.",
           variant: "destructive",
+          duration: 6000,
         });
-        speak('Please allow microphone access and try again');
+        speak('Please allow microphone access when prompted, or use the text input option');
+        // Show text input as immediate fallback
+        setShowTextInput(true);
       } else {
         toast({
           title: "Microphone Error", 
-          description: "Unable to access microphone. Please check your device settings.",
+          description: "Unable to access microphone. Using text input instead.",
           variant: "destructive",
         });
-        speak('Unable to access microphone');
+        speak('Unable to access microphone. Please use text input.');
+        setShowTextInput(true);
       }
     }
   };
