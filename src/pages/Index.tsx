@@ -96,32 +96,26 @@ const Index = () => {
         <SidebarInset>
           <TopAppBar onLogoClick={() => setSidebarOpen(!sidebarOpen)} />
           
-          <div className="max-w-4xl mx-auto p-4 space-y-6">
-            {/* Welcome & Slogan */}
+          <div className="max-w-4xl mx-auto p-4 space-y-8">
+            {/* Welcome Section */}
             <WelcomeSection />
 
             {/* Robot - Main Focus */}
-            <div className="flex flex-col items-center">
-
-            {/* Welcome Message */}
-            <h1 className="text-5xl font-bold text-foreground mb-8 text-center drop-shadow-lg font-sans">
-              Welcome{userName ? `, ${userName}` : ''}
-            </h1>
-            
-            <TasklyBot 
-              onVoiceCommand={handleVoiceCommand}
-              voiceHistory={voiceHistory}
-              mode={currentMode}
-            />
-
-            {/* Mode Switch - Under avatar */}
-            <div className="mt-4">
-              <ModeSwitch 
-                defaultMode="speaking"
-                onModeChange={handleModeChange}
+            <div className="flex flex-col items-center space-y-4">
+              <TasklyBot 
+                onVoiceCommand={handleVoiceCommand}
+                voiceHistory={voiceHistory}
+                mode={currentMode}
               />
+
+              {/* Mode Switch - Under avatar */}
+              <div className="mt-4">
+                <ModeSwitch 
+                  defaultMode="speaking"
+                  onModeChange={handleModeChange}
+                />
+              </div>
             </div>
-          </div>
 
             {/* Today's Tasks */}
             <TodaysTasks refreshTrigger={refreshTrigger} />

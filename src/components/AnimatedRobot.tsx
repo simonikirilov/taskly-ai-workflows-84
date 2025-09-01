@@ -8,77 +8,135 @@ interface AnimatedRobotProps {
   onClick?: () => void;
   className?: string;
   children?: React.ReactNode;
+  state?: 'idle' | 'listening' | 'thinking' | 'speaking' | 'error';
 }
 
-export function AnimatedRobot({ isListening, isExpanded, onClick, className, children }: AnimatedRobotProps) {
+export function AnimatedRobot({ 
+  isListening, 
+  isExpanded, 
+  onClick, 
+  className, 
+  children,
+  state = 'idle' 
+}: AnimatedRobotProps) {
   const [isBlinking, setIsBlinking] = useState(false);
   const [isSmiling, setIsSmiling] = useState(false);
   const [eyesWide, setEyesWide] = useState(false);
+  const [isShaking, setIsShaking] = useState(false);
 
-  // Blinking animation every 5-7 seconds
+  // Natural blinking every 5-7 seconds
   useEffect(() => {
     const blinkInterval = setInterval(() => {
-      setIsBlinking(true);
-      setTimeout(() => setIsBlinking(false), 200);
+      if (state === 'idle' || state === 'listening') {
+        setIsBlinking(true);
+        setTimeout(() => setIsBlinking(false), 150);
+      }
     }, Math.random() * 2000 + 5000); // 5-7 seconds
 
     return () => clearInterval(blinkInterval);
-  }, []);
+  }, [state]);
 
-  // Enhanced animations when listening
+  // State-based animations
   useEffect(() => {
-    if (isListening) {
-      setIsSmiling(true);
-      setEyesWide(true);
-      const timer = setTimeout(() => {
+    switch (state) {
+      case 'listening':
+        setIsSmiling(false);
+        setEyesWide(true);
+        setIsShaking(false);
+        break;
+      case 'thinking':
         setIsSmiling(false);
         setEyesWide(false);
-      }, 1500);
-      return () => clearTimeout(timer);
-    } else {
-      setEyesWide(false);
+        setIsShaking(false);
+        break;
+      case 'speaking':
+        setIsSmiling(true);
+        setEyesWide(false);
+        setIsShaking(false);
+        setTimeout(() => setIsSmiling(false), 1000);
+        break;
+      case 'error':
+        setIsSmiling(false);
+        setEyesWide(false);
+        setIsShaking(true);
+        setTimeout(() => setIsShaking(false), 400);
+        break;
+      default: // idle
+        setIsSmiling(false);
+        setEyesWide(false);
+        setIsShaking(false);
+        break;
     }
-  }, [isListening]);
+  }, [state]);
+
+  const getScaleClass = () => {
+    if (isExpanded) return "scale-[1.4]";
+    if (state === 'listening') return "scale-[1.15] hover:scale-[1.2]";
+    if (state === 'thinking') return "scale-[1.05]";
+    return "hover:scale-[1.05]";
+  };
+
+  const getFilterStyle = () => {
+    if (isExpanded) {
+      return 'drop-shadow(0 0 35px rgba(59, 130, 246, 0.8)) brightness(1.15)';
+    }
+    if (state === 'listening') {
+      return 'drop-shadow(0 0 25px rgba(59, 130, 246, 0.7)) brightness(1.1)';
+    }
+    if (state === 'speaking') {
+      return 'drop-shadow(0 0 20px rgba(34, 197, 94, 0.6)) brightness(1.05)';
+    }
+    if (state === 'error') {
+      return 'drop-shadow(0 0 20px rgba(239, 68, 68, 0.6)) brightness(0.9)';
+    }
+    return 'drop-shadow(0 0 20px rgba(59, 130, 246, 0.4))';
+  };
 
   return (
     <div className={cn("relative flex items-center justify-center", className)}>
       {/* Enhanced background glow */}
       <div className="absolute inset-0 flex items-center justify-center">
         <div className={cn(
-          "w-full max-w-[400px] aspect-square bg-gradient-radial from-blue-400/15 via-blue-400/8 to-transparent rounded-full blur-3xl transition-opacity duration-500",
-          isExpanded ? "opacity-80" : "opacity-50"
+          "w-full max-w-[400px] aspect-square rounded-full blur-3xl transition-all duration-500",
+          state === 'listening' && "bg-gradient-radial from-blue-400/25 via-blue-400/15 to-transparent opacity-80",
+          state === 'speaking' && "bg-gradient-radial from-green-400/25 via-green-400/15 to-transparent opacity-70",
+          state === 'error' && "bg-gradient-radial from-red-400/25 via-red-400/15 to-transparent opacity-70",
+          (state === 'idle' || state === 'thinking') && "bg-gradient-radial from-blue-400/15 via-blue-400/8 to-transparent opacity-50",
+          isExpanded && "opacity-90"
         )} />
       </div>
       
-      {/* Robot container with enhanced prominence and floating animation */}
+      {/* Focus ring for listening state */}
+      {state === 'listening' && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-full max-w-[450px] aspect-square border-2 border-primary/30 rounded-full animate-pulse" />
+        </div>
+      )}
+      
+      {/* Robot container with enhanced animations */}
       <div 
         className={cn(
-          "relative transition-all duration-500 cursor-pointer w-full max-w-[420px] mx-auto",
-          "animate-float-slow", // Subtle floating/bobbing motion
-          isExpanded 
-            ? "scale-140 z-50" 
-            : isListening 
-              ? "scale-110" 
-              : "hover:scale-[1.05]"
+          "relative transition-all duration-200 cursor-pointer w-full max-w-[420px] mx-auto",
+          "animate-[float_3s_ease-in-out_infinite]", // Breathing/floating motion
+          getScaleClass(),
+          state === 'thinking' && "animate-[float_3s_ease-in-out_infinite,pulse_1s_ease-in-out_infinite]",
+          isShaking && "animate-[shake_0.12s_ease-in-out_3]"
         )}
         onClick={onClick}
+        style={{
+          transform: state === 'thinking' ? 'rotate(3deg)' : 'rotate(0deg)',
+          transition: 'transform 200ms ease-out, scale 200ms spring(1, 0.5, 0.8, 1.2)'
+        }}
       >
         <img 
           src="/lovable-uploads/d9e422aa-ea2c-4619-8ac2-3818edd8bcb3.png"
           alt="Taskly AI Assistant"
           className={cn(
-            "w-full h-auto object-contain p-0 m-0 max-w-full transition-all duration-500",
-            isListening && "brightness-110 drop-shadow-[0_0_25px_rgba(59,130,246,0.6)]",
-            isExpanded && "brightness-115 drop-shadow-[0_0_35px_rgba(59,130,246,0.8)]",
+            "w-full h-auto object-contain p-0 m-0 max-w-full transition-all duration-200",
             isSmiling && "animate-pulse"
           )}
           style={{ 
-            filter: isExpanded 
-              ? 'drop-shadow(0 0 35px rgba(59, 130, 246, 0.8)) brightness(1.15)'
-              : isListening 
-                ? 'drop-shadow(0 0 25px rgba(59, 130, 246, 0.6)) brightness(1.1)' 
-                : 'drop-shadow(0 0 25px rgba(59, 130, 246, 0.4))',
-            transform: isExpanded ? 'rotate(0deg)' : isListening ? 'rotate(2deg)' : 'rotate(0deg)'
+            filter: getFilterStyle()
           }}
           onError={(e) => {
             const target = e.target as HTMLImageElement;
@@ -92,34 +150,49 @@ export function AnimatedRobot({ isListening, isExpanded, onClick, className, chi
           <Bot className="h-28 w-28 text-white" />
         </div>
         
-        {/* Eyes animations overlay */}
-        {(isBlinking || eyesWide) && (
+        {/* Enhanced eyes animations overlay */}
+        {(isBlinking || eyesWide || state === 'thinking') && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="w-full max-w-[420px] relative">
-              {/* Eyes - blinking or wide when listening */}
+              {/* Left eye */}
               <div className={cn(
-                "absolute top-[35%] left-[40%] rounded-full transition-all duration-200",
-                isBlinking ? "w-2 h-1 bg-background opacity-90" : 
-                eyesWide ? "w-4 h-4 bg-primary/20 border-2 border-primary/40" :
+                "absolute top-[35%] left-[40%] rounded-full transition-all duration-150",
+                isBlinking ? "w-3 h-1 bg-background opacity-90" : 
+                eyesWide ? "w-5 h-5 bg-primary/25 border-2 border-primary/50 animate-pulse" :
+                state === 'thinking' ? "w-3 h-3 bg-primary/20 border border-primary/30 animate-pulse" :
                 "w-3 h-3 bg-primary/10 border border-primary/20"
               )} />
+              {/* Right eye */}
               <div className={cn(
-                "absolute top-[35%] right-[40%] rounded-full transition-all duration-200",
-                isBlinking ? "w-2 h-1 bg-background opacity-90" : 
-                eyesWide ? "w-4 h-4 bg-primary/20 border-2 border-primary/40" :
+                "absolute top-[35%] right-[40%] rounded-full transition-all duration-150",
+                isBlinking ? "w-3 h-1 bg-background opacity-90" : 
+                eyesWide ? "w-5 h-5 bg-primary/25 border-2 border-primary/50 animate-pulse" :
+                state === 'thinking' ? "w-3 h-3 bg-primary/20 border border-primary/30 animate-pulse" :
                 "w-3 h-3 bg-primary/10 border border-primary/20"
               )} />
             </div>
           </div>
         )}
         
-        {/* Listening indicator - enhanced visibility */}
-        {isListening && (
+        {/* Enhanced listening indicator */}
+        {state === 'listening' && (
+          <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2">
+            <div className="flex gap-1 px-6 py-3 bg-primary/30 rounded-full backdrop-blur-sm border border-primary/30 shadow-lg">
+              <div className="w-2 h-8 bg-primary animate-pulse rounded-full" />
+              <div className="w-2 h-8 bg-primary animate-pulse rounded-full" style={{ animationDelay: '0.15s' }} />
+              <div className="w-2 h-8 bg-primary animate-pulse rounded-full" style={{ animationDelay: '0.3s' }} />
+              <div className="w-2 h-8 bg-primary animate-pulse rounded-full" style={{ animationDelay: '0.45s' }} />
+            </div>
+          </div>
+        )}
+        
+        {/* Thinking indicator */}
+        {state === 'thinking' && (
           <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2">
-            <div className="flex gap-1 px-5 py-3 bg-primary/25 rounded-full backdrop-blur-sm border border-primary/20">
-              <div className="w-2 h-7 bg-primary animate-pulse rounded-full" />
-              <div className="w-2 h-7 bg-primary animate-pulse rounded-full" style={{ animationDelay: '0.2s' }} />
-              <div className="w-2 h-7 bg-primary animate-pulse rounded-full" style={{ animationDelay: '0.4s' }} />
+            <div className="flex gap-1 px-4 py-2 bg-secondary/30 rounded-full backdrop-blur-sm border border-secondary/30">
+              <div className="w-1.5 h-1.5 bg-secondary animate-bounce rounded-full" />
+              <div className="w-1.5 h-1.5 bg-secondary animate-bounce rounded-full" style={{ animationDelay: '0.1s' }} />
+              <div className="w-1.5 h-1.5 bg-secondary animate-bounce rounded-full" style={{ animationDelay: '0.2s' }} />
             </div>
           </div>
         )}

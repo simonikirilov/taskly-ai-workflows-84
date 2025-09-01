@@ -19,6 +19,7 @@ export function TopAppBar({ onLogoClick }: TopAppBarProps) {
   const menuItems = [
     { label: 'Home', path: '/' },
     { label: 'Dashboard', path: '/dashboard' },
+    { label: 'Record', path: '/record' },
     { label: 'Workflows', path: '/workflows' },
     { label: 'Account', path: '/account' },
     { label: 'Settings', path: '/settings' },
@@ -58,9 +59,9 @@ export function TopAppBar({ onLogoClick }: TopAppBarProps) {
                   onClick={() => navigate(item.path)}
                   className="cursor-pointer"
                 >
-                  {item.label}
+                 {item.label}
                 </DropdownMenuItem>
-                {index === 2 && <DropdownMenuSeparator />}
+                {index === 3 && <DropdownMenuSeparator />}
               </div>
             ))}
           </DropdownMenuContent>
