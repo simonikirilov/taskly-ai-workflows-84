@@ -33,7 +33,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-5-2025-08-07',
+        model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
@@ -50,7 +50,7 @@ Keep responses concise, actionable, and focused on productivity. If users ask ab
           ...context,
           { role: 'user', content: message }
         ],
-        max_completion_tokens: 500,
+        max_tokens: 500,
       }),
     });
 
