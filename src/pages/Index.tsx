@@ -97,18 +97,19 @@ const Index = () => {
           <TopAppBar onLogoClick={() => setSidebarOpen(!sidebarOpen)} />
           
           <div className="max-w-4xl mx-auto p-4 space-y-6">
-            {/* Welcome & Slogan */}
-            <WelcomeSection />
-
-            {/* Robot - Main Focus */}
-            <div className="flex flex-col items-center">
-            {/* Mode Switch - Top Right */}
-            <div className="fixed top-4 right-4 z-50">
+            {/* Mode Switch - Left under logo */}
+            <div className="flex justify-start">
               <ModeSwitch 
                 defaultMode="speaking"
                 onModeChange={handleModeChange}
               />
             </div>
+
+            {/* Welcome & Slogan */}
+            <WelcomeSection />
+
+            {/* Robot - Main Focus */}
+            <div className="flex flex-col items-center">
 
             {/* Welcome Message */}
             <h1 className="text-5xl font-bold text-foreground mb-8 text-center drop-shadow-lg font-sans">
