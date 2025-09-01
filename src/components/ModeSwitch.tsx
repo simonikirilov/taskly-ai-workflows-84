@@ -21,9 +21,6 @@ export function ModeSwitch({ defaultMode = 'speaking', onModeChange }: ModeSwitc
     <div className="flex items-center gap-3 p-4 bg-card/50 backdrop-blur-sm rounded-2xl border border-border/30 shadow-lg">
       <div className="flex items-center gap-2">
         <Keyboard className="h-4 w-4 text-muted-foreground" />
-        <Label htmlFor="mode-switch" className="text-sm font-medium">
-          Typing
-        </Label>
       </div>
       
       <Switch
