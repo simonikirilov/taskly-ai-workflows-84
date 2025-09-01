@@ -7,6 +7,7 @@ import { TopAppBar } from "@/components/TopAppBar";
 import { TasklyBot } from "@/components/TasklyBot";
 import { WelcomeSection } from "@/components/WelcomeSection";
 import { TodaysTasks } from "@/components/TodaysTasks";
+import { ModeSwitch } from "@/components/ModeSwitch";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { addTaskForUser } from "@/utils/taskUtils";
@@ -17,6 +18,7 @@ const Index = () => {
   const [voiceHistory, setVoiceHistory] = useState<string[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userName, setUserName] = useState<string>('');
+  const [currentMode, setCurrentMode] = useState<'speaking' | 'typing'>('speaking');
 
   // Get user name from onboarding data
   useEffect(() => {
@@ -67,9 +69,8 @@ const Index = () => {
     }
   };
 
-  const handleRecordFlow = (recordingBlob?: Blob, duration?: string) => {
-    // Handle workflow recording
-    console.log('Workflow recorded:', { recordingBlob, duration });
+  const handleModeChange = (mode: 'speaking' | 'typing') => {
+    setCurrentMode(mode);
   };
 
   // Show loading spinner while checking authentication
@@ -101,17 +102,25 @@ const Index = () => {
 
             {/* Robot - Main Focus */}
             <div className="flex flex-col items-center">
-              {/* Welcome Message */}
-              <h1 className="text-5xl font-bold text-foreground mb-8 text-center drop-shadow-lg font-sans">
-                Welcome{userName ? `, ${userName}` : ''}
-              </h1>
-              
-              <TasklyBot 
-                onVoiceCommand={handleVoiceCommand}
-                onRecordFlow={handleRecordFlow}
-                voiceHistory={voiceHistory}
+            {/* Mode Switch - Top Right */}
+            <div className="fixed top-4 right-4 z-50">
+              <ModeSwitch 
+                defaultMode="speaking"
+                onModeChange={handleModeChange}
               />
             </div>
+
+            {/* Welcome Message */}
+            <h1 className="text-5xl font-bold text-foreground mb-8 text-center drop-shadow-lg font-sans">
+              Welcome{userName ? `, ${userName}` : ''}
+            </h1>
+            
+            <TasklyBot 
+              onVoiceCommand={handleVoiceCommand}
+              voiceHistory={voiceHistory}
+              mode={currentMode}
+            />
+          </div>
 
             {/* Today's Tasks */}
             <TodaysTasks refreshTrigger={refreshTrigger} />

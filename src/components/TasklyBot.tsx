@@ -16,18 +16,15 @@ import { AnimatedRobot } from './AnimatedRobot';
 
 interface TasklyBotProps {
   onVoiceCommand: (command: string) => void;
-  onRecordFlow?: (recordingBlob?: Blob, duration?: string) => void;
   voiceHistory?: string[];
+  mode: 'speaking' | 'typing';
 }
 
-export function TasklyBot({ onVoiceCommand, onRecordFlow, voiceHistory = [] }: TasklyBotProps) {
+export function TasklyBot({ onVoiceCommand, voiceHistory = [], mode }: TasklyBotProps) {
   const [lastCommand, setLastCommand] = useState<string>('');
-  const [robotImageUrl, setRobotImageUrl] = useState<string>('/public/assets/robot.png'); // Will be updated when user uploads
-  const [showSpeakButton, setShowSpeakButton] = useState(false);
   const [showCopilotChat, setShowCopilotChat] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showTextInput, setShowTextInput] = useState(false);
-  const [isRobotExpanded, setIsRobotExpanded] = useState(false);
   const [pendingCommand, setPendingCommand] = useState<{ text: string; task: string } | null>(null);
   const [feedback, setFeedback] = useState<{ message: string; type: 'success' | 'error' | 'thinking' | 'listening'; visible: boolean }>({
     message: '',
@@ -35,14 +32,6 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, voiceHistory = [] }: T
     visible: false
   });
 
-  // Load speak button preference
-  useEffect(() => {
-    const preferences = localStorage.getItem('taskly-user-preferences');
-    if (preferences) {
-      const parsed = JSON.parse(preferences);
-      setShowSpeakButton(parsed.showSpeakButton ?? false);
-    }
-  }, []);
 
   const { speak } = useTextToSpeech();
 
@@ -75,55 +64,29 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, voiceHistory = [] }: T
     }
   });
 
-  const { isRecording, formattedTime, startRecording, stopRecording } = useScreenRecording({
-    onRecordingStart: () => {
-      toast({
-        title: "Recording started",
-        description: "Capturing your workflow. Stop screen sharing to end recording.",
-      });
-    },
-    onRecordingStop: (blob) => {
-      onRecordFlow?.(blob, "2:30"); // Mock duration
-    },
-    onError: (error) => {
-      toast({
-        title: "Recording failed",
-        description: error,
-        variant: "destructive",
-      });
-    }
-  });
 
   const handleBotClick = () => {
-    if (!isRobotExpanded) {
-      // First click expands the robot
-      setIsRobotExpanded(true);
-      setFeedback({ message: 'Choose your input method', type: 'thinking', visible: true });
+    if (mode === 'speaking') {
+      // In speaking mode, directly start voice recognition
+      handleSpeakCommand();
+    } else {
+      // In typing mode, open AI Copilot chat
+      setShowCopilotChat(true);
+      setFeedback({ message: 'AI Copilot Chat opened', type: 'thinking', visible: true });
     }
   };
 
-  const handleSpeakOption = () => {
+  const handleSpeakCommand = () => {
     if (!voiceSupported) {
       setFeedback({ message: 'Voice not supported on this device', type: 'error', visible: true });
       speak('Voice not supported on this device');
       return;
     }
     
-    setIsRobotExpanded(false);
     startListening();
     setFeedback({ message: 'Listening...', type: 'listening', visible: true });
   };
 
-  const handleTypeOption = () => {
-    setIsRobotExpanded(false);
-    setShowTextInput(true);
-    setFeedback({ message: 'Type your command', type: 'thinking', visible: true });
-  };
-
-  const collapseRobot = () => {
-    setIsRobotExpanded(false);
-    setFeedback({ message: '', type: 'thinking', visible: false });
-  };
 
   const handleTextCommand = (command: string) => {
     setFeedback({ message: 'Processing command...', type: 'thinking', visible: true });
@@ -162,52 +125,18 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, voiceHistory = [] }: T
     setFeedback({ message: 'Cancelled', type: 'error', visible: true });
   };
 
-  const handleRecordFlow = () => {
-    if (isRecording) {
-      stopRecording();
-    } else {
-      startRecording();
-    }
-  };
 
   return (
     <>
-      <RecordingIndicator 
-        isRecording={isRecording} 
-        recordingTime={formattedTime}
-        onStop={stopRecording}
-      />
-      
-      
       <div className="flex flex-col items-center relative -mt-8 md:-mt-12">
         {/* Animated Robot with Alive Features */}
         <div className="relative">
           <AnimatedRobot 
             isListening={isListening}
-            isExpanded={isRobotExpanded}
+            isExpanded={false}
             onClick={handleBotClick}
             className="mb-6"
-          >
-            {/* Action buttons overlay when expanded */}
-            <div className="flex gap-3 animate-scale-in">
-              <Button
-                onClick={handleSpeakOption}
-                size="lg"
-                variant="default"
-                className="h-14 px-6 text-lg font-medium rounded-2xl bg-gradient-to-r from-primary to-blue-500 hover:from-primary/90 hover:to-blue-500/90 shadow-lg shadow-primary/30"
-              >
-                🎤 Speak
-              </Button>
-              <Button
-                onClick={handleTypeOption}
-                size="lg"
-                variant="outline"
-                className="h-14 px-6 text-lg font-medium rounded-2xl border-2 border-primary/30 bg-background/80 hover:bg-background/90 shadow-lg"
-              >
-                ⌨️ Type
-              </Button>
-            </div>
-          </AnimatedRobot>
+          />
           <RobotFeedback
             message={feedback.message}
             type={feedback.type}
@@ -216,59 +145,12 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, voiceHistory = [] }: T
           />
         </div>
 
-      {/* Action Buttons Row - Closer to robot */}
-      <div className="flex gap-3 w-full justify-center max-w-md mx-auto mt-6">
-        <Button
-          onClick={handleRecordFlow}
-          size="default"
-          variant="outline"
-          className={cn(
-            "h-12 px-6 text-sm font-medium transition-all duration-300 rounded-xl border border-border/30 backdrop-blur-sm",
-            isRecording 
-              ? "bg-gradient-to-r from-red-500/20 to-red-600/20 border-red-500/40 text-red-400 shadow-lg shadow-red-500/25" 
-              : "bg-card/30 hover:bg-card/50 hover:border-border/50"
-          )}
-        >
-          <Video className={cn("h-4 w-4 mr-2", isRecording && "text-red-400")} />
-          {isRecording ? "Stop Recording" : "Record"}
-        </Button>
-
-        <Button
-          onClick={() => setShowCopilotChat(true)}
-          size="default"
-          variant="default"
-          className="h-12 px-6 text-sm font-medium transition-all duration-300 rounded-xl bg-gradient-to-r from-primary to-blue-500 hover:from-primary/90 hover:to-blue-500/90 shadow-lg"
-        >
-          <MessageCircle className="h-4 w-4 mr-2" />
-          AI Copilot
-        </Button>
-        
-        {showSpeakButton && (
-          <Button
-            onClick={voiceSupported ? handleBotClick : () => setShowTextInput(true)}
-            size="default"
-            variant="outline"
-            className={cn(
-              "h-12 px-6 text-sm font-medium transition-all duration-300 rounded-xl border border-border/30 backdrop-blur-sm",
-              isListening 
-                ? "bg-gradient-to-r from-primary/20 to-blue-500/20 border-primary/40 text-primary shadow-lg shadow-primary/25" 
-                : "bg-card/30 hover:bg-card/50 hover:border-border/50"
-            )}
-          >
-            {voiceSupported ? (
-              <>
-                <Mic className={cn("h-4 w-4 mr-2", isListening && "text-primary animate-pulse")} />
-                {isListening ? "Listening..." : "Speak"}
-              </>
-            ) : (
-              <>
-                <Type className="h-4 w-4 mr-2" />
-                Type
-              </>
-            )}
-          </Button>
-        )}
-      </div>
+        {/* Mode Indicator */}
+        <div className="text-center mb-4">
+          <p className="text-sm text-muted-foreground">
+            {mode === 'speaking' ? '🎤 Click robot to speak' : '💬 Click robot to type'}
+          </p>
+        </div>
 
       {/* Voice History - Only show if there's history */}
       {voiceHistory.length > 0 && (
@@ -305,14 +187,6 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, voiceHistory = [] }: T
         onSubmit={handleTextCommand}
         placeholder="Type your command, e.g., 'Create a task to call John tomorrow'"
       />
-      
-      {/* Click outside to collapse robot */}
-      {isRobotExpanded && (
-        <div 
-          className="fixed inset-0 z-40 bg-black/20" 
-          onClick={collapseRobot}
-        />
-      )}
       </div>
     </>
   );

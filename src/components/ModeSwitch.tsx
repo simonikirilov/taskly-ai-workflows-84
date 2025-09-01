@@ -1,0 +1,48 @@
+import { useState } from 'react';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Mic, Type } from 'lucide-react';
+
+interface ModeSwitchProps {
+  defaultMode?: 'speaking' | 'typing';
+  onModeChange: (mode: 'speaking' | 'typing') => void;
+}
+
+export function ModeSwitch({ defaultMode = 'speaking', onModeChange }: ModeSwitchProps) {
+  const [isSpeakingMode, setIsSpeakingMode] = useState(defaultMode === 'speaking');
+
+  const handleToggle = (checked: boolean) => {
+    const newMode = checked ? 'speaking' : 'typing';
+    setIsSpeakingMode(checked);
+    onModeChange(newMode);
+  };
+
+  return (
+    <div className="flex items-center gap-3 p-4 bg-card/50 backdrop-blur-sm rounded-2xl border border-border/30 shadow-lg">
+      <div className="flex items-center gap-2">
+        <Type className="h-4 w-4 text-muted-foreground" />
+        <Label htmlFor="mode-switch" className="text-sm font-medium">
+          Typing
+        </Label>
+      </div>
+      
+      <Switch
+        id="mode-switch"
+        checked={isSpeakingMode}
+        onCheckedChange={handleToggle}
+        className="data-[state=checked]:bg-primary"
+      />
+      
+      <div className="flex items-center gap-2">
+        <Label htmlFor="mode-switch" className="text-sm font-medium">
+          Speaking
+        </Label>
+        <Mic className="h-4 w-4 text-muted-foreground" />
+      </div>
+      
+      <div className="text-xs text-muted-foreground ml-2">
+        {isSpeakingMode ? 'Click robot to speak' : 'Click robot to type'}
+      </div>
+    </div>
+  );
+}
