@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 interface UseVoiceRecognitionOptions {
   onResult: (transcript: string) => void;
   onError?: (error: string) => void;
+  onVolumeChange?: (volume: number) => void;
 }
 
 interface BrowserSupportCheck {
@@ -16,15 +17,22 @@ interface BrowserSupportCheck {
   permissionStatus: 'unknown' | 'granted' | 'denied' | 'prompt';
 }
 
-export function useVoiceRecognition({ onResult, onError }: UseVoiceRecognitionOptions) {
+export function useVoiceRecognition({ onResult, onError, onVolumeChange }: UseVoiceRecognitionOptions) {
   const [isListening, setIsListening] = useState(false);
-  const [isSupported, setIsSupported] = useState<boolean | null>(null); // null = checking, true/false = result
+  const [isSupported, setIsSupported] = useState<boolean | null>(null);
   const [supportStatus, setSupportStatus] = useState<BrowserSupportCheck | null>(null);
   const [useServerFallback, setUseServerFallback] = useState(false);
+  const [audioLevel, setAudioLevel] = useState(0);
+  
   const recognitionRef = useRef<any>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   const checkBrowserSupport = useCallback(async (): Promise<BrowserSupportCheck> => {
     console.log('🔍 Checking browser support for voice recognition...');
@@ -36,7 +44,6 @@ export function useVoiceRecognition({ onResult, onError }: UseVoiceRecognitionOp
     
     let permissionStatus: 'unknown' | 'granted' | 'denied' | 'prompt' = 'unknown';
     
-    // Check microphone permissions if possible
     if (navigator.permissions && navigator.permissions.query) {
       try {
         const permission = await navigator.permissions.query({ name: 'microphone' as PermissionName });
@@ -55,7 +62,6 @@ export function useVoiceRecognition({ onResult, onError }: UseVoiceRecognitionOp
       permissionStatus
     });
 
-    // Check HTTPS requirement
     if (!isHttps) {
       return {
         isSupported: false,
@@ -67,7 +73,6 @@ export function useVoiceRecognition({ onResult, onError }: UseVoiceRecognitionOp
       };
     }
 
-    // Check for MediaDevices API (required for all voice features)
     if (!hasMediaDevices) {
       return {
         isSupported: false,
@@ -79,7 +84,6 @@ export function useVoiceRecognition({ onResult, onError }: UseVoiceRecognitionOp
       };
     }
 
-    // Check for MediaRecorder (required for server fallback)
     if (!hasMediaRecorder) {
       return {
         isSupported: hasNativeSupport,
@@ -91,7 +95,6 @@ export function useVoiceRecognition({ onResult, onError }: UseVoiceRecognitionOp
       };
     }
 
-    // All capabilities available
     return {
       isSupported: hasNativeSupport || hasMediaRecorder,
       reason: hasNativeSupport ? undefined : 'Using server-based voice recognition',
@@ -102,31 +105,88 @@ export function useVoiceRecognition({ onResult, onError }: UseVoiceRecognitionOp
     };
   }, []);
 
-  // Check browser support on component mount
-  useEffect(() => {
-    const initializeSupportCheck = async () => {
-      console.log('🚀 Initializing voice recognition support check...');
-      try {
-        const support = await checkBrowserSupport();
-        setSupportStatus(support);
-        setIsSupported(support.isSupported);
-        console.log('✅ Initial support check complete:', support);
-      } catch (error) {
-        console.error('❌ Error checking browser support:', error);
-        setIsSupported(false);
-        setSupportStatus({
-          isSupported: false,
-          reason: 'Error checking browser capabilities',
-          canUseServerFallback: false,
-          hasNativeSupport: false,
-          hasMediaRecorder: false,
-          permissionStatus: 'unknown'
-        });
-      }
-    };
+  const setupVoiceActivityDetection = useCallback((stream: MediaStream) => {
+    if (!window.AudioContext && !(window as any).webkitAudioContext) {
+      console.log('⚠️ Web Audio API not supported');
+      return;
+    }
 
-    initializeSupportCheck();
-  }, [checkBrowserSupport]);
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      audioContextRef.current = new AudioContextClass();
+      const analyser = audioContextRef.current.createAnalyser();
+      const source = audioContextRef.current.createMediaStreamSource(stream);
+      
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.3;
+      source.connect(analyser);
+      analyserRef.current = analyser;
+
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+
+      const detectVoiceActivity = () => {
+        if (!analyserRef.current || !isListening) return;
+        
+        analyserRef.current.getByteFrequencyData(dataArray);
+        
+        let sum = 0;
+        for (let i = 0; i < bufferLength; i++) {
+          sum += dataArray[i];
+        }
+        const average = sum / bufferLength;
+        const volume = Math.min(100, Math.max(0, (average / 128) * 100));
+        
+        setAudioLevel(volume);
+        onVolumeChange?.(volume);
+
+        const SILENCE_THRESHOLD = 5;
+        const SILENCE_DURATION = 2000;
+
+        if (volume < SILENCE_THRESHOLD) {
+          if (!silenceTimeoutRef.current) {
+            silenceTimeoutRef.current = setTimeout(() => {
+              console.log('🔇 Silence detected, auto-stopping recording');
+              if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+                mediaRecorderRef.current.stop();
+              }
+            }, SILENCE_DURATION);
+          }
+        } else {
+          if (silenceTimeoutRef.current) {
+            clearTimeout(silenceTimeoutRef.current);
+            silenceTimeoutRef.current = null;
+          }
+        }
+
+        animationFrameRef.current = requestAnimationFrame(detectVoiceActivity);
+      };
+
+      detectVoiceActivity();
+    } catch (error) {
+      console.log('⚠️ Error setting up voice activity detection:', error);
+    }
+  }, [isListening, onVolumeChange]);
+
+  const cleanupAudioResources = useCallback(() => {
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    if (silenceTimeoutRef.current) {
+      clearTimeout(silenceTimeoutRef.current);
+      silenceTimeoutRef.current = null;
+    }
+    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    setAudioLevel(0);
+  }, []);
 
   const startServerVoiceRecognition = useCallback(async () => {
     try {
@@ -143,6 +203,9 @@ export function useVoiceRecognition({ onResult, onError }: UseVoiceRecognitionOp
         }
       });
 
+      streamRef.current = stream;
+      setupVoiceActivityDetection(stream);
+
       const mediaRecorder = new MediaRecorder(stream, {
         mimeType: 'audio/webm;codecs=opus'
       });
@@ -156,10 +219,11 @@ export function useVoiceRecognition({ onResult, onError }: UseVoiceRecognitionOp
       };
 
       mediaRecorder.onstop = async () => {
+        cleanupAudioResources();
+        
         try {
           const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
           
-          // Convert to base64
           const reader = new FileReader();
           reader.onloadend = async () => {
             try {
@@ -172,7 +236,6 @@ export function useVoiceRecognition({ onResult, onError }: UseVoiceRecognitionOp
               if (error) throw error;
 
               if (data.text) {
-                // Store in localStorage
                 const voiceHistory = JSON.parse(localStorage.getItem('taskly-voice-history') || '[]');
                 voiceHistory.push({ text: data.text, timestamp: new Date().toISOString() });
                 localStorage.setItem('taskly-voice-history', JSON.stringify(voiceHistory.slice(-10)));
@@ -202,88 +265,82 @@ export function useVoiceRecognition({ onResult, onError }: UseVoiceRecognitionOp
           });
         }
 
-        // Clean up
-        stream.getTracks().forEach(track => track.stop());
         setIsListening(false);
       };
 
-      // Auto-stop after 10 seconds
+      // Reduced timeout to 6 seconds for better UX
       timeoutRef.current = setTimeout(() => {
         if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
           mediaRecorderRef.current.stop();
         }
-      }, 10000);
+      }, 6000);
 
       mediaRecorder.start();
     } catch (error) {
       const errorMessage = `Microphone access denied: ${error.message}`;
       onError?.(errorMessage);
       setIsListening(false);
+      cleanupAudioResources();
       toast({
         title: "Microphone access denied",
         description: "Please allow microphone access to use voice features",
         variant: "destructive",
       });
     }
-  }, [onResult, onError]);
+  }, [onResult, onError, setupVoiceActivityDetection, cleanupAudioResources]);
+
+  useEffect(() => {
+    const initializeSupportCheck = async () => {
+      console.log('🚀 Initializing voice recognition support check...');
+      try {
+        const support = await checkBrowserSupport();
+        setSupportStatus(support);
+        setIsSupported(support.isSupported);
+        console.log('✅ Initial support check complete:', support);
+      } catch (error) {
+        console.error('❌ Error checking browser support:', error);
+        setIsSupported(false);
+        setSupportStatus({
+          isSupported: false,
+          reason: 'Error checking browser capabilities',
+          canUseServerFallback: false,
+          hasNativeSupport: false,
+          hasMediaRecorder: false,
+          permissionStatus: 'unknown'
+        });
+      }
+    };
+
+    initializeSupportCheck();
+  }, [checkBrowserSupport]);
 
   const startListening = useCallback(async () => {
     console.log('🎙️ Starting voice recognition...');
     
-    // Check browser support when user actually tries to use voice
     const support = await checkBrowserSupport();
     setSupportStatus(support);
     console.log('🔍 Current support status:', support);
 
+    // Always prefer server fallback for better reliability and auto-stop
+    if (support.canUseServerFallback) {
+      console.log('📡 Using server voice recognition with voice activity detection');
+      setUseServerFallback(true);
+      await startServerVoiceRecognition();
+      return;
+    }
+
     if (!support.isSupported) {
-      if (support.canUseServerFallback) {
-        console.log('📡 Using server fallback for voice recognition');
-        setUseServerFallback(true);
-        toast({
-          title: "Using server voice recognition",
-          description: support.reason + ". Falling back to server transcription.",
-        });
-        await startServerVoiceRecognition();
-        return;
-      } else {
-        console.log('❌ Voice recognition not supported, no fallback available');
-        onError?.(support.reason || "Voice recognition not supported");
-        toast({
-          title: "Voice not supported",
-          description: support.reason + ". Please use the type option instead.",
-          variant: "destructive",
-        });
-        return;
-      }
+      console.log('❌ Voice recognition not supported, no fallback available');
+      onError?.(support.reason || "Voice recognition not supported");
+      toast({
+        title: "Voice not supported",
+        description: support.reason + ". Please use the type option instead.",
+        variant: "destructive",
+      });
+      return;
     }
 
-    // Try native Speech Recognition first
-    console.log('🎤 Attempting to access microphone for native recognition...');
-    try {
-      await navigator.mediaDevices.getUserMedia({ audio: true });
-      console.log('✅ Microphone access granted');
-    } catch (error) {
-      console.log('❌ Microphone access denied:', error);
-      if (support.canUseServerFallback) {
-        console.log('📡 Falling back to server voice recognition');
-        setUseServerFallback(true);
-        toast({
-          title: "Using server voice recognition",
-          description: "Microphone permission required for native voice recognition. Using server fallback.",
-        });
-        await startServerVoiceRecognition();
-        return;
-      } else {
-        onError?.("Microphone access denied");
-        toast({
-          title: "Microphone access denied",
-          description: "Please allow microphone access or use the type option instead.",
-          variant: "destructive",
-        });
-        return;
-      }
-    }
-
+    // Fallback to native if server isn't available
     console.log('🚀 Starting native speech recognition...');
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
@@ -296,13 +353,12 @@ export function useVoiceRecognition({ onResult, onError }: UseVoiceRecognitionOp
       console.log('🎙️ Native speech recognition started');
       setIsListening(true);
       setUseServerFallback(false);
-      // Auto-stop after 5 seconds of no speech
       timeoutRef.current = setTimeout(() => {
         if (recognitionRef.current) {
           console.log('⏰ Auto-stopping due to timeout');
           recognitionRef.current.stop();
         }
-      }, 5000);
+      }, 4000);
     };
 
     recognition.onresult = (event) => {
@@ -312,34 +368,20 @@ export function useVoiceRecognition({ onResult, onError }: UseVoiceRecognitionOp
       const transcript = event.results[0][0].transcript;
       console.log('✅ Speech recognition result:', transcript);
       
-      // Store in localStorage
       const voiceHistory = JSON.parse(localStorage.getItem('taskly-voice-history') || '[]');
       voiceHistory.push({ text: transcript, timestamp: new Date().toISOString() });
-      localStorage.setItem('taskly-voice-history', JSON.stringify(voiceHistory.slice(-10))); // Keep last 10
+      localStorage.setItem('taskly-voice-history', JSON.stringify(voiceHistory.slice(-10)));
       
       onResult(transcript);
       setIsListening(false);
     };
 
-    recognition.onerror = async (event) => {
+    recognition.onerror = (event) => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
 
       console.log('❌ Native speech recognition error:', event.error);
-
-      // If native recognition fails and server fallback is possible, use it
-      if (support.canUseServerFallback && event.error !== 'aborted') {
-        console.log('📡 Switching to server fallback due to error');
-        setUseServerFallback(true);
-        toast({
-          title: "Switching to server voice recognition",
-          description: "Native voice recognition failed. Using server fallback.",
-        });
-        await startServerVoiceRecognition();
-        return;
-      }
-
       const errorMessage = `Speech recognition error: ${event.error}`;
       onError?.(errorMessage);
       setIsListening(false);
@@ -364,6 +406,7 @@ export function useVoiceRecognition({ onResult, onError }: UseVoiceRecognitionOp
   }, [onResult, onError, checkBrowserSupport, startServerVoiceRecognition]);
 
   const stopListening = useCallback(() => {
+    console.log('🛑 Manually stopping voice recognition');
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
@@ -373,8 +416,9 @@ export function useVoiceRecognition({ onResult, onError }: UseVoiceRecognitionOp
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       mediaRecorderRef.current.stop();
     }
+    cleanupAudioResources();
     setIsListening(false);
-  }, []);
+  }, [cleanupAudioResources]);
 
   return {
     isListening,
@@ -384,6 +428,7 @@ export function useVoiceRecognition({ onResult, onError }: UseVoiceRecognitionOp
     supportStatus,
     useServerFallback,
     checkBrowserSupport,
+    audioLevel,
   };
 }
 
