@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Mic, Type } from 'lucide-react';
+import { Mic, Keyboard } from 'lucide-react';
 
 interface ModeSwitchProps {
   defaultMode?: 'speaking' | 'typing';
@@ -20,7 +20,7 @@ export function ModeSwitch({ defaultMode = 'speaking', onModeChange }: ModeSwitc
   return (
     <div className="flex items-center gap-3 p-4 bg-card/50 backdrop-blur-sm rounded-2xl border border-border/30 shadow-lg">
       <div className="flex items-center gap-2">
-        <Type className="h-4 w-4 text-muted-foreground" />
+        <Keyboard className="h-4 w-4 text-muted-foreground" />
         <Label htmlFor="mode-switch" className="text-sm font-medium">
           Typing
         </Label>
