@@ -103,25 +103,15 @@ export function AnimatedRobot({ isListening, onClick, className }: AnimatedRobot
           </div>
         )}
         
-        {/* Enhanced listening indicator with pulsing glow */}
+        {/* Listening indicator - enhanced visibility */}
         {isListening && (
-          <>
-            {/* Pulsing glow around robot */}
-            <div className="absolute inset-0 animate-pulse">
-              <div className="w-full h-full bg-gradient-to-r from-primary/30 via-blue-400/30 to-primary/30 rounded-full blur-xl" />
+          <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2">
+            <div className="flex gap-1 px-5 py-3 bg-primary/25 rounded-full backdrop-blur-sm border border-primary/20">
+              <div className="w-2 h-7 bg-primary animate-pulse rounded-full" />
+              <div className="w-2 h-7 bg-primary animate-pulse rounded-full" style={{ animationDelay: '0.2s' }} />
+              <div className="w-2 h-7 bg-primary animate-pulse rounded-full" style={{ animationDelay: '0.4s' }} />
             </div>
-            
-            {/* Sound wave indicator */}
-            <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2">
-              <div className="flex gap-1 px-6 py-4 bg-gradient-to-r from-primary/30 to-blue-500/30 rounded-full backdrop-blur-md border border-primary/30 shadow-lg">
-                <div className="w-2 h-8 bg-primary animate-pulse rounded-full" />
-                <div className="w-2 h-6 bg-primary animate-pulse rounded-full" style={{ animationDelay: '0.1s' }} />
-                <div className="w-2 h-10 bg-primary animate-pulse rounded-full" style={{ animationDelay: '0.2s' }} />
-                <div className="w-2 h-6 bg-primary animate-pulse rounded-full" style={{ animationDelay: '0.3s' }} />
-                <div className="w-2 h-8 bg-primary animate-pulse rounded-full" style={{ animationDelay: '0.4s' }} />
-              </div>
-            </div>
-          </>
+          </div>
         )}
       </div>
     </div>

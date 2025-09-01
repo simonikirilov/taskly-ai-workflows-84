@@ -87,22 +87,13 @@ export default {
 					to: {
 						height: '0'
 					}
-				},
-				'float-slow': {
-					'0%, 100%': {
-						transform: 'translateY(0px)'
-					},
-					'50%': {
-						transform: 'translateY(-10px)'
-					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
 				'breathe': 'breathe 4s ease-in-out infinite',
-				'float': 'float 6s ease-in-out infinite',
-				'float-slow': 'float-slow 4s ease-in-out infinite'
+				'float': 'float 6s ease-in-out infinite'
 			},
 			backgroundImage: {
 				'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
