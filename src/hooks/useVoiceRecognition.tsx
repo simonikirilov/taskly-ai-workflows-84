@@ -8,31 +8,25 @@ interface UseVoiceRecognitionOptions {
 
 export function useVoiceRecognition({ onResult, onError }: UseVoiceRecognitionOptions) {
   const [isListening, setIsListening] = useState(false);
-  const [isSupported, setIsSupported] = useState(true);
+  const [isSupported, setIsSupported] = useState(() => {
+    // Check browser compatibility on initialization
+    return ('webkitSpeechRecognition' in window) || ('SpeechRecognition' in window);
+  });
   const recognitionRef = useRef<any>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const startListening = useCallback(async () => {
-    // Request microphone permissions first
-    try {
-      await navigator.mediaDevices.getUserMedia({ audio: true });
-    } catch (error) {
-      toast({
-        title: "Microphone access required",
-        description: "Please allow microphone access to use voice commands.",
-        variant: "destructive",
-      });
-      onError?.("Microphone access denied");
+    // Check browser support first
+    if (!isSupported) {
+      onError?.("Voice recognition not supported in this browser");
       return;
     }
 
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      setIsSupported(false);
-      toast({
-        title: "Voice recognition not supported",
-        description: "Your browser doesn't support voice recognition.",
-        variant: "destructive",
-      });
+    // Request microphone permissions
+    try {
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (error) {
+      onError?.("Microphone access denied");
       return;
     }
 

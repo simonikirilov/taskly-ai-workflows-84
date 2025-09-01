@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Mic, Video, MessageCircle } from 'lucide-react';
+import { Mic, Video, MessageCircle, Type } from 'lucide-react';
 import { useVoiceRecognition } from '@/hooks/useVoiceRecognition';
 import { useScreenRecording } from '@/hooks/useScreenRecording';
 import { useTextToSpeech } from '@/hooks/useTextToSpeech';
@@ -8,6 +8,7 @@ import { RecordingIndicator } from '@/components/RecordingIndicator';
 import { CopilotChat } from './CopilotChat';
 import { ConfirmationDialog } from '@/components/ConfirmationDialog';
 import { RobotFeedback } from '@/components/RobotFeedback';
+import { TextCommandInput } from '@/components/TextCommandInput';
 
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -25,6 +26,7 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, voiceHistory = [] }: T
   const [showSpeakButton, setShowSpeakButton] = useState(false);
   const [showCopilotChat, setShowCopilotChat] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [showTextInput, setShowTextInput] = useState(false);
   const [pendingCommand, setPendingCommand] = useState<{ text: string; task: string } | null>(null);
   const [feedback, setFeedback] = useState<{ message: string; type: 'success' | 'error' | 'thinking' | 'listening'; visible: boolean }>({
     message: '',
@@ -43,7 +45,7 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, voiceHistory = [] }: T
 
   const { speak } = useTextToSpeech();
 
-  const { isListening, startListening, stopListening } = useVoiceRecognition({
+  const { isListening, isSupported: voiceSupported, startListening, stopListening } = useVoiceRecognition({
     onResult: (transcript) => {
       setLastCommand(transcript);
       setFeedback({ message: 'Processing command...', type: 'thinking', visible: true });
@@ -66,7 +68,13 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, voiceHistory = [] }: T
     },
     onError: (error) => {
       console.error('Voice recognition error:', error);
-      setFeedback({ message: "Didn't catch that", type: 'error', visible: true });
+      if (error.includes('not supported')) {
+        setFeedback({ message: "Try typing instead", type: 'error', visible: true });
+        setShowTextInput(true);
+      } else {
+        setFeedback({ message: "Try typing instead", type: 'error', visible: true });
+        setShowTextInput(true);
+      }
     }
   });
 
@@ -90,6 +98,13 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, voiceHistory = [] }: T
   });
 
   const handleBotClick = () => {
+    if (!voiceSupported) {
+      // If voice not supported, show text input
+      setShowTextInput(true);
+      setFeedback({ message: 'Type your command', type: 'thinking', visible: true });
+      return;
+    }
+
     if (isListening) {
       stopListening();
       setFeedback({ message: '', type: 'listening', visible: false });
@@ -97,6 +112,26 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, voiceHistory = [] }: T
       startListening();
       setFeedback({ message: 'Listening...', type: 'listening', visible: true });
     }
+  };
+
+  const handleTextCommand = (command: string) => {
+    setFeedback({ message: 'Processing command...', type: 'thinking', visible: true });
+    
+    // Same logic as voice commands
+    if (command.length < 5) {
+      setPendingCommand({ text: command, task: `Create task: "${command}"` });
+      setShowConfirmation(true);
+      setFeedback({ message: 'Please confirm...', type: 'error', visible: true });
+    } else {
+      onVoiceCommand(command);
+      setFeedback({ message: 'Task created!', type: 'success', visible: true });
+      speak('Task created successfully');
+    }
+    
+    toast({
+      title: "Command received",
+      description: `"${command}"`,
+    });
   };
 
   const handleConfirmTask = () => {
@@ -177,7 +212,7 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, voiceHistory = [] }: T
         
         {showSpeakButton && (
           <Button
-            onClick={handleBotClick}
+            onClick={voiceSupported ? handleBotClick : () => setShowTextInput(true)}
             size="default"
             variant="outline"
             className={cn(
@@ -187,8 +222,17 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, voiceHistory = [] }: T
                 : "bg-card/30 hover:bg-card/50 hover:border-border/50"
             )}
           >
-            <Mic className={cn("h-4 w-4 mr-2", isListening && "text-primary animate-pulse")} />
-            {isListening ? "Listening..." : "Speak"}
+            {voiceSupported ? (
+              <>
+                <Mic className={cn("h-4 w-4 mr-2", isListening && "text-primary animate-pulse")} />
+                {isListening ? "Listening..." : "Speak"}
+              </>
+            ) : (
+              <>
+                <Type className="h-4 w-4 mr-2" />
+                Type
+              </>
+            )}
           </Button>
         )}
       </div>
@@ -220,6 +264,13 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, voiceHistory = [] }: T
         onConfirm={handleConfirmTask}
         transcribedText={pendingCommand?.text || ''}
         suggestedTask={pendingCommand?.task || ''}
+      />
+
+      <TextCommandInput
+        isOpen={showTextInput}
+        onClose={() => setShowTextInput(false)}
+        onSubmit={handleTextCommand}
+        placeholder="Type your command, e.g., 'Create a task to call John tomorrow'"
       />
       </div>
     </>
