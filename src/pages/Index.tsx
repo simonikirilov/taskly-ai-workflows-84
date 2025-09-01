@@ -6,6 +6,7 @@ import { AppSidebar } from "@/components/Sidebar";
 import { TopAppBar } from "@/components/TopAppBar";
 import { TasklyBot } from "@/components/TasklyBot";
 import { WelcomeSection } from "@/components/WelcomeSection";
+import { TodaysTasks } from "@/components/TodaysTasks";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { addTaskForUser } from "@/utils/taskUtils";
@@ -90,6 +91,9 @@ const Index = () => {
               onRecordFlow={handleRecordFlow}
               voiceHistory={voiceHistory}
             />
+
+            {/* Today's Tasks */}
+            <TodaysTasks refreshTrigger={refreshTrigger} />
           </div>
         </SidebarInset>
       </div>

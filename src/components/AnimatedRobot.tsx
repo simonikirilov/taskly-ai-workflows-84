@@ -11,6 +11,7 @@ interface AnimatedRobotProps {
 export function AnimatedRobot({ isListening, onClick, className }: AnimatedRobotProps) {
   const [isBlinking, setIsBlinking] = useState(false);
   const [isSmiling, setIsSmiling] = useState(false);
+  const [eyesWide, setEyesWide] = useState(false);
 
   // Blinking animation every 5-7 seconds
   useEffect(() => {
@@ -22,12 +23,18 @@ export function AnimatedRobot({ isListening, onClick, className }: AnimatedRobot
     return () => clearInterval(blinkInterval);
   }, []);
 
-  // Smile animation on click or task completion
+  // Enhanced animations when listening
   useEffect(() => {
     if (isListening) {
       setIsSmiling(true);
-      const timer = setTimeout(() => setIsSmiling(false), 1500);
+      setEyesWide(true);
+      const timer = setTimeout(() => {
+        setIsSmiling(false);
+        setEyesWide(false);
+      }, 1500);
       return () => clearTimeout(timer);
+    } else {
+      setEyesWide(false);
     }
   }, [isListening]);
 
@@ -75,13 +82,23 @@ export function AnimatedRobot({ isListening, onClick, className }: AnimatedRobot
           <Bot className="h-28 w-28 text-white" />
         </div>
         
-        {/* Eyes blinking overlay */}
-        {isBlinking && (
+        {/* Eyes animations overlay */}
+        {(isBlinking || eyesWide) && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="w-full max-w-[420px] relative">
-              {/* This would be positioned over the robot's eyes - adjust positioning as needed */}
-              <div className="absolute top-[35%] left-[40%] w-2 h-1 bg-background rounded-full opacity-90" />
-              <div className="absolute top-[35%] right-[40%] w-2 h-1 bg-background rounded-full opacity-90" />
+              {/* Eyes - blinking or wide when listening */}
+              <div className={cn(
+                "absolute top-[35%] left-[40%] rounded-full transition-all duration-200",
+                isBlinking ? "w-2 h-1 bg-background opacity-90" : 
+                eyesWide ? "w-4 h-4 bg-primary/20 border-2 border-primary/40" :
+                "w-3 h-3 bg-primary/10 border border-primary/20"
+              )} />
+              <div className={cn(
+                "absolute top-[35%] right-[40%] rounded-full transition-all duration-200",
+                isBlinking ? "w-2 h-1 bg-background opacity-90" : 
+                eyesWide ? "w-4 h-4 bg-primary/20 border-2 border-primary/40" :
+                "w-3 h-3 bg-primary/10 border border-primary/20"
+              )} />
             </div>
           </div>
         )}

@@ -10,6 +10,7 @@ export function useVoiceRecognition({ onResult, onError }: UseVoiceRecognitionOp
   const [isListening, setIsListening] = useState(false);
   const [isSupported, setIsSupported] = useState(true);
   const recognitionRef = useRef<any>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const startListening = useCallback(async () => {
     // Request microphone permissions first
@@ -44,10 +45,24 @@ export function useVoiceRecognition({ onResult, onError }: UseVoiceRecognitionOp
 
     recognition.onstart = () => {
       setIsListening(true);
+      // Auto-stop after 5 seconds of no speech
+      timeoutRef.current = setTimeout(() => {
+        if (recognitionRef.current) {
+          recognitionRef.current.stop();
+        }
+      }, 5000);
     };
 
     recognition.onresult = (event) => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
       const transcript = event.results[0][0].transcript;
+      // Store in localStorage
+      const voiceHistory = JSON.parse(localStorage.getItem('taskly-voice-history') || '[]');
+      voiceHistory.push({ text: transcript, timestamp: new Date().toISOString() });
+      localStorage.setItem('taskly-voice-history', JSON.stringify(voiceHistory.slice(-10))); // Keep last 10
+      
       onResult(transcript);
       setIsListening(false);
     };
@@ -64,6 +79,9 @@ export function useVoiceRecognition({ onResult, onError }: UseVoiceRecognitionOp
     };
 
     recognition.onend = () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
       setIsListening(false);
     };
 
@@ -72,6 +90,9 @@ export function useVoiceRecognition({ onResult, onError }: UseVoiceRecognitionOp
   }, [onResult, onError]);
 
   const stopListening = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
     if (recognitionRef.current) {
       recognitionRef.current.stop();
     }

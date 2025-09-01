@@ -3,8 +3,11 @@ import { Button } from '@/components/ui/button';
 import { Mic, Video, MessageCircle } from 'lucide-react';
 import { useVoiceRecognition } from '@/hooks/useVoiceRecognition';
 import { useScreenRecording } from '@/hooks/useScreenRecording';
+import { useTextToSpeech } from '@/hooks/useTextToSpeech';
 import { RecordingIndicator } from '@/components/RecordingIndicator';
 import { CopilotChat } from './CopilotChat';
+import { ConfirmationDialog } from '@/components/ConfirmationDialog';
+import { RobotFeedback } from '@/components/RobotFeedback';
 
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -21,6 +24,13 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, voiceHistory = [] }: T
   const [robotImageUrl, setRobotImageUrl] = useState<string>('/public/assets/robot.png'); // Will be updated when user uploads
   const [showSpeakButton, setShowSpeakButton] = useState(false);
   const [showCopilotChat, setShowCopilotChat] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [pendingCommand, setPendingCommand] = useState<{ text: string; task: string } | null>(null);
+  const [feedback, setFeedback] = useState<{ message: string; type: 'success' | 'error' | 'thinking' | 'listening'; visible: boolean }>({
+    message: '',
+    type: 'listening',
+    visible: false
+  });
 
   // Load speak button preference
   useEffect(() => {
@@ -31,10 +41,24 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, voiceHistory = [] }: T
     }
   }, []);
 
+  const { speak } = useTextToSpeech();
+
   const { isListening, startListening, stopListening } = useVoiceRecognition({
     onResult: (transcript) => {
       setLastCommand(transcript);
-      onVoiceCommand(transcript);
+      setFeedback({ message: 'Processing command...', type: 'thinking', visible: true });
+      
+      // Simple confidence check - if transcript is very short or unclear, ask for confirmation
+      if (transcript.length < 5 || transcript.toLowerCase().includes('uh') || transcript.toLowerCase().includes('um')) {
+        setPendingCommand({ text: transcript, task: `Create task: "${transcript}"` });
+        setShowConfirmation(true);
+        setFeedback({ message: 'Not sure about that...', type: 'error', visible: true });
+      } else {
+        onVoiceCommand(transcript);
+        setFeedback({ message: 'Task created!', type: 'success', visible: true });
+        speak('Task created successfully');
+      }
+      
       toast({
         title: "Voice command received",
         description: `"${transcript}"`,
@@ -42,6 +66,7 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, voiceHistory = [] }: T
     },
     onError: (error) => {
       console.error('Voice recognition error:', error);
+      setFeedback({ message: "Didn't catch that", type: 'error', visible: true });
     }
   });
 
@@ -67,9 +92,27 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, voiceHistory = [] }: T
   const handleBotClick = () => {
     if (isListening) {
       stopListening();
+      setFeedback({ message: '', type: 'listening', visible: false });
     } else {
       startListening();
+      setFeedback({ message: 'Listening...', type: 'listening', visible: true });
     }
+  };
+
+  const handleConfirmTask = () => {
+    if (pendingCommand) {
+      onVoiceCommand(pendingCommand.text);
+      setFeedback({ message: 'Task created!', type: 'success', visible: true });
+      speak('Task created successfully');
+      setShowConfirmation(false);
+      setPendingCommand(null);
+    }
+  };
+
+  const handleCancelTask = () => {
+    setShowConfirmation(false);
+    setPendingCommand(null);
+    setFeedback({ message: 'Cancelled', type: 'error', visible: true });
   };
 
   const handleRecordFlow = () => {
@@ -91,11 +134,19 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, voiceHistory = [] }: T
       
       <div className="flex flex-col items-center relative -mt-8 md:-mt-12">
         {/* Animated Robot with Alive Features */}
-        <AnimatedRobot 
-          isListening={isListening}
-          onClick={handleBotClick}
-          className="mb-6"
-        />
+        <div className="relative">
+          <AnimatedRobot 
+            isListening={isListening}
+            onClick={handleBotClick}
+            className="mb-6"
+          />
+          <RobotFeedback
+            message={feedback.message}
+            type={feedback.type}
+            isVisible={feedback.visible}
+            onHide={() => setFeedback(prev => ({ ...prev, visible: false }))}
+          />
+        </div>
 
       {/* Action Buttons Row - Closer to robot */}
       <div className="flex gap-3 w-full justify-center max-w-md mx-auto mt-6">
@@ -161,6 +212,14 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, voiceHistory = [] }: T
       <CopilotChat 
         isOpen={showCopilotChat}
         onClose={() => setShowCopilotChat(false)}
+      />
+
+      <ConfirmationDialog
+        isOpen={showConfirmation}
+        onClose={handleCancelTask}
+        onConfirm={handleConfirmTask}
+        transcribedText={pendingCommand?.text || ''}
+        suggestedTask={pendingCommand?.task || ''}
       />
       </div>
     </>
