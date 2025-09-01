@@ -31,9 +31,6 @@ export function ModeSwitch({ defaultMode = 'speaking', onModeChange }: ModeSwitc
       />
       
       <div className="flex items-center gap-2">
-        <Label htmlFor="mode-switch" className="text-sm font-medium">
-          Speaking
-        </Label>
         <Mic className="h-4 w-4 text-muted-foreground" />
       </div>
     </div>
