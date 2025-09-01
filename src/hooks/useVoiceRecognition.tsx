@@ -193,6 +193,10 @@ export function useVoiceRecognition({ onResult, onError, onVolumeChange }: UseVo
       setIsListening(true);
       audioChunksRef.current = [];
 
+      // Check if we have permission first
+      const permissionStatus = await navigator.permissions?.query({ name: 'microphone' as PermissionName });
+      console.log('🎤 Current microphone permission:', permissionStatus?.state || 'unknown');
+
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           sampleRate: 16000,
@@ -277,15 +281,32 @@ export function useVoiceRecognition({ onResult, onError, onVolumeChange }: UseVo
 
       mediaRecorder.start();
     } catch (error) {
+      console.error('🚫 Microphone access error:', error);
       const errorMessage = `Microphone access denied: ${error.message}`;
       onError?.(errorMessage);
       setIsListening(false);
       cleanupAudioResources();
-      toast({
-        title: "Microphone access denied",
-        description: "Please allow microphone access to use voice features",
-        variant: "destructive",
-      });
+      
+      // More helpful error message based on the error type
+      if (error.name === 'NotAllowedError') {
+        toast({
+          title: "Microphone Permission Needed",
+          description: "Please click the microphone icon in your browser's address bar and allow access, then try again.",
+          variant: "destructive",
+        });
+      } else if (error.name === 'NotFoundError') {
+        toast({
+          title: "No Microphone Found",
+          description: "Please connect a microphone and refresh the page.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Microphone access denied",
+          description: "Please allow microphone access to use voice features. Check your browser settings.",
+          variant: "destructive",
+        });
+      }
     }
   }, [onResult, onError, setupVoiceActivityDetection, cleanupAudioResources]);
 
