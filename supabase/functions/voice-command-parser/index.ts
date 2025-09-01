@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+const deepseekApiKey = Deno.env.get('DEEPSEEK_API_KEY');
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -29,14 +29,14 @@ serve(async (req) => {
 
     console.log('Processing voice command:', command);
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch('https://api.deepseek.com/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
+        'Authorization': `Bearer ${deepseekApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'deepseek-chat',
         messages: [
           {
             role: 'system',
@@ -67,7 +67,7 @@ Only respond with the JSON object, no other text.`
     });
 
     if (!response.ok) {
-      console.error('OpenAI API error:', await response.text());
+      console.error('DeepSeek API error:', await response.text());
       throw new Error('Failed to parse voice command');
     }
 

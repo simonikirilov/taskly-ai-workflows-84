@@ -335,33 +335,7 @@ export function useVoiceRecognition({ onResult, onError, onVolumeChange }: UseVo
     initializeSupportCheck();
   }, [checkBrowserSupport]);
 
-  const startListening = useCallback(async () => {
-    console.log('🎙️ Starting voice recognition...');
-    
-    const support = await checkBrowserSupport();
-    setSupportStatus(support);
-    console.log('🔍 Current support status:', support);
-
-    // Always prefer server fallback for better reliability and auto-stop
-    if (support.canUseServerFallback) {
-      console.log('📡 Using server voice recognition with voice activity detection');
-      setUseServerFallback(true);
-      await startServerVoiceRecognition();
-      return;
-    }
-
-    if (!support.isSupported) {
-      console.log('❌ Voice recognition not supported, no fallback available');
-      onError?.(support.reason || "Voice recognition not supported");
-      toast({
-        title: "Voice not supported",
-        description: support.reason + ". Please use the type option instead.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Fallback to native if server isn't available
+  const startNativeSpeechRecognition = useCallback(async () => {
     console.log('🚀 Starting native speech recognition...');
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
@@ -424,7 +398,39 @@ export function useVoiceRecognition({ onResult, onError, onVolumeChange }: UseVo
     recognitionRef.current = recognition;
     setIsSupported(true);
     recognition.start();
-  }, [onResult, onError, checkBrowserSupport, startServerVoiceRecognition]);
+  }, [onResult, onError]);
+
+  const startListening = useCallback(async () => {
+    console.log('🎙️ Starting voice recognition...');
+    
+    const support = await checkBrowserSupport();
+    setSupportStatus(support);
+    console.log('🔍 Current support status:', support);
+
+    // Prefer native browser speech recognition since server fallback uses OpenAI
+    if (support.hasNativeSupport) {
+      console.log('🚀 Using native browser speech recognition');
+      setUseServerFallback(false);
+      await startNativeSpeechRecognition();
+      return;
+    }
+
+    // Only use server fallback if native speech recognition is not available
+    if (support.canUseServerFallback && !support.hasNativeSupport) {
+      console.log('📡 Using server voice recognition with voice activity detection');
+      setUseServerFallback(true);
+      await startServerVoiceRecognition();
+      return;
+    }
+
+    console.log('❌ Voice recognition not supported');
+    onError?.(support.reason || "Voice recognition not supported");  
+    toast({
+      title: "Voice not supported",
+      description: support.reason + ". Please use the type option instead.",
+      variant: "destructive",
+    });
+  }, [onResult, onError, checkBrowserSupport, startServerVoiceRecognition, startNativeSpeechRecognition]);
 
   const stopListening = useCallback(() => {
     console.log('🛑 Manually stopping voice recognition');
