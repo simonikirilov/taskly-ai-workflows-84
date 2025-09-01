@@ -27,6 +27,7 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, voiceHistory = [] }: T
   const [showCopilotChat, setShowCopilotChat] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showTextInput, setShowTextInput] = useState(false);
+  const [isRobotExpanded, setIsRobotExpanded] = useState(false);
   const [pendingCommand, setPendingCommand] = useState<{ text: string; task: string } | null>(null);
   const [feedback, setFeedback] = useState<{ message: string; type: 'success' | 'error' | 'thinking' | 'listening'; visible: boolean }>({
     message: '',
@@ -55,10 +56,11 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, voiceHistory = [] }: T
         setPendingCommand({ text: transcript, task: `Create task: "${transcript}"` });
         setShowConfirmation(true);
         setFeedback({ message: 'Not sure about that...', type: 'error', visible: true });
+        speak('I\'m not sure about that. Please confirm.');
       } else {
         onVoiceCommand(transcript);
         setFeedback({ message: 'Task created!', type: 'success', visible: true });
-        speak('Task created successfully');
+        speak('Task added to today\'s tasks');
       }
       
       toast({
@@ -68,13 +70,8 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, voiceHistory = [] }: T
     },
     onError: (error) => {
       console.error('Voice recognition error:', error);
-      if (error.includes('not supported')) {
-        setFeedback({ message: "Try typing instead", type: 'error', visible: true });
-        setShowTextInput(true);
-      } else {
-        setFeedback({ message: "Try typing instead", type: 'error', visible: true });
-        setShowTextInput(true);
-      }
+      setFeedback({ message: "Sorry, I didn't catch that. Try again.", type: 'error', visible: true });
+      speak('Sorry, I didn\'t catch that. Try again.');
     }
   });
 
@@ -98,20 +95,34 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, voiceHistory = [] }: T
   });
 
   const handleBotClick = () => {
+    if (!isRobotExpanded) {
+      // First click expands the robot
+      setIsRobotExpanded(true);
+      setFeedback({ message: 'Choose your input method', type: 'thinking', visible: true });
+    }
+  };
+
+  const handleSpeakOption = () => {
     if (!voiceSupported) {
-      // If voice not supported, show text input
-      setShowTextInput(true);
-      setFeedback({ message: 'Type your command', type: 'thinking', visible: true });
+      setFeedback({ message: 'Voice not supported on this device', type: 'error', visible: true });
+      speak('Voice not supported on this device');
       return;
     }
+    
+    setIsRobotExpanded(false);
+    startListening();
+    setFeedback({ message: 'Listening...', type: 'listening', visible: true });
+  };
 
-    if (isListening) {
-      stopListening();
-      setFeedback({ message: '', type: 'listening', visible: false });
-    } else {
-      startListening();
-      setFeedback({ message: 'Listening...', type: 'listening', visible: true });
-    }
+  const handleTypeOption = () => {
+    setIsRobotExpanded(false);
+    setShowTextInput(true);
+    setFeedback({ message: 'Type your command', type: 'thinking', visible: true });
+  };
+
+  const collapseRobot = () => {
+    setIsRobotExpanded(false);
+    setFeedback({ message: '', type: 'thinking', visible: false });
   };
 
   const handleTextCommand = (command: string) => {
@@ -122,10 +133,11 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, voiceHistory = [] }: T
       setPendingCommand({ text: command, task: `Create task: "${command}"` });
       setShowConfirmation(true);
       setFeedback({ message: 'Please confirm...', type: 'error', visible: true });
+      speak('Please confirm this task.');
     } else {
       onVoiceCommand(command);
       setFeedback({ message: 'Task created!', type: 'success', visible: true });
-      speak('Task created successfully');
+      speak('Task added to today\'s tasks');
     }
     
     toast({
@@ -138,7 +150,7 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, voiceHistory = [] }: T
     if (pendingCommand) {
       onVoiceCommand(pendingCommand.text);
       setFeedback({ message: 'Task created!', type: 'success', visible: true });
-      speak('Task created successfully');
+      speak('Task added to today\'s tasks');
       setShowConfirmation(false);
       setPendingCommand(null);
     }
@@ -172,9 +184,30 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, voiceHistory = [] }: T
         <div className="relative">
           <AnimatedRobot 
             isListening={isListening}
+            isExpanded={isRobotExpanded}
             onClick={handleBotClick}
             className="mb-6"
-          />
+          >
+            {/* Action buttons overlay when expanded */}
+            <div className="flex gap-3 animate-scale-in">
+              <Button
+                onClick={handleSpeakOption}
+                size="lg"
+                variant="default"
+                className="h-14 px-6 text-lg font-medium rounded-2xl bg-gradient-to-r from-primary to-blue-500 hover:from-primary/90 hover:to-blue-500/90 shadow-lg shadow-primary/30"
+              >
+                🎤 Speak
+              </Button>
+              <Button
+                onClick={handleTypeOption}
+                size="lg"
+                variant="outline"
+                className="h-14 px-6 text-lg font-medium rounded-2xl border-2 border-primary/30 bg-background/80 hover:bg-background/90 shadow-lg"
+              >
+                ⌨️ Type
+              </Button>
+            </div>
+          </AnimatedRobot>
           <RobotFeedback
             message={feedback.message}
             type={feedback.type}
@@ -272,6 +305,14 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, voiceHistory = [] }: T
         onSubmit={handleTextCommand}
         placeholder="Type your command, e.g., 'Create a task to call John tomorrow'"
       />
+      
+      {/* Click outside to collapse robot */}
+      {isRobotExpanded && (
+        <div 
+          className="fixed inset-0 z-40 bg-black/20" 
+          onClick={collapseRobot}
+        />
+      )}
       </div>
     </>
   );
