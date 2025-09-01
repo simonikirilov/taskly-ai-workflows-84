@@ -12,12 +12,10 @@ import { AnimatedRobot } from './AnimatedRobot';
 interface TasklyBotProps {
   onVoiceCommand: (command: string) => void;
   onRecordFlow?: (recordingBlob?: Blob, duration?: string) => void;
-  suggestionCount?: number;
-  onShowSuggestions?: () => void;
   voiceHistory?: string[];
 }
 
-export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, onShowSuggestions, voiceHistory = [] }: TasklyBotProps) {
+export function TasklyBot({ onVoiceCommand, onRecordFlow, voiceHistory = [] }: TasklyBotProps) {
   const [lastCommand, setLastCommand] = useState<string>('');
   const [robotImageUrl, setRobotImageUrl] = useState<string>('/public/assets/robot.png'); // Will be updated when user uploads
   const [showSpeakButton, setShowSpeakButton] = useState(false);
@@ -147,28 +145,6 @@ export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, o
           </div>
         </div>
       )}
-
-      {/* Floating AI Suggestions Robot - Bottom Right */}
-      <button
-        onClick={onShowSuggestions}
-        className="fixed bottom-6 right-6 z-50 transition-all duration-300 hover:scale-105 animate-float-slow"
-        title="Click for AI Suggestions"
-      >
-        <div className="relative">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center backdrop-blur-sm border border-primary/20 shadow-lg">
-            <img 
-              src="/lovable-uploads/d9e422aa-ea2c-4619-8ac2-3818edd8bcb3.png"
-              alt="AI Suggestions"
-              className="w-12 h-12 object-contain"
-            />
-          </div>
-          {suggestionCount > 0 && (
-            <span className="absolute -top-1 -right-1 h-5 w-5 bg-gradient-to-r from-primary to-blue-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-lg animate-pulse">
-              {suggestionCount > 9 ? '9+' : suggestionCount}
-            </span>
-          )}
-        </div>
-      </button>
       </div>
     </>
   );

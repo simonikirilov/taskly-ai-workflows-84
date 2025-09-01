@@ -5,14 +5,12 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/Sidebar";
 import { TopAppBar } from "@/components/TopAppBar";
 import { TasklyBot } from "@/components/TasklyBot";
-import { AISuggestionsCards } from "@/components/AISuggestionsCards";
 import { WelcomeSection } from "@/components/WelcomeSection";
 import { useAuth } from "@/hooks/useAuth";
 
 const Index = () => {
   const { user, loading } = useAuth();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [showSuggestions, setShowSuggestions] = useState(false);
   const [voiceHistory, setVoiceHistory] = useState<string[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -60,14 +58,7 @@ const Index = () => {
             <TasklyBot 
               onVoiceCommand={handleVoiceCommand}
               onRecordFlow={handleRecordFlow}
-              suggestionCount={3}
-              onShowSuggestions={() => setShowSuggestions(true)}
               voiceHistory={voiceHistory}
-            />
-          
-            <AISuggestionsCards 
-              isVisible={showSuggestions}
-              onClose={() => setShowSuggestions(false)}
             />
           </div>
         </SidebarInset>
