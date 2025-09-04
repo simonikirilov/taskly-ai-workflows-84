@@ -8,7 +8,7 @@ import {
 import { AudioProcessor } from '../utils/audio';
 
 export class WebWhisperImplementation implements WhisperPlatformImplementation {
-  private pipe: any = null;
+  private whisperPipeline: any = null;
   private audioProcessor: AudioProcessor;
   private isInitialized = false;
   private isLoading = false;
@@ -23,7 +23,7 @@ export class WebWhisperImplementation implements WhisperPlatformImplementation {
     this.isLoading = true;
     try {
       // Initialize multilingual Whisper pipeline with Hugging Face transformers
-      this.pipe = await pipeline(
+      this.whisperPipeline = await pipeline(
         'automatic-speech-recognition',
         'onnx-community/whisper-base',
         { 
@@ -37,7 +37,7 @@ export class WebWhisperImplementation implements WhisperPlatformImplementation {
     } catch (error) {
       // Fallback to CPU if WebGPU fails
       try {
-        this.pipe = await pipeline(
+        this.whisperPipeline = await pipeline(
           'automatic-speech-recognition',
           'onnx-community/whisper-base',
           { device: 'cpu' }
@@ -127,7 +127,8 @@ export class WebWhisperImplementation implements WhisperPlatformImplementation {
 
       console.log('🎤 Pipeline config:', pipelineConfig);
 
-      const result = await this.pipe(audioObject, pipelineConfig);
+      // Call Whisper pipeline (not a stream pipe - this is HF transformers pipeline)
+      const result = await this.whisperPipeline(audioObject, pipelineConfig);
 
       console.log('🎤 Pipeline result:', result);
       return this.formatResult(result);
@@ -199,7 +200,7 @@ export class WebWhisperImplementation implements WhisperPlatformImplementation {
 
   async cleanup(): Promise<void> {
     this.audioProcessor.cleanup();
-    this.pipe = null;
+    this.whisperPipeline = null;
     this.isInitialized = false;
   }
 }
