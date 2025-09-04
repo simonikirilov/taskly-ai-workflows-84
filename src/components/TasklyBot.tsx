@@ -7,6 +7,7 @@ import { useAudioFeedback } from '@/hooks/useAudioFeedback';
 import { CopilotChat } from './CopilotChat';
 import { ConfirmationDialog } from '@/components/ConfirmationDialog';
 import { TextCommandInput } from '@/components/TextCommandInput';
+import { WhisperStatus } from './WhisperStatus';
 import { toast } from '@/hooks/use-toast';
 import { AnimatedRobot } from './AnimatedRobot';
 
@@ -33,7 +34,7 @@ export function TasklyBot({ onVoiceCommand, voiceHistory = [], mode }: TasklyBot
     }
   });
 
-  const { isListening, isSupported: voiceSupported, startListening, stopListening } = useVoiceRecognition({
+  const { isListening, isSupported: voiceSupported, startListening, stopListening, whisperStatus } = useVoiceRecognition({
     onResult: (transcript) => {
       setLastCommand(transcript);
       robotStateMachine.startSpeaking();
@@ -213,13 +214,14 @@ export function TasklyBot({ onVoiceCommand, voiceHistory = [], mode }: TasklyBot
           />
         </div>
 
-        {/* Mode Indicator */}
-        <div className="text-center mb-4">
+        {/* Mode Indicator and Whisper Status */}
+        <div className="text-center mb-4 space-y-2">
           <p className="text-sm text-muted-foreground">
             {mode === 'speaking' 
               ? (isListening ? '🎤 Listening... Tap to stop' : '🎤 Tap to speak') 
               : '💬 Tap to chat'}
           </p>
+          <WhisperStatus status={whisperStatus} isListening={isListening} />
         </div>
 
         {/* Voice History - Only show if there's history and not listening */}

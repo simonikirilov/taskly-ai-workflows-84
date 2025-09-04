@@ -1,10 +1,12 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
+import { useWhisperTranscription } from './useWhisperTranscription';
 
 interface UseVoiceRecognitionOptions {
   onResult: (transcript: string) => void;
   onError?: (error: string) => void;
   onVolumeChange?: (volume: number) => void;
+  useWhisper?: boolean;
 }
 
 interface BrowserSupportCheck {
@@ -13,10 +15,16 @@ interface BrowserSupportCheck {
   canUseServerFallback: boolean;
   hasNativeSupport: boolean;
   hasMediaRecorder: boolean;
+  whisperSupported: boolean;
   permissionStatus: 'unknown' | 'granted' | 'denied' | 'prompt';
 }
 
-export function useVoiceRecognition({ onResult, onError, onVolumeChange }: UseVoiceRecognitionOptions) {
+export function useVoiceRecognition({ 
+  onResult, 
+  onError, 
+  onVolumeChange, 
+  useWhisper = false 
+}: UseVoiceRecognitionOptions) {
   const [isListening, setIsListening] = useState(false);
   const [isSupported, setIsSupported] = useState<boolean | null>(null);
   const [supportStatus, setSupportStatus] = useState<BrowserSupportCheck | null>(null);
@@ -33,6 +41,17 @@ export function useVoiceRecognition({ onResult, onError, onVolumeChange }: UseVo
   const animationFrameRef = useRef<number | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
+  // Initialize Whisper transcription hook
+  const whisperTranscription = useWhisperTranscription({
+    onResult: (result) => {
+      onResult(result.text);
+    },
+    onError: (error) => {
+      console.error('Whisper transcription error:', error);
+      onError?.(error);
+    }
+  });
+
   const checkBrowserSupport = useCallback(async (): Promise<BrowserSupportCheck> => {
     console.log('🔍 Checking browser support for voice recognition...');
     
@@ -45,6 +64,8 @@ export function useVoiceRecognition({ onResult, onError, onVolumeChange }: UseVo
     });
     const hasMediaDevices = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
     const hasMediaRecorder = typeof MediaRecorder !== 'undefined';
+    const whisperSupported = whisperTranscription.isInitialized || 
+                             (typeof window !== 'undefined' && 'WebAssembly' in window);
     
     let permissionStatus: 'unknown' | 'granted' | 'denied' | 'prompt' = 'unknown';
     
@@ -63,6 +84,7 @@ export function useVoiceRecognition({ onResult, onError, onVolumeChange }: UseVo
       hasNativeSupport,
       hasMediaDevices,
       hasMediaRecorder,
+      whisperSupported,
       permissionStatus
     });
 
@@ -73,6 +95,7 @@ export function useVoiceRecognition({ onResult, onError, onVolumeChange }: UseVo
         canUseServerFallback: hasMediaDevices && hasMediaRecorder,
         hasNativeSupport: false,
         hasMediaRecorder,
+        whisperSupported,
         permissionStatus
       };
     }
@@ -84,30 +107,21 @@ export function useVoiceRecognition({ onResult, onError, onVolumeChange }: UseVo
         canUseServerFallback: false,
         hasNativeSupport: false,
         hasMediaRecorder,
-        permissionStatus
-      };
-    }
-
-    if (!hasMediaRecorder) {
-      return {
-        isSupported: hasNativeSupport,
-        reason: hasNativeSupport ? undefined : 'Voice recognition not supported in this browser',
-        canUseServerFallback: false,
-        hasNativeSupport,
-        hasMediaRecorder: false,
+        whisperSupported,
         permissionStatus
       };
     }
 
     return {
-      isSupported: hasNativeSupport || hasMediaRecorder,
-      reason: hasNativeSupport ? undefined : 'Using server-based voice recognition',
+      isSupported: hasNativeSupport || hasMediaRecorder || whisperSupported,
+      reason: hasNativeSupport ? undefined : whisperSupported ? 'Using Whisper AI transcription' : 'Limited speech recognition available',
       canUseServerFallback: hasMediaRecorder,
       hasNativeSupport,
       hasMediaRecorder,
+      whisperSupported,
       permissionStatus
     };
-  }, []);
+  }, [whisperTranscription.isInitialized]);
 
   const setupVoiceActivityDetection = useCallback((stream: MediaStream) => {
     if (!window.AudioContext && !(window as any).webkitAudioContext) {
@@ -192,8 +206,6 @@ export function useVoiceRecognition({ onResult, onError, onVolumeChange }: UseVo
     setAudioLevel(0);
   }, []);
 
-  // Server voice recognition disabled - removed edge function dependency
-
   useEffect(() => {
     const initializeSupportCheck = async () => {
       console.log('🚀 Initializing voice recognition support check...');
@@ -211,6 +223,7 @@ export function useVoiceRecognition({ onResult, onError, onVolumeChange }: UseVo
           canUseServerFallback: false,
           hasNativeSupport: false,
           hasMediaRecorder: false,
+          whisperSupported: false,
           permissionStatus: 'unknown'
         });
       }
@@ -291,7 +304,15 @@ export function useVoiceRecognition({ onResult, onError, onVolumeChange }: UseVo
     setSupportStatus(support);
     console.log('🔍 Current support status:', support);
 
-    // Only use native browser speech recognition
+    // Use Whisper if preferred and available
+    if (useWhisper && support.whisperSupported && whisperTranscription.isInitialized) {
+      console.log('🚀 Using Whisper AI transcription');
+      setIsListening(true);
+      await whisperTranscription.startListening();
+      return;
+    }
+
+    // Use native browser speech recognition
     if (support.hasNativeSupport) {
       console.log('🚀 Using native browser speech recognition');
       setUseServerFallback(false);
@@ -299,15 +320,23 @@ export function useVoiceRecognition({ onResult, onError, onVolumeChange }: UseVo
       return;
     }
 
-    // Show error if native browser speech recognition is not available
-    console.log('❌ No speech recognition available - native not supported');
+    // Fallback to Whisper if native not available
+    if (support.whisperSupported && whisperTranscription.isInitialized) {
+      console.log('🚀 Falling back to Whisper AI transcription');
+      setIsListening(true);
+      await whisperTranscription.startListening();
+      return;
+    }
+
+    // Show error if no speech recognition is available
+    console.log('❌ No speech recognition available');
     onError?.("Speech recognition not available. Please use text input instead.");
     toast({
       title: "Voice Recognition Unavailable",
       description: "Your browser doesn't support speech recognition. Please use the text input option instead.",
       variant: "destructive",
     });
-  }, [onResult, onError, checkBrowserSupport, startNativeSpeechRecognition]);
+  }, [useWhisper, whisperTranscription, onResult, onError, checkBrowserSupport, startNativeSpeechRecognition]);
 
   const stopListening = useCallback(() => {
     console.log('🛑 Manually stopping voice recognition');
@@ -320,9 +349,15 @@ export function useVoiceRecognition({ onResult, onError, onVolumeChange }: UseVo
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       mediaRecorderRef.current.stop();
     }
+    
+    // Stop Whisper if it's being used
+    if (useWhisper && whisperTranscription.isListening) {
+      whisperTranscription.stopListening();
+    }
+    
     cleanupAudioResources();
     setIsListening(false);
-  }, [cleanupAudioResources]);
+  }, [useWhisper, whisperTranscription, cleanupAudioResources]);
 
   return {
     isListening,
@@ -333,6 +368,10 @@ export function useVoiceRecognition({ onResult, onError, onVolumeChange }: UseVo
     useServerFallback,
     checkBrowserSupport,
     audioLevel,
+    // Whisper-related state
+    whisperStatus: whisperTranscription.status,
+    isWhisperInitialized: whisperTranscription.isInitialized,
+    whisperError: whisperTranscription.error,
   };
 }
 
