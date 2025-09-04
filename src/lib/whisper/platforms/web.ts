@@ -97,22 +97,34 @@ export class WebWhisperImplementation implements WhisperPlatformImplementation {
     console.log('🎤 Sample rate check - first few values:', Array.from(audioData.slice(0, 5)));
 
     try {
-      // Validate that we have a valid Float32Array with proper methods
-      if (!(audioData instanceof Float32Array)) {
-        throw new Error('Audio data must be a Float32Array');
+      // Ensure we have a proper Float32Array with all required methods
+      console.log('🎤 Pre-validation audio data:', {
+        type: typeof audioData,
+        constructor: audioData.constructor.name,
+        isFloat32Array: audioData instanceof Float32Array,
+        hasSubarray: typeof audioData.subarray === 'function',
+        length: audioData.length
+      });
+
+      // Always create a fresh Float32Array to ensure proper prototype chain
+      const properAudioData = new Float32Array(audioData.length);
+      for (let i = 0; i < audioData.length; i++) {
+        properAudioData[i] = audioData[i];
       }
 
-      // Ensure we have sufficient audio data
-      if (audioData.length === 0) {
+      // Validate the new array
+      if (properAudioData.length === 0) {
         throw new Error('Audio data is empty');
       }
 
-      // Verify the typed array has required methods to avoid "subarray is not a function" error
-      if (typeof audioData.subarray !== 'function') {
-        console.warn('🎤 Audio data missing subarray method, creating new Float32Array');
-        // Only create new Float32Array if the original lacks required methods
-        audioData = new Float32Array(audioData);
-      }
+      console.log('🎤 Post-validation audio data:', {
+        constructor: properAudioData.constructor.name,
+        hasSubarray: typeof properAudioData.subarray === 'function',
+        length: properAudioData.length,
+        isProperFloat32Array: properAudioData instanceof Float32Array
+      });
+
+      audioData = properAudioData;
 
       // Create proper audio object for Hugging Face transformers
       const audioObject = {

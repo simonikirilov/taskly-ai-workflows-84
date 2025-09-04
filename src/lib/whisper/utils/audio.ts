@@ -62,20 +62,26 @@ export class AudioProcessor {
     
     // Convert to 16kHz mono Float32Array (Whisper expects raw audio data)
     const length = audioBuffer.length;
-    const result = new Float32Array(length);
     
     if (audioBuffer.numberOfChannels === 1) {
-      result.set(audioBuffer.getChannelData(0));
+      // Create a proper Float32Array by copying data, not using views or set()
+      const channelData = audioBuffer.getChannelData(0);
+      const result = new Float32Array(length);
+      // Copy data manually to ensure proper Float32Array with all prototype methods
+      for (let i = 0; i < length; i++) {
+        result[i] = channelData[i];
+      }
+      return result;
     } else {
-      // Mix stereo to mono
+      // Mix stereo to mono - create proper Float32Array
       const left = audioBuffer.getChannelData(0);
       const right = audioBuffer.getChannelData(1);
+      const result = new Float32Array(length);
       for (let i = 0; i < length; i++) {
         result[i] = (left[i] + right[i]) * 0.5;
       }
+      return result;
     }
-
-    return result;
   }
 
   private floatArrayToWav(floatArray: Float32Array, sampleRate: number): ArrayBuffer {
