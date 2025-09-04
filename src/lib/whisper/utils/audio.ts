@@ -52,7 +52,7 @@ export class AudioProcessor {
     });
   }
 
-  async convertToWav(audioBlob: Blob): Promise<ArrayBuffer> {
+  async convertToFloat32Array(audioBlob: Blob): Promise<Float32Array> {
     if (!this.audioContext) {
       this.audioContext = new AudioContext({ sampleRate: 16000 });
     }
@@ -60,7 +60,7 @@ export class AudioProcessor {
     const arrayBuffer = await audioBlob.arrayBuffer();
     const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
     
-    // Convert to 16kHz mono WAV
+    // Convert to 16kHz mono Float32Array (Whisper expects raw audio data)
     const length = audioBuffer.length;
     const result = new Float32Array(length);
     
@@ -75,7 +75,7 @@ export class AudioProcessor {
       }
     }
 
-    return this.floatArrayToWav(result, 16000);
+    return result;
   }
 
   private floatArrayToWav(floatArray: Float32Array, sampleRate: number): ArrayBuffer {

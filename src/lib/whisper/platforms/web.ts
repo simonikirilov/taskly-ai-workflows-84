@@ -56,21 +56,27 @@ export class WebWhisperImplementation implements WhisperPlatformImplementation {
       await this.initialize();
     }
 
-    let audioData: ArrayBuffer;
+    let audioData: Float32Array;
 
     if (audio.type === 'microphone' && audio.stream) {
       // Handle live microphone input
       const blob = await this.audioProcessor.stopRecording();
-      audioData = await this.audioProcessor.convertToWav(blob);
+      audioData = await this.audioProcessor.convertToFloat32Array(blob);
     } else if (audio.data) {
       // Handle file or blob input
       if (audio.data instanceof Blob) {
-        audioData = await this.audioProcessor.convertToWav(audio.data);
-      } else if (audio.data instanceof ArrayBuffer) {
+        audioData = await this.audioProcessor.convertToFloat32Array(audio.data);
+      } else if (audio.data instanceof Float32Array) {
         audioData = audio.data;
+      } else if (audio.data instanceof ArrayBuffer) {
+        // Convert ArrayBuffer to Float32Array (assume 16-bit PCM)
+        const int16Array = new Int16Array(audio.data);
+        audioData = new Float32Array(int16Array.length);
+        for (let i = 0; i < int16Array.length; i++) {
+          audioData[i] = int16Array[i] / 32768.0; // Convert to -1.0 to 1.0 range
+        }
       } else {
-        // Float32Array - convert to WAV
-        audioData = this.floatArrayToWav(audio.data);
+        throw new Error('Unsupported audio data format');
       }
     } else {
       throw new Error('No audio data provided');
