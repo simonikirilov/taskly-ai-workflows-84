@@ -21,6 +21,7 @@ export function useWhisperTranscription(options: UseWhisperTranscriptionOptions 
 
   const updateStatus = useCallback(() => {
     const currentStatus = whisperTranscriber.getStatus();
+    console.log('🎤 useWhisperTranscription updating status:', currentStatus);
     setStatus(currentStatus);
     setIsInitialized(currentStatus.isInitialized);
     options.onStatusChange?.(currentStatus);
@@ -29,22 +30,30 @@ export function useWhisperTranscription(options: UseWhisperTranscriptionOptions 
   useEffect(() => {
     // Initialize whisper on mount
     const initializeWhisper = async () => {
+      console.log('🎤 useWhisperTranscription starting initialization...');
       try {
         await whisperTranscriber.initialize();
+        console.log('🎤 useWhisperTranscription initialization complete');
         updateStatus();
       } catch (error) {
+        console.error('🎤 useWhisperTranscription initialization failed:', error);
         const errorMessage = error instanceof Error ? error.message : 'Failed to initialize Whisper';
+        setStatus(prev => ({ ...prev!, error: errorMessage, isLoading: false }));
         options.onError?.(errorMessage);
       }
     };
 
     initializeWhisper();
 
+    // Set up interval to check status periodically (in case of missed updates)
+    const statusInterval = setInterval(updateStatus, 2000);
+
     // Cleanup on unmount
     return () => {
+      clearInterval(statusInterval);
       audioProcessor.current.cleanup();
     };
-  }, []);
+  }, [updateStatus]);
 
   const startListening = useCallback(async () => {
     if (isListening || !isInitialized) return;

@@ -18,10 +18,16 @@ export class WebWhisperImplementation implements WhisperPlatformImplementation {
   }
 
   async initialize(): Promise<void> {
-    if (this.isInitialized || this.isLoading) return;
+    if (this.isInitialized || this.isLoading) {
+      console.log('🎤 Whisper already initialized or loading, skipping...');
+      return;
+    }
     
+    console.log('🎤 Starting Whisper initialization...');
     this.isLoading = true;
+    
     try {
+      console.log('🎤 Attempting to initialize with WebGPU...');
       // Initialize multilingual Whisper pipeline with Hugging Face transformers
       this.whisperPipeline = await pipeline(
         'automatic-speech-recognition',
@@ -33,8 +39,10 @@ export class WebWhisperImplementation implements WhisperPlatformImplementation {
         }
       );
       
+      console.log('🎤 WebGPU initialization successful');
       this.isInitialized = true;
     } catch (error) {
+      console.warn('🎤 WebGPU initialization failed, trying CPU...', error);
       // Fallback to CPU if WebGPU fails
       try {
         this.whisperPipeline = await pipeline(
@@ -42,11 +50,15 @@ export class WebWhisperImplementation implements WhisperPlatformImplementation {
           'onnx-community/whisper-base',
           { device: 'cpu' }
         );
+        console.log('🎤 CPU initialization successful');
         this.isInitialized = true;
       } catch (fallbackError) {
+        console.error('🎤 Both WebGPU and CPU initialization failed:', fallbackError);
+        this.isLoading = false;
         throw new Error(`Failed to initialize Whisper: ${fallbackError}`);
       }
     } finally {
+      console.log('🎤 Whisper initialization complete, isLoading set to false');
       this.isLoading = false;
     }
   }
@@ -225,7 +237,9 @@ export class WebWhisperImplementation implements WhisperPlatformImplementation {
   }
 
   isModelLoaded(): boolean {
-    return this.isInitialized;
+    const loaded = this.isInitialized && this.whisperPipeline !== null;
+    console.log('🎤 Model loaded status:', loaded, 'initialized:', this.isInitialized, 'pipeline:', !!this.whisperPipeline);
+    return loaded;
   }
 
   async cleanup(): Promise<void> {

@@ -46,20 +46,38 @@ export class WhisperTranscriber {
   }
 
   async initialize(): Promise<void> {
-    if (this.status.isInitialized || this.status.isLoading) return;
+    if (this.status.isInitialized || this.status.isLoading) {
+      console.log('🎤 WhisperTranscriber already initialized or loading, skipping...');
+      return;
+    }
 
+    console.log('🎤 WhisperTranscriber starting initialization...');
     this.status.isLoading = true;
     this.status.error = undefined;
 
     try {
-      await this.implementation.initialize();
+      // Add timeout to prevent infinite loading
+      const initPromise = this.implementation.initialize();
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Whisper initialization timeout after 60 seconds')), 60000);
+      });
+
+      await Promise.race([initPromise, timeoutPromise]);
+      
       this.status.isInitialized = true;
       this.status.modelLoaded = this.implementation.isModelLoaded();
+      console.log('🎤 WhisperTranscriber initialization complete:', {
+        isInitialized: this.status.isInitialized,
+        modelLoaded: this.status.modelLoaded,
+        platform: this.status.platform
+      });
     } catch (error) {
+      console.error('🎤 WhisperTranscriber initialization failed:', error);
       this.status.error = error instanceof Error ? error.message : 'Initialization failed';
       throw error;
     } finally {
       this.status.isLoading = false;
+      console.log('🎤 WhisperTranscriber isLoading set to false');
     }
   }
 
@@ -83,7 +101,9 @@ export class WhisperTranscriber {
   }
 
   getStatus(): WhisperStatus {
-    return { ...this.status };
+    const currentStatus = { ...this.status };
+    console.log('🎤 Getting WhisperTranscriber status:', currentStatus);
+    return currentStatus;
   }
 
   async cleanup(): Promise<void> {
