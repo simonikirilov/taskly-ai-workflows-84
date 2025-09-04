@@ -97,31 +97,44 @@ export class WebWhisperImplementation implements WhisperPlatformImplementation {
     console.log('🎤 Sample rate check - first few values:', Array.from(audioData.slice(0, 5)));
 
     try {
+      // Ensure audio data is a proper Float32Array (not a subarray) to avoid errors
+      const properAudioData = audioData instanceof Float32Array 
+        ? new Float32Array(audioData) 
+        : audioData;
+
       // Create proper audio object for Hugging Face transformers
       const audioObject = {
-        array: audioData,
+        array: properAudioData,
         sampling_rate: 16000
       };
 
       console.log('🎤 Calling pipeline with audio object:', {
         arrayType: audioObject.array.constructor.name,
         arrayLength: audioObject.array.length,
-        samplingRate: audioObject.sampling_rate
+        samplingRate: audioObject.sampling_rate,
+        isProperArray: audioObject.array.constructor === Float32Array
       });
 
-      const result = await this.pipe(audioObject, {
+      // Configure for multilingual Whisper model
+      const pipelineConfig = {
         return_timestamps: config?.returnTimestamps ?? true,
         chunk_length_s: 30, // Process in 30-second chunks
         stride_length_s: 5,  // 5-second stride
-        // Let Whisper auto-detect language for multilingual support
-        ...(config?.language ? { language: config.language, is_multilingual: true } : {})
-      });
+        is_multilingual: true, // Always true for whisper-base multilingual model
+        // If language is specified, use it; otherwise let Whisper auto-detect
+        ...(config?.language ? { language: config.language } : {})
+      };
+
+      console.log('🎤 Pipeline config:', pipelineConfig);
+
+      const result = await this.pipe(audioObject, pipelineConfig);
 
       console.log('🎤 Pipeline result:', result);
       return this.formatResult(result);
     } catch (error) {
       console.error('🎤 Pipeline error:', error);
       console.error('🎤 Audio data type being passed:', typeof audioData, audioData.constructor.name);
+      console.error('🎤 Is proper Float32Array:', audioData.constructor === Float32Array);
       throw new Error(`Transcription failed: ${error}`);
     }
   }
