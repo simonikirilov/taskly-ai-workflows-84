@@ -58,41 +58,69 @@ export class WebWhisperImplementation implements WhisperPlatformImplementation {
 
     let audioData: Float32Array;
 
+    console.log('🎤 Audio input type:', audio.type, 'has data:', !!audio.data, 'has stream:', !!audio.stream);
+
     if (audio.type === 'microphone' && audio.stream) {
       // Handle live microphone input
       const blob = await this.audioProcessor.stopRecording();
+      console.log('🎤 Got recording blob:', blob.type, blob.size, 'bytes');
       audioData = await this.audioProcessor.convertToFloat32Array(blob);
+      console.log('🎤 Converted to Float32Array:', audioData.constructor.name, audioData.length, 'samples');
     } else if (audio.data) {
       // Handle file or blob input
       if (audio.data instanceof Blob) {
+        console.log('🎤 Processing Blob:', audio.data.type, audio.data.size, 'bytes');
         audioData = await this.audioProcessor.convertToFloat32Array(audio.data);
+        console.log('🎤 Converted Blob to Float32Array:', audioData.constructor.name, audioData.length, 'samples');
       } else if (audio.data instanceof Float32Array) {
+        console.log('🎤 Using provided Float32Array:', audio.data.length, 'samples');
         audioData = audio.data;
       } else if (audio.data instanceof ArrayBuffer) {
+        console.log('🎤 Converting ArrayBuffer:', audio.data.byteLength, 'bytes');
         // Convert ArrayBuffer to Float32Array (assume 16-bit PCM)
         const int16Array = new Int16Array(audio.data);
         audioData = new Float32Array(int16Array.length);
         for (let i = 0; i < int16Array.length; i++) {
           audioData[i] = int16Array[i] / 32768.0; // Convert to -1.0 to 1.0 range
         }
+        console.log('🎤 Converted ArrayBuffer to Float32Array:', audioData.length, 'samples');
       } else {
+        console.error('🎤 Unsupported audio data type:', typeof audio.data, (audio.data as any)?.constructor?.name);
         throw new Error('Unsupported audio data format');
       }
     } else {
+      console.error('🎤 No audio data provided');
       throw new Error('No audio data provided');
     }
 
+    console.log('🎤 About to call pipeline with:', audioData.constructor.name, audioData.length, 'samples');
+    console.log('🎤 Sample rate check - first few values:', Array.from(audioData.slice(0, 5)));
+
     try {
-      const result = await this.pipe(audioData, {
-        return_timestamps: config?.returnTimestamps ?? true,
-        return_word_timestamps: config?.returnWordTimestamps ?? false,
-        language: config?.language ?? 'en',
-        temperature: config?.temperature ?? 0.0,
-        max_new_tokens: config?.maxTokens ?? 128
+      // Create proper audio object for Hugging Face transformers
+      const audioObject = {
+        array: audioData,
+        sampling_rate: 16000
+      };
+
+      console.log('🎤 Calling pipeline with audio object:', {
+        arrayType: audioObject.array.constructor.name,
+        arrayLength: audioObject.array.length,
+        samplingRate: audioObject.sampling_rate
       });
 
+      const result = await this.pipe(audioObject, {
+        return_timestamps: config?.returnTimestamps ?? true,
+        chunk_length_s: 30, // Process in 30-second chunks
+        stride_length_s: 5,  // 5-second stride
+        language: config?.language ?? 'en'
+      });
+
+      console.log('🎤 Pipeline result:', result);
       return this.formatResult(result);
     } catch (error) {
+      console.error('🎤 Pipeline error:', error);
+      console.error('🎤 Audio data type being passed:', typeof audioData, audioData.constructor.name);
       throw new Error(`Transcription failed: ${error}`);
     }
   }
