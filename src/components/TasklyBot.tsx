@@ -35,6 +35,32 @@ export function TasklyBot({ onVoiceCommand, voiceHistory = [], mode }: TasklyBot
     }
   });
 
+  // Define handleVoiceInput before using it in useVoiceRecognition
+  const handleVoiceInput = (transcript: string) => {
+    setLastCommand(transcript);
+    robotStateMachine.startSpeaking();
+    
+    // Simple confidence check
+    if (transcript.length < 5 || transcript.toLowerCase().includes('uh') || transcript.toLowerCase().includes('um')) {
+      setPendingCommand({ text: transcript, task: `Create task: "${transcript}"` });
+      setShowConfirmation(true);
+      speak('I\'m not sure about that. Please confirm.');
+      playEarcon('error');
+    } else {
+      onVoiceCommand(transcript);
+      speak('Task added to today\'s tasks');
+      playEarcon('success');
+      playHaptic('light');
+    }
+    
+    setTimeout(() => robotStateMachine.finishSpeaking(), 2000);
+    
+    toast({
+      title: "Voice command received",
+      description: `"${transcript}"`,
+    });
+  };
+
   const voiceRecognition = useVoiceRecognition({
     onResult: handleVoiceInput,
     onError: (error) => {
@@ -60,31 +86,6 @@ export function TasklyBot({ onVoiceCommand, voiceHistory = [], mode }: TasklyBot
 
   const { isListening, isSupported: voiceSupported, startListening, stopListening, whisperStatus, 
           partialText, finalText, confidence, volume, isSpeaking, speechDuration, silenceDuration } = voiceRecognition;
-
-  const handleVoiceInput = (transcript: string) => {
-    setLastCommand(transcript);
-    robotStateMachine.startSpeaking();
-    
-    // Simple confidence check
-    if (transcript.length < 5 || transcript.toLowerCase().includes('uh') || transcript.toLowerCase().includes('um')) {
-      setPendingCommand({ text: transcript, task: `Create task: "${transcript}"` });
-      setShowConfirmation(true);
-      speak('I\'m not sure about that. Please confirm.');
-      playEarcon('error');
-    } else {
-      onVoiceCommand(transcript);
-      speak('Task added to today\'s tasks');
-      playEarcon('success');
-      playHaptic('light');
-    }
-    
-    setTimeout(() => robotStateMachine.finishSpeaking(), 2000);
-    
-    toast({
-      title: "Voice command received",
-      description: `"${transcript}"`,
-    });
-  };
 
   // Sync robot state with voice recognition
   useEffect(() => {
