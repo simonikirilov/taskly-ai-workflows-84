@@ -102,41 +102,57 @@ export class WebWhisperImplementation implements WhisperPlatformImplementation {
         ? new Float32Array(audioData) 
         : audioData;
 
+      // Validate that we have a valid typed array
+      if (!(properAudioData instanceof Float32Array)) {
+        throw new Error('Audio data must be a Float32Array');
+      }
+
+      // Ensure we have sufficient audio data
+      if (properAudioData.length === 0) {
+        throw new Error('Audio data is empty');
+      }
+
       // Create proper audio object for Hugging Face transformers
       const audioObject = {
         array: properAudioData,
         sampling_rate: 16000
       };
 
-      console.log('🎤 Calling pipeline with audio object:', {
+      console.log('🎤 Calling Whisper pipeline with audio object:', {
         arrayType: audioObject.array.constructor.name,
         arrayLength: audioObject.array.length,
         samplingRate: audioObject.sampling_rate,
-        isProperArray: audioObject.array.constructor === Float32Array
+        isProperArray: audioObject.array.constructor === Float32Array,
+        duration: `${(audioObject.array.length / audioObject.sampling_rate).toFixed(2)}s`
       });
 
-      // Configure for multilingual Whisper model
+      // Configure for multilingual Whisper model (whisper-base)
       const pipelineConfig = {
         return_timestamps: config?.returnTimestamps ?? true,
         chunk_length_s: 30, // Process in 30-second chunks
         stride_length_s: 5,  // 5-second stride
-        is_multilingual: true, // Always true for whisper-base multilingual model
-        // If language is specified, use it; otherwise let Whisper auto-detect
+        is_multilingual: true, // Required for whisper-base multilingual model
+        // Auto-detect language unless specifically provided
         ...(config?.language ? { language: config.language } : {})
       };
 
-      console.log('🎤 Pipeline config:', pipelineConfig);
+      console.log('🎤 Multilingual Whisper config:', pipelineConfig);
 
-      // Call Whisper pipeline (not a stream pipe - this is HF transformers pipeline)
+      // Call Hugging Face Transformers pipeline (NOT a stream pipe operation)
+      // This is a function call to the ML pipeline, not stream piping
       const result = await this.whisperPipeline(audioObject, pipelineConfig);
 
-      console.log('🎤 Pipeline result:', result);
+      console.log('🎤 Transcription result:', result);
       return this.formatResult(result);
     } catch (error) {
-      console.error('🎤 Pipeline error:', error);
-      console.error('🎤 Audio data type being passed:', typeof audioData, audioData.constructor.name);
-      console.error('🎤 Is proper Float32Array:', audioData.constructor === Float32Array);
-      throw new Error(`Transcription failed: ${error}`);
+      console.error('🎤 Transcription error:', error);
+      console.error('🎤 Audio data details:', {
+        type: typeof audioData,
+        constructor: audioData?.constructor?.name,
+        isFloat32Array: audioData instanceof Float32Array,
+        length: audioData?.length
+      });
+      throw new Error(`Safe transcription failed: ${error instanceof Error ? error.message : error}`);
     }
   }
 
