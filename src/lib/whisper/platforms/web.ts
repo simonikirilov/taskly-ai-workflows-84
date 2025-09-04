@@ -97,24 +97,26 @@ export class WebWhisperImplementation implements WhisperPlatformImplementation {
     console.log('🎤 Sample rate check - first few values:', Array.from(audioData.slice(0, 5)));
 
     try {
-      // Ensure audio data is a proper Float32Array (not a subarray) to avoid errors
-      const properAudioData = audioData instanceof Float32Array 
-        ? new Float32Array(audioData) 
-        : audioData;
-
-      // Validate that we have a valid typed array
-      if (!(properAudioData instanceof Float32Array)) {
+      // Validate that we have a valid Float32Array with proper methods
+      if (!(audioData instanceof Float32Array)) {
         throw new Error('Audio data must be a Float32Array');
       }
 
       // Ensure we have sufficient audio data
-      if (properAudioData.length === 0) {
+      if (audioData.length === 0) {
         throw new Error('Audio data is empty');
+      }
+
+      // Verify the typed array has required methods to avoid "subarray is not a function" error
+      if (typeof audioData.subarray !== 'function') {
+        console.warn('🎤 Audio data missing subarray method, creating new Float32Array');
+        // Only create new Float32Array if the original lacks required methods
+        audioData = new Float32Array(audioData);
       }
 
       // Create proper audio object for Hugging Face transformers
       const audioObject = {
-        array: properAudioData,
+        array: audioData,
         sampling_rate: 16000
       };
 
