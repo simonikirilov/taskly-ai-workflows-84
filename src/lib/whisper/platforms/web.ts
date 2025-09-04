@@ -22,10 +22,10 @@ export class WebWhisperImplementation implements WhisperPlatformImplementation {
     
     this.isLoading = true;
     try {
-      // Initialize Whisper pipeline with Hugging Face transformers
+      // Initialize multilingual Whisper pipeline with Hugging Face transformers
       this.pipe = await pipeline(
         'automatic-speech-recognition',
-        'onnx-community/whisper-base.en',
+        'onnx-community/whisper-base',
         { 
           device: 'webgpu',
           // Fallback to CPU if WebGPU not available
@@ -39,7 +39,7 @@ export class WebWhisperImplementation implements WhisperPlatformImplementation {
       try {
         this.pipe = await pipeline(
           'automatic-speech-recognition',
-          'onnx-community/whisper-base.en',
+          'onnx-community/whisper-base',
           { device: 'cpu' }
         );
         this.isInitialized = true;
@@ -113,7 +113,8 @@ export class WebWhisperImplementation implements WhisperPlatformImplementation {
         return_timestamps: config?.returnTimestamps ?? true,
         chunk_length_s: 30, // Process in 30-second chunks
         stride_length_s: 5,  // 5-second stride
-        language: config?.language ?? 'en'
+        // Let Whisper auto-detect language for multilingual support
+        ...(config?.language ? { language: config.language, is_multilingual: true } : {})
       });
 
       console.log('🎤 Pipeline result:', result);
@@ -137,7 +138,7 @@ export class WebWhisperImplementation implements WhisperPlatformImplementation {
     return {
       text: result.text || '',
       segments,
-      language: 'en',
+      language: result.language || 'auto-detected',
       confidence: result.score
     };
   }
