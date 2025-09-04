@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useVoiceRecognition } from '@/hooks/useVoiceRecognition';
+import { LiveTranscriptionDisplay } from './LiveTranscriptionDisplay';
 import { useTextToSpeech } from '@/hooks/useTextToSpeech';
 import { useRobotStateMachine } from '@/hooks/useRobotStateMachine';
 import { useAudioFeedback } from '@/hooks/useAudioFeedback';
@@ -34,39 +35,56 @@ export function TasklyBot({ onVoiceCommand, voiceHistory = [], mode }: TasklyBot
     }
   });
 
-  const { isListening, isSupported: voiceSupported, startListening, stopListening, whisperStatus } = useVoiceRecognition({
-    onResult: (transcript) => {
-      setLastCommand(transcript);
-      robotStateMachine.startSpeaking();
-      
-      // Simple confidence check
-      if (transcript.length < 5 || transcript.toLowerCase().includes('uh') || transcript.toLowerCase().includes('um')) {
-        setPendingCommand({ text: transcript, task: `Create task: "${transcript}"` });
-        setShowConfirmation(true);
-        speak('I\'m not sure about that. Please confirm.');
-        playEarcon('error');
-      } else {
-        onVoiceCommand(transcript);
-        speak('Task added to today\'s tasks');
-        playEarcon('success');
-        playHaptic('light');
-      }
-      
-      setTimeout(() => robotStateMachine.finishSpeaking(), 2000);
-      
-      toast({
-        title: "Voice command received",
-        description: `"${transcript}"`,
-      });
-    },
+  const voiceRecognition = useVoiceRecognition({
+    onResult: handleVoiceInput,
     onError: (error) => {
       console.error('Voice recognition error:', error);
       robotStateMachine.setError();
-      speak('Sorry, I didn\'t catch that. Try again.');
-      playEarcon('error');
-      playHaptic('medium');
-    }
+      toast({
+        title: "Voice Recognition Error",
+        description: error,
+        variant: "destructive",
+      });
+    },
+    onPartialResult: (transcript) => {
+      console.log('Partial transcript:', transcript);
+      // Show partial results to user for better feedback
+    },
+    onVolumeChange: (volume) => {
+      // Volume feedback for better UX
+    },
+    useWhisper: true,
+    useStreaming: true,
+    sensitivityLevel: 3
   });
+
+  const { isListening, isSupported: voiceSupported, startListening, stopListening, whisperStatus, 
+          partialText, finalText, confidence, volume, isSpeaking, speechDuration, silenceDuration } = voiceRecognition;
+
+  const handleVoiceInput = (transcript: string) => {
+    setLastCommand(transcript);
+    robotStateMachine.startSpeaking();
+    
+    // Simple confidence check
+    if (transcript.length < 5 || transcript.toLowerCase().includes('uh') || transcript.toLowerCase().includes('um')) {
+      setPendingCommand({ text: transcript, task: `Create task: "${transcript}"` });
+      setShowConfirmation(true);
+      speak('I\'m not sure about that. Please confirm.');
+      playEarcon('error');
+    } else {
+      onVoiceCommand(transcript);
+      speak('Task added to today\'s tasks');
+      playEarcon('success');
+      playHaptic('light');
+    }
+    
+    setTimeout(() => robotStateMachine.finishSpeaking(), 2000);
+    
+    toast({
+      title: "Voice command received",
+      description: `"${transcript}"`,
+    });
+  };
 
   // Sync robot state with voice recognition
   useEffect(() => {
@@ -203,63 +221,78 @@ export function TasklyBot({ onVoiceCommand, voiceHistory = [], mode }: TasklyBot
   return (
     <>
       <div className="flex flex-col items-center relative">
-        {/* Enhanced Animated Robot with State Machine */}
-        <div className="relative will-change-transform">
-          <AnimatedRobot 
+        <div className="flex flex-col items-center gap-4 p-6">
+          {/* Live Transcription Display */}
+          <LiveTranscriptionDisplay
             isListening={isListening}
-            isExpanded={false}
-            onClick={handleBotClick}
-            className="mb-6"
-            state={robotStateMachine.state}
+            partialText={partialText || ''}
+            finalText={finalText || ''}
+            confidence={confidence || 0}
+            volume={volume || 0}
+            isSpeaking={isSpeaking || false}
+            speechDuration={speechDuration || 0}
+            silenceDuration={silenceDuration || 0}
+            className="mb-4"
           />
-        </div>
 
-        {/* Mode Indicator and Whisper Status */}
-        <div className="text-center mb-4 space-y-2">
-          <p className="text-sm text-muted-foreground">
-            {mode === 'speaking' 
-              ? (isListening ? '🎤 Listening... Tap to stop' : '🎤 Tap to speak') 
-              : '💬 Tap to chat'}
-          </p>
-          <WhisperStatus status={whisperStatus} isListening={isListening} />
-        </div>
+          {/* Enhanced Animated Robot with State Machine */}
+          <div className="relative will-change-transform">
+            <AnimatedRobot 
+              isListening={isListening}
+              isExpanded={false}
+              onClick={handleBotClick}
+              className="mb-6"
+              state={robotStateMachine.state}
+            />
+          </div>
 
-        {/* Voice History - Only show if there's history and not listening */}
-        {voiceHistory.length > 0 && !isListening && (
-          <div className="relative z-10 max-w-2xl text-center mt-4 animate-fade-in">
-            <div className="glass rounded-2xl p-6">
-              <h4 className="text-sm font-medium text-muted-foreground mb-4">Recent Commands</h4>
-              <div className="space-y-3 max-h-32 overflow-y-auto">
-                {voiceHistory.slice(-3).map((command, index) => (
-                  <div key={index} className="text-left p-3 bg-background/60 rounded-lg border border-border/50">
-                    <p className="text-sm text-foreground">"{command}"</p>
-                  </div>
-                ))}
+          {/* Mode Indicator and Whisper Status */}
+          <div className="text-center mb-4 space-y-2">
+            <p className="text-sm text-muted-foreground">
+              {mode === 'speaking' 
+                ? (isListening ? '🎤 Listening... Tap to stop' : '🎤 Tap to speak') 
+                : '💬 Tap to chat'}
+            </p>
+            <WhisperStatus status={whisperStatus} isListening={isListening} />
+          </div>
+
+          {/* Voice History - Only show if there's history and not listening */}
+          {voiceHistory.length > 0 && !isListening && (
+            <div className="relative z-10 max-w-2xl text-center mt-4 animate-fade-in">
+              <div className="glass rounded-2xl p-6">
+                <h4 className="text-sm font-medium text-muted-foreground mb-4">Recent Commands</h4>
+                <div className="space-y-3 max-h-32 overflow-y-auto">
+                  {voiceHistory.slice(-3).map((command, index) => (
+                    <div key={index} className="text-left p-3 bg-background/60 rounded-lg border border-border/50">
+                      <p className="text-sm text-foreground">"{command}"</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        )}
-
-        <CopilotChat 
-          isOpen={showCopilotChat}
-          onClose={() => setShowCopilotChat(false)}
-        />
-
-        <ConfirmationDialog
-          isOpen={showConfirmation}
-          onClose={handleCancelTask}
-          onConfirm={handleConfirmTask}
-          transcribedText={pendingCommand?.text || ''}
-          suggestedTask={pendingCommand?.task || ''}
-        />
-
-        <TextCommandInput
-          isOpen={showTextInput}
-          onClose={() => setShowTextInput(false)}
-          onSubmit={handleTextCommand}
-          placeholder="Type your command, e.g., 'Create a task to call John tomorrow'"
-        />
+          )}
+        </div>
       </div>
+
+      <CopilotChat 
+        isOpen={showCopilotChat}
+        onClose={() => setShowCopilotChat(false)}
+      />
+
+      <ConfirmationDialog
+        isOpen={showConfirmation}
+        onClose={handleCancelTask}
+        onConfirm={handleConfirmTask}
+        transcribedText={pendingCommand?.text || ''}
+        suggestedTask={pendingCommand?.task || ''}
+      />
+
+      <TextCommandInput
+        isOpen={showTextInput}
+        onClose={() => setShowTextInput(false)}
+        onSubmit={handleTextCommand}
+        placeholder="Type your command, e.g., 'Create a task to call John tomorrow'"
+      />
     </>
   );
 }
