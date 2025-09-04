@@ -9,7 +9,6 @@ import { WelcomeSection } from "@/components/WelcomeSection";
 import { TodaysTasks } from "@/components/TodaysTasks";
 import { ModeSwitch } from "@/components/ModeSwitch";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
 import { addTaskForUser } from "@/utils/taskUtils";
 
 const Index = () => {
@@ -39,33 +38,27 @@ const Index = () => {
     console.log('Voice command received:', command);
     setVoiceHistory(prev => [...prev, command]);
     
-    // Parse the voice command to see if it's a task creation request
-    try {
-      const response = await supabase.functions.invoke('voice-command-parser', {
-        body: { command }
-      });
-
-      if (response.error) {
-        console.error('Error parsing voice command:', response.error);
-        return;
-      }
-
-      const parsedCommand = response.data;
+    // Simple keyword-based task creation (no AI parsing)
+    const taskKeywords = ['task', 'todo', 'remind', 'create', 'add', 'schedule'];
+    const hasTaskKeyword = taskKeywords.some(keyword => 
+      command.toLowerCase().includes(keyword)
+    );
+    
+    if (hasTaskKeyword && user) {
+      // Extract task title by removing common command words
+      let title = command
+        .replace(/^(create|add|make|new)\s+(a\s+)?(task|todo|reminder)\s+(to\s+)?/i, '')
+        .replace(/^(remind\s+me\s+(to\s+)?)/i, '')
+        .trim();
       
-      if (parsedCommand.isTask && parsedCommand.title && user) {
-        const result = await addTaskForUser(
-          user.id, 
-          parsedCommand.title, 
-          parsedCommand.scheduledTime
-        );
+      if (title) {
+        const result = await addTaskForUser(user.id, title, null);
         
         if (result.success) {
           // Trigger a refresh of the task list
           setRefreshTrigger(prev => prev + 1);
         }
       }
-    } catch (error) {
-      console.error('Error processing voice command:', error);
     }
   };
 

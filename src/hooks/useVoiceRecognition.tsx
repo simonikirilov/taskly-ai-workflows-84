@@ -1,6 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 
 interface UseVoiceRecognitionOptions {
   onResult: (transcript: string) => void;
@@ -193,127 +192,7 @@ export function useVoiceRecognition({ onResult, onError, onVolumeChange }: UseVo
     setAudioLevel(0);
   }, []);
 
-  const startServerVoiceRecognition = useCallback(async () => {
-    try {
-      setIsListening(true);
-      audioChunksRef.current = [];
-
-      // Check if we have permission first
-      const permissionStatus = await navigator.permissions?.query({ name: 'microphone' as PermissionName });
-      console.log('🎤 Current microphone permission:', permissionStatus?.state || 'unknown');
-
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          sampleRate: 16000,
-          channelCount: 1,
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true
-        }
-      });
-
-      streamRef.current = stream;
-      setupVoiceActivityDetection(stream);
-
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'audio/webm;codecs=opus'
-      });
-
-      mediaRecorderRef.current = mediaRecorder;
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstop = async () => {
-        cleanupAudioResources();
-        
-        try {
-          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-          
-          const reader = new FileReader();
-          reader.onloadend = async () => {
-            try {
-              const base64Audio = (reader.result as string).split(',')[1];
-              
-              const { data, error } = await supabase.functions.invoke('voice-to-text', {
-                body: { audio: base64Audio }
-              });
-
-              if (error) throw error;
-
-              if (data.text) {
-                const voiceHistory = JSON.parse(localStorage.getItem('taskly-voice-history') || '[]');
-                voiceHistory.push({ text: data.text, timestamp: new Date().toISOString() });
-                localStorage.setItem('taskly-voice-history', JSON.stringify(voiceHistory.slice(-10)));
-                
-                onResult(data.text);
-              } else {
-                throw new Error('No transcription received');
-              }
-            } catch (error) {
-              const errorMessage = `Server transcription error: ${error.message}`;
-              onError?.(errorMessage);
-              toast({
-                title: "Voice recognition error",
-                description: errorMessage,
-                variant: "destructive",
-              });
-            }
-          };
-          reader.readAsDataURL(audioBlob);
-        } catch (error) {
-          const errorMessage = `Audio processing error: ${error.message}`;
-          onError?.(errorMessage);
-          toast({
-            title: "Voice recognition error",
-            description: errorMessage,
-            variant: "destructive",
-          });
-        }
-
-        setIsListening(false);
-      };
-
-      // Reduced timeout to 6 seconds for better UX
-      timeoutRef.current = setTimeout(() => {
-        if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-          mediaRecorderRef.current.stop();
-        }
-      }, 6000);
-
-      mediaRecorder.start();
-    } catch (error) {
-      console.error('🚫 Microphone access error:', error);
-      const errorMessage = `Microphone access denied: ${error.message}`;
-      onError?.(errorMessage);
-      setIsListening(false);
-      cleanupAudioResources();
-      
-      // More helpful error message based on the error type
-      if (error.name === 'NotAllowedError') {
-        toast({
-          title: "Microphone Permission Needed",
-          description: "Please click the microphone icon in your browser's address bar and allow access, then try again.",
-          variant: "destructive",
-        });
-      } else if (error.name === 'NotFoundError') {
-        toast({
-          title: "No Microphone Found",
-          description: "Please connect a microphone and refresh the page.",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Microphone access denied",
-          description: "Please allow microphone access to use voice features. Check your browser settings.",
-          variant: "destructive",
-        });
-      }
-    }
-  }, [onResult, onError, setupVoiceActivityDetection, cleanupAudioResources]);
+  // Server voice recognition disabled - removed edge function dependency
 
   useEffect(() => {
     const initializeSupportCheck = async () => {
@@ -412,7 +291,7 @@ export function useVoiceRecognition({ onResult, onError, onVolumeChange }: UseVo
     setSupportStatus(support);
     console.log('🔍 Current support status:', support);
 
-    // Prefer native browser speech recognition since server fallback uses OpenAI
+    // Only use native browser speech recognition
     if (support.hasNativeSupport) {
       console.log('🚀 Using native browser speech recognition');
       setUseServerFallback(false);
@@ -420,8 +299,8 @@ export function useVoiceRecognition({ onResult, onError, onVolumeChange }: UseVo
       return;
     }
 
-    // Since we don't have OpenAI configured for server fallback, show error
-    console.log('❌ No speech recognition available - native not supported and server fallback disabled');
+    // Show error if native browser speech recognition is not available
+    console.log('❌ No speech recognition available - native not supported');
     onError?.("Speech recognition not available. Please use text input instead.");
     toast({
       title: "Voice Recognition Unavailable",
