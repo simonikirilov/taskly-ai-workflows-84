@@ -19,8 +19,7 @@ import {
   Activity,
   Bot,
   LogOut,
-  Workflow,
-  Video
+  Workflow
 } from "lucide-react"
 import { NavLink } from "react-router-dom"
 import { useAuth } from "@/hooks/useAuth"
@@ -28,10 +27,9 @@ import { Button } from "@/components/ui/button"
 
 const menuItems = [
   { title: "Home", url: "/", icon: Home },
-  { title: "Dashboard", url: "/dashboard", icon: BarChart3 },
-  { title: "Record", url: "/record", icon: Video },
   { title: "Workflows", url: "/workflows", icon: Workflow },
   { title: "Account", url: "/account", icon: User },
+  { title: "Dashboard", url: "/dashboard", icon: BarChart3 },
   { title: "Settings", url: "/settings", icon: Settings },
 ]
 

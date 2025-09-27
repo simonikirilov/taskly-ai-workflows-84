@@ -1,9 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { Lightbulb, Sparkles } from 'lucide-react';
 
@@ -17,45 +15,38 @@ interface Suggestion {
 export function SuggestionsList() {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
 
   useEffect(() => {
-    if (user) {
-      fetchSuggestions();
-    } else {
-      setLoading(false);
-    }
-  }, [user]);
+    const fetchSuggestions = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('suggestions')
+          .select('*')
+          .eq('user_id', 'local-user')
+          .order('created_at', { ascending: false })
+          .limit(5);
 
-  const fetchSuggestions = async () => {
-    if (!user) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from('suggestions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(5);
+        if (error) throw error;
+        setSuggestions(data || []);
+      } catch (error) {
+        console.error('Error fetching suggestions:', error);
+        toast({
+          title: "Error loading suggestions",
+          description: "Failed to load AI suggestions. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      if (error) throw error;
-      setSuggestions(data || []);
-    } catch (error) {
-      console.error('Error fetching suggestions:', error);
-      toast({
-        title: "Error loading suggestions",
-        description: "Failed to load AI suggestions. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchSuggestions();
+  }, []);
 
   // Add some default suggestions if none exist
   useEffect(() => {
     const addDefaultSuggestions = async () => {
-      if (!user || suggestions.length > 0) return;
+      if (suggestions.length > 0) return;
 
       const defaultSuggestions = [
         {
@@ -78,7 +69,7 @@ export function SuggestionsList() {
           .insert(
             defaultSuggestions.map(suggestion => ({
               ...suggestion,
-              user_id: user.id
+              user_id: 'local-user'
             }))
           );
 
@@ -88,7 +79,7 @@ export function SuggestionsList() {
         const { data } = await supabase
           .from('suggestions')
           .select('*')
-          .eq('user_id', user.id)
+          .eq('user_id', 'local-user')
           .order('created_at', { ascending: false })
           .limit(5);
         
@@ -99,26 +90,7 @@ export function SuggestionsList() {
     };
 
     addDefaultSuggestions();
-  }, [suggestions.length, user]);
-
-  if (!user) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            AI Suggestions
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center p-4 text-muted-foreground">
-            <Lightbulb className="h-8 w-8 mx-auto mb-2 opacity-50" />
-            <p className="text-sm">Sign in to see personalized suggestions</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  }, [suggestions.length]);
 
   if (loading) {
     return (

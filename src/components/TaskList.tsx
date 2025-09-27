@@ -1,10 +1,8 @@
-
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { X, CheckCircle, Check } from 'lucide-react';
@@ -25,23 +23,18 @@ interface TaskListProps {
 export function TaskList({ refreshTrigger = 0 }: TaskListProps) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(false);
-  const { user } = useAuth();
 
   useEffect(() => {
-    if (user) {
-      fetchTasks();
-    }
-  }, [refreshTrigger, user]);
+    fetchTasks();
+  }, [refreshTrigger]);
 
   const fetchTasks = async () => {
-    if (!user) return;
-    
     try {
       setLoading(true);
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', 'local-user')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -59,8 +52,6 @@ export function TaskList({ refreshTrigger = 0 }: TaskListProps) {
   };
 
   const toggleTaskStatus = async (taskId: string, currentStatus: boolean) => {
-    if (!user) return;
-    
     try {
       const { error } = await supabase
         .from('tasks')
@@ -100,8 +91,6 @@ export function TaskList({ refreshTrigger = 0 }: TaskListProps) {
   };
 
   const deleteTask = async (taskId: string) => {
-    if (!user) return;
-    
     try {
       const { error } = await supabase
         .from('tasks')
@@ -126,21 +115,6 @@ export function TaskList({ refreshTrigger = 0 }: TaskListProps) {
       });
     }
   };
-
-  // Show login prompt if user is not authenticated
-  if (!user) {
-    return (
-      <div className="text-center py-16">
-        <div className="elevated-card w-32 h-32 mx-auto mb-6 rounded-3xl flex items-center justify-center">
-          <CheckCircle className="h-16 w-16 text-primary/70" />
-        </div>
-        <h3 className="text-2xl font-semibold text-foreground mb-3">Please sign in</h3>
-        <p className="text-lg text-muted-foreground font-light max-w-md mx-auto">
-          Sign in to view and manage your tasks
-        </p>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-8">

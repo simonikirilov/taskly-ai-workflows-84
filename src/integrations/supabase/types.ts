@@ -33,7 +33,7 @@ export type Database = {
           rule_type: string
           schedule_pattern: string
           updated_at?: string
-          user_id: string
+          user_id?: string
         }
         Update: {
           created_at?: string
@@ -60,7 +60,7 @@ export type Database = {
           created_at?: string
           id?: string
           type: string
-          user_id: string
+          user_id?: string
         }
         Update: {
           content?: string
@@ -88,7 +88,7 @@ export type Database = {
           status?: boolean
           title: string
           updated_at?: string
-          user_id: string
+          user_id?: string
         }
         Update: {
           created_at?: string
@@ -120,7 +120,7 @@ export type Database = {
           name: string
           steps?: Json | null
           updated_at?: string
-          user_id: string
+          user_id?: string
         }
         Update: {
           created_at?: string
