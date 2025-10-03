@@ -1,215 +1,467 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useAuth } from '@/hooks/useAuth';
-import { User, Mail, Calendar, LogOut, ArrowLeft, Settings, Download, Shield, Mic, Palette, Flame, TrendingUp, Clock } from 'lucide-react';
-import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { 
+  ArrowLeft, 
+  Camera, 
+  Globe, 
+  Calendar, 
+  Mail, 
+  FileText, 
+  Bell, 
+  Shield, 
+  Download, 
+  Trash2, 
+  Lock, 
+  Info,
+  CheckCircle,
+  Volume2,
+  Bot,
+  Eye,
+  Mic
+} from 'lucide-react';
 
 export default function Account() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  
+  // Profile state
+  const [displayName, setDisplayName] = useState(user?.email?.split('@')[0] || '');
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState(user?.email || '');
+  const [timezone, setTimezone] = useState('UTC-5 (Eastern)');
+  const [language, setLanguage] = useState('EN');
+  const [slogan, setSlogan] = useState('Report • Label • Automate');
+  
+  // Settings state
+  const [robotVoice, setRobotVoice] = useState(false);
+  const [expressions, setExpressions] = useState('Medium');
+  const [showSpeakButton, setShowSpeakButton] = useState(false);
+  const [watching, setWatching] = useState(true);
+  
+  
+  // Notifications state
+  const [reminders, setReminders] = useState(true);
+  const [preBlockNudge, setPreBlockNudge] = useState(true);
+  const [doneReceipts, setDoneReceipts] = useState(true);
+  
+  // Security state
+  const [appLock, setAppLock] = useState('Off');
+  
+  // Save state
+  const [hasChanges, setHasChanges] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   if (!user) {
     return null;
   }
 
-  const handleSignOut = () => {
-    signOut();
+  const handleSave = () => {
+    // Save all settings to localStorage
+    localStorage.setItem('taskly-profile', JSON.stringify({
+      displayName, username, email, timezone, language, slogan
+    }));
+    localStorage.setItem('taskly-settings', JSON.stringify({
+      robotVoice, expressions, showSpeakButton, watching,
+      reminders, preBlockNudge, doneReceipts,
+      appLock
+    }));
+    
+    setSaveSuccess(true);
+    setHasChanges(false);
+    setTimeout(() => setSaveSuccess(false), 2000);
   };
 
-  const getProviderBadge = () => {
-    if (user.app_metadata?.provider === 'google') {
-      return <Badge variant="secondary">Google</Badge>;
-    }
-    return <Badge variant="secondary">Email</Badge>;
+  const handleDeleteData = () => {
+    // Clear all local data
+    localStorage.removeItem('taskly-profile');
+    localStorage.removeItem('taskly-settings');
+    localStorage.removeItem('taskly-tasks');
+    localStorage.removeItem('taskly-workflows');
+  };
+
+  const handleExportData = () => {
+    const data = {
+      profile: JSON.parse(localStorage.getItem('taskly-profile') || '{}'),
+      settings: JSON.parse(localStorage.getItem('taskly-settings') || '{}'),
+      tasks: JSON.parse(localStorage.getItem('taskly-tasks') || '[]'),
+      workflows: JSON.parse(localStorage.getItem('taskly-workflows') || '[]')
+    };
+    
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'taskly-data-export.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-xl">
-        <div className="flex h-20 items-center justify-between px-6">
-          <button 
+      <header className="sticky top-0 z-40 border-b border-border/20 bg-background/95 backdrop-blur-lg">
+        <div className="flex h-16 items-center justify-between px-6 max-w-4xl mx-auto">
+          <Button 
+            variant="ghost" 
+            size="sm"
             onClick={() => navigate('/')} 
-            className="p-2 hover:bg-muted rounded-lg transition-colors"
+            className="gap-2"
           >
-            <ArrowLeft className="h-5 w-5" />
-          </button>
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+          
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="text-muted-foreground"
+            >
+              Account
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => navigate('/dashboard')}
+            >
+              Dashboard
+            </Button>
+          </div>
         </div>
       </header>
 
-      {/* Page Title */}
-      <div className="flex justify-center py-6">
-        <h1 className="text-4xl font-bold text-foreground">Account</h1>
-      </div>
+      <div className="max-w-3xl mx-auto px-6 py-8 space-y-6">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold mb-2">Account</h1>
+          <p className="text-muted-foreground">Manage your profile and preferences</p>
+        </div>
 
-      <div className="container mx-auto px-6 py-8 max-w-2xl space-y-8">
-        {/* Top Section: Avatar + Greeting + Streak */}
-        <Card className="glass p-6">
-          <div className="flex items-center space-x-6">
-            <button className="group relative">
-              <Avatar className="h-24 w-24 border-4 border-primary/20 cursor-pointer group-hover:border-primary/40 transition-all">
-                <AvatarImage src="/placeholder.svg" alt="User Avatar" />
-                <AvatarFallback className="bg-[var(--gradient-primary)] text-white text-lg">
-                  <User className="h-10 w-10" />
+        {/* A. Profile Card */}
+        <Card className="p-6 space-y-6">
+          <h2 className="text-xl font-semibold">Profile</h2>
+          
+          <div className="flex items-start gap-6">
+            <div className="relative">
+              <Avatar className="h-24 w-24">
+                <AvatarImage src="" />
+                <AvatarFallback className="text-lg font-medium">
+                  {displayName.slice(0, 2).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <User className="h-6 w-6 text-white" />
-              </div>
-            </button>
+              <Button 
+                size="sm" 
+                variant="secondary" 
+                className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 gap-2"
+              >
+                <Camera className="h-3 w-3" />
+                Change
+              </Button>
+            </div>
             
-            <div className="flex-1 space-y-3">
-              <div>
-                <h2 className="text-2xl font-bold">Hello, {user?.email?.split('@')[0]?.charAt(0).toUpperCase() + user?.email?.split('@')[0]?.slice(1) || 'User'}! 👋</h2>
-                <p className="text-muted-foreground">{user?.email}</p>
+            <div className="flex-1 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="displayName">Display Name</Label>
+                  <Input 
+                    id="displayName"
+                    value={displayName}
+                    onChange={(e) => { setDisplayName(e.target.value); setHasChanges(true); }}
+                    placeholder="Your name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="username">Username</Label>
+                  <Input 
+                    id="username"
+                    value={username}
+                    onChange={(e) => { setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '')); setHasChanges(true); }}
+                    placeholder="your-handle"
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input 
+                    id="email"
+                    value={email}
+                    onChange={(e) => { setEmail(e.target.value); setHasChanges(true); }}
+                    placeholder="your@email.com"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="timezone">Timezone</Label>
+                  <Select value={timezone} onValueChange={(value) => { setTimezone(value); setHasChanges(true); }}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="UTC-8 (Pacific)">UTC-8 (Pacific)</SelectItem>
+                      <SelectItem value="UTC-7 (Mountain)">UTC-7 (Mountain)</SelectItem>
+                      <SelectItem value="UTC-6 (Central)">UTC-6 (Central)</SelectItem>
+                      <SelectItem value="UTC-5 (Eastern)">UTC-5 (Eastern)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               
               <div className="flex items-center gap-4">
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  <Flame className="h-3 w-3" />
-                  5 Day Streak
-                </Badge>
-                <Badge className="bg-primary/10 text-primary border-primary/20">
-                  {user?.email_confirmed_at ? "Verified" : "Free Plan"}
-                </Badge>
+                <Label>Language</Label>
+                <div className="flex gap-2">
+                  <Button 
+                    size="sm" 
+                    variant={language === 'EN' ? 'default' : 'outline'}
+                    onClick={() => { setLanguage('EN'); setHasChanges(true); }}
+                  >
+                    EN
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant={language === 'BG' ? 'default' : 'outline'}
+                    onClick={() => { setLanguage('BG'); setHasChanges(true); }}
+                  >
+                    BG
+                  </Button>
+                </div>
               </div>
+            </div>
+          </div>
+          
+          <div className="flex justify-end">
+            <Button 
+              disabled={!hasChanges}
+              onClick={handleSave}
+              className="gap-2"
+            >
+              {saveSuccess && <CheckCircle className="h-4 w-4" />}
+              {saveSuccess ? 'Saved!' : 'Save Changes'}
+            </Button>
+          </div>
+        </Card>
+
+        {/* B. Personalization */}
+        <Card className="p-6 space-y-4">
+          <h2 className="text-xl font-semibold">Personalization</h2>
+          
+          <div className="space-y-2">
+            <Label htmlFor="slogan">Slogan under greeting</Label>
+            <Input 
+              id="slogan"
+              value={slogan}
+              onChange={(e) => { setSlogan(e.target.value); setHasChanges(true); }}
+              placeholder="Report • Label • Automate"
+            />
+          </div>
+          
+          <div className="grid grid-cols-2 gap-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label className="flex items-center gap-2">
+                  <Volume2 className="h-4 w-4" />
+                  Robot voice
+                </Label>
+                <p className="text-sm text-muted-foreground">Narration of replies</p>
+              </div>
+              <Switch 
+                checked={robotVoice} 
+                onCheckedChange={(checked) => { setRobotVoice(checked); setHasChanges(true); }} 
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Bot className="h-4 w-4" />
+                Expression intensity
+              </Label>
+              <Select value={expressions} onValueChange={(value) => { setExpressions(value); setHasChanges(true); }}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Low">Low</SelectItem>
+                  <SelectItem value="Medium">Medium</SelectItem>
+                  <SelectItem value="High">High</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label className="flex items-center gap-2">
+                  <Mic className="h-4 w-4" />
+                  Show Speak Button
+                </Label>
+                <p className="text-sm text-muted-foreground">Display voice input</p>
+              </div>
+              <Switch 
+                checked={showSpeakButton} 
+                onCheckedChange={(checked) => { setShowSpeakButton(checked); setHasChanges(true); }} 
+              />
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label className="flex items-center gap-2">
+                  <Eye className="h-4 w-4" />
+                  Watching
+                </Label>
+                <p className="text-sm text-muted-foreground">Mirrors home bubble</p>
+              </div>
+              <Switch 
+                checked={watching} 
+                onCheckedChange={(checked) => { setWatching(checked); setHasChanges(true); }} 
+              />
             </div>
           </div>
         </Card>
 
-        {/* Account Details Section */}
-        <div className="space-y-6">
-          <Card className="glass p-6">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Mail className="h-5 w-5" />
-              Account Details
-            </h3>
-            
-            <div className="space-y-4">
-              <div className="flex justify-between items-center p-3 rounded-lg bg-muted/20">
-                <span className="text-sm font-medium">📧 Email</span>
-                <span className="text-sm text-muted-foreground">{user?.email}</span>
-              </div>
-              
-              <div className="flex justify-between items-center p-3 rounded-lg bg-muted/20">
-                <span className="text-sm font-medium">💎 Subscription</span>
-                <Badge variant="secondary">Free Plan</Badge>
-              </div>
-              
-              <div className="flex justify-between items-center p-3 rounded-lg bg-muted/20">
-                <span className="text-sm font-medium">⚙️ Total Workflows</span>
-                <span className="text-sm font-bold text-primary">12</span>
-              </div>
-              
-              <div className="flex justify-between items-center p-3 rounded-lg bg-muted/20">
-                <span className="text-sm font-medium">🤖 Agent Activity</span>
-                <span className="text-sm font-bold text-accent">Active</span>
-              </div>
-            </div>
-          </Card>
 
-          {/* Preferences */}
-          <Card className="glass p-6">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Settings className="h-5 w-5" />
-              Preferences
-            </h3>
-            
-            <div className="space-y-3">
-              <Button variant="outline" className="w-full justify-start glass border-0">
-                <Mic className="mr-3 h-4 w-4 text-primary" />
-                🎤 Voice Settings
-              </Button>
-              
-              <Button variant="outline" className="w-full justify-start glass border-0">
-                <User className="mr-3 h-4 w-4 text-accent" />
-                🤖 AI Tone & Personality
-              </Button>
-              
-              <Button variant="outline" className="w-full justify-start glass border-0">
-                <Palette className="mr-3 h-4 w-4 text-secondary-foreground" />
-                🎨 Assistant Theme
-              </Button>
-              
-              <Button variant="outline" className="w-full justify-start glass border-0">
-                <Settings className="mr-3 h-4 w-4" />
-                ✏️ Edit Profile
-              </Button>
+        {/* D. Notifications */}
+        <Card className="p-6 space-y-4">
+          <h2 className="text-xl font-semibold flex items-center gap-2">
+            <Bell className="h-5 w-5" />
+            Notifications
+          </h2>
+          
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label>Reminders</Label>
+              <Switch 
+                checked={reminders} 
+                onCheckedChange={(checked) => { setReminders(checked); setHasChanges(true); }} 
+              />
             </div>
-          </Card>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Pre-block nudge</Label>
+                <p className="text-sm text-muted-foreground">5 min before focus blocks</p>
+              </div>
+              <Switch 
+                checked={preBlockNudge} 
+                onCheckedChange={(checked) => { setPreBlockNudge(checked); setHasChanges(true); }} 
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label>Done receipts</Label>
+              <Switch 
+                checked={doneReceipts} 
+                onCheckedChange={(checked) => { setDoneReceipts(checked); setHasChanges(true); }} 
+              />
+            </div>
+          </div>
+        </Card>
 
-          {/* Analytics */}
-          <Card className="glass p-6">
-            <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Your Analytics
-            </h3>
-            
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="group text-center p-6 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 hover:border-primary/40 transition-all duration-300 cursor-pointer hover:scale-105">
-                <div className="text-3xl font-bold text-primary mb-2 group-hover:scale-110 transition-transform">47</div>
-                <div className="text-sm text-muted-foreground">🗣️ Most Used Commands</div>
-              </div>
-              
-              <div className="group text-center p-6 rounded-xl bg-gradient-to-br from-accent/10 to-accent/5 border border-accent/20 hover:border-accent/40 transition-all duration-300 cursor-pointer hover:scale-105">
-                <div className="text-3xl font-bold text-accent mb-2 group-hover:scale-110 transition-transform">3.2h</div>
-                <div className="text-sm text-muted-foreground">⏱️ Daily Average</div>
-              </div>
-              
-              <div className="group text-center p-6 rounded-xl bg-gradient-to-br from-secondary/10 to-secondary/5 border border-secondary/20 hover:border-secondary/40 transition-all duration-300 cursor-pointer hover:scale-105">
-                <div className="text-3xl font-bold text-secondary mb-2 group-hover:scale-110 transition-transform">36%</div>
-                <div className="text-sm text-muted-foreground">📊 Top Category</div>
-              </div>
-              
-              <div className="group text-center p-6 rounded-xl bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-500/20 hover:border-green-500/40 transition-all duration-300 cursor-pointer hover:scale-105">
-                <div className="text-3xl font-bold text-green-500 mb-2 group-hover:scale-110 transition-transform">92%</div>
-                <div className="text-sm text-muted-foreground">✅ Completion Rate</div>
-              </div>
+        {/* E. Data & Privacy */}
+        <Card className="p-6 space-y-4">
+          <h2 className="text-xl font-semibold">Data & Privacy</h2>
+          
+          <div className="space-y-4">
+            <div className="p-3 bg-muted/50 rounded-lg">
+              <p className="text-sm"><strong>Storage:</strong> Local-first</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                You control your data. We only store structure (titles/links), not bodies.
+              </p>
             </div>
             
-            <Separator className="my-4" />
-            
-            <div className="space-y-3">
-              <Button variant="outline" className="w-full justify-start glass border-0">
-                <Download className="mr-3 h-4 w-4" />
-                Export My Data
+            <div className="flex gap-3">
+              <Button variant="outline" className="flex-1 gap-2" onClick={handleExportData}>
+                <Download className="h-4 w-4" />
+                Export Data (JSON)
               </Button>
               
-              <Button variant="outline" className="w-full justify-start glass border-0">
-                <Shield className="mr-3 h-4 w-4" />
-                Privacy Settings
-              </Button>
-              
-              <Separator className="my-4" />
-              
-              <Button 
-                variant="destructive" 
-                onClick={handleSignOut}
-                className="w-full justify-start"
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                Sign Out
-              </Button>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="destructive" className="gap-2">
+                    <Trash2 className="h-4 w-4" />
+                    Delete All Data
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Delete All Data</DialogTitle>
+                    <DialogDescription>
+                      This action cannot be undone. Type "DELETE" to confirm.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <Input placeholder="Type DELETE to confirm" />
+                    <div className="flex gap-3">
+                      <Button variant="outline" className="flex-1">Cancel</Button>
+                      <Button variant="destructive" onClick={handleDeleteData}>Delete</Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
-          </Card>
-        </div>
+          </div>
+        </Card>
 
-        {!user.email_confirmed_at && (
-          <Card className="border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-2 text-yellow-800 dark:text-yellow-200">
-                <Mail className="h-4 w-4" />
-                <span className="text-sm font-medium">
-                  Please check your email to verify your account
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {/* F. Security */}
+        <Card className="p-6 space-y-4">
+          <h2 className="text-xl font-semibold flex items-center gap-2">
+            <Shield className="h-5 w-5" />
+            Security
+          </h2>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>App lock</Label>
+              <Select value={appLock} onValueChange={(value) => { setAppLock(value); setHasChanges(true); }}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Off">Off</SelectItem>
+                  <SelectItem value="Passcode">Passcode</SelectItem>
+                  <SelectItem value="Biometric">Biometric</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <Button variant="outline" className="w-full gap-2">
+              <Lock className="h-4 w-4" />
+              Lock Now (Test)
+            </Button>
+          </div>
+        </Card>
+
+        {/* G. About */}
+        <Card className="p-6 space-y-4">
+          <h2 className="text-xl font-semibold flex items-center gap-2">
+            <Info className="h-5 w-5" />
+            About
+          </h2>
+          
+          <div className="space-y-3 text-sm">
+            <div className="flex justify-between">
+              <span>Version</span>
+              <span>1.0.0</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Build</span>
+              <span>2024.12.001</span>
+            </div>
+          </div>
+          
+          <div className="flex gap-3">
+            <Button variant="outline" className="flex-1">Help / FAQ</Button>
+            <Button variant="outline" className="flex-1">Contact Support</Button>
+          </div>
+        </Card>
       </div>
     </div>
   );

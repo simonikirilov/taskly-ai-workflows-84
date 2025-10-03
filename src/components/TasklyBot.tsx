@@ -1,221 +1,299 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Bot, Mic, MicOff, Video, Sparkles } from 'lucide-react';
 import { useVoiceRecognition } from '@/hooks/useVoiceRecognition';
-import { useScreenRecording } from '@/hooks/useScreenRecording';
-import { RecordingIndicator } from '@/components/RecordingIndicator';
-import { WorkflowAnalysis } from '@/components/WorkflowAnalysis';
+import { LiveTranscriptionDisplay } from './LiveTranscriptionDisplay';
+import { useTextToSpeech } from '@/hooks/useTextToSpeech';
+import { useRobotStateMachine } from '@/hooks/useRobotStateMachine';
+import { useAudioFeedback } from '@/hooks/useAudioFeedback';
+import { CopilotChat } from './CopilotChat';
+import { ConfirmationDialog } from '@/components/ConfirmationDialog';
+import { TextCommandInput } from '@/components/TextCommandInput';
+import { WhisperStatus } from './WhisperStatus';
 import { toast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
+import { AnimatedRobot } from './AnimatedRobot';
 
 interface TasklyBotProps {
   onVoiceCommand: (command: string) => void;
-  onRecordFlow?: (recordingBlob?: Blob, duration?: string) => void;
-  suggestionCount?: number;
-  onShowSuggestions?: () => void;
   voiceHistory?: string[];
+  mode: 'speaking' | 'typing';
 }
 
-export function TasklyBot({ onVoiceCommand, onRecordFlow, suggestionCount = 0, onShowSuggestions, voiceHistory = [] }: TasklyBotProps) {
+export function TasklyBot({ onVoiceCommand, voiceHistory = [], mode }: TasklyBotProps) {
   const [lastCommand, setLastCommand] = useState<string>('');
-  const [robotImageUrl, setRobotImageUrl] = useState<string>('/public/assets/robot.png'); // Will be updated when user uploads
-  const [showWorkflowAnalysis, setShowWorkflowAnalysis] = useState(false);
-  const [recordingBlob, setRecordingBlob] = useState<Blob | undefined>();
-  const [showSpeakButton, setShowSpeakButton] = useState(false);
+  const [showCopilotChat, setShowCopilotChat] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [showTextInput, setShowTextInput] = useState(false);
+  const [pendingCommand, setPendingCommand] = useState<{ text: string; task: string } | null>(null);
+  const [isToggling, setIsToggling] = useState(false);
 
-  // Load speak button preference
-  useEffect(() => {
-    const preferences = localStorage.getItem('taskly-user-preferences');
-    if (preferences) {
-      const parsed = JSON.parse(preferences);
-      setShowSpeakButton(parsed.showSpeakButton ?? false);
-    }
-  }, []);
-
-  const { isListening, startListening, stopListening } = useVoiceRecognition({
-    onResult: (transcript) => {
-      setLastCommand(transcript);
-      onVoiceCommand(transcript);
-      toast({
-        title: "Voice command received",
-        description: `"${transcript}"`,
-      });
-    },
-    onError: (error) => {
-      console.error('Voice recognition error:', error);
+  const { speak } = useTextToSpeech();
+  const { playEarcon, playHaptic } = useAudioFeedback();
+  
+  const robotStateMachine = useRobotStateMachine({
+    onStateChange: (state) => {
+      console.log('Robot state changed to:', state);
     }
   });
 
-  const { isRecording, formattedTime, startRecording, stopRecording } = useScreenRecording({
-    onRecordingStart: () => {
-      toast({
-        title: "Recording started",
-        description: "Capturing your workflow. Stop screen sharing to end recording.",
-      });
-    },
-    onRecordingStop: (blob) => {
-      setRecordingBlob(blob);
-      setShowWorkflowAnalysis(true);
-      onRecordFlow?.(blob, "2:30"); // Mock duration
-    },
+  // Define handleVoiceInput before using it in useVoiceRecognition
+  const handleVoiceInput = (transcript: string) => {
+    setLastCommand(transcript);
+    robotStateMachine.startSpeaking();
+    
+    // Simple confidence check
+    if (transcript.length < 5 || transcript.toLowerCase().includes('uh') || transcript.toLowerCase().includes('um')) {
+      setPendingCommand({ text: transcript, task: `Create task: "${transcript}"` });
+      setShowConfirmation(true);
+      speak('I\'m not sure about that. Please confirm.');
+      playEarcon('error');
+    } else {
+      onVoiceCommand(transcript);
+      speak('Task added to today\'s tasks');
+      playEarcon('success');
+      playHaptic('light');
+    }
+    
+    setTimeout(() => robotStateMachine.finishSpeaking(), 2000);
+    
+    toast({
+      title: "Voice command received",
+      description: `"${transcript}"`,
+    });
+  };
+
+  const voiceRecognition = useVoiceRecognition({
+    onResult: handleVoiceInput,
     onError: (error) => {
+      console.error('Voice recognition error:', error);
+      robotStateMachine.setError();
       toast({
-        title: "Recording failed",
+        title: "Voice Recognition Error",
         description: error,
         variant: "destructive",
       });
-    }
+    },
+    onPartialResult: (transcript) => {
+      console.log('Partial transcript:', transcript);
+      // Show partial results to user for better feedback
+    },
+    onVolumeChange: (volume) => {
+      // Volume feedback for better UX
+    },
+    useWhisper: true,
+    useStreaming: true,
+    sensitivityLevel: 3
   });
 
-  const handleBotClick = () => {
-    if (isListening) {
-      stopListening();
-    } else {
-      startListening();
+  const { isListening, isSupported: voiceSupported, startListening, stopListening, whisperStatus, 
+          partialText, finalText, confidence, volume, isSpeaking, speechDuration, silenceDuration } = voiceRecognition;
+
+  // Sync robot state with voice recognition
+  useEffect(() => {
+    if (isListening && robotStateMachine.state !== 'listening') {
+      robotStateMachine.startListening();
+    } else if (!isListening && robotStateMachine.state === 'listening') {
+      robotStateMachine.stopListening();
+    }
+  }, [isListening, robotStateMachine]);
+
+  const handleBotClick = async () => {
+    if (isToggling) return; // Prevent rapid clicks
+    setIsToggling(true);
+    
+    try {
+      if (mode === 'speaking') {
+        // Toggle microphone behavior
+        if (isListening) {
+          // Stop listening
+          stopListening();
+          playEarcon('stop');
+          playHaptic('light');
+        } else {
+          // Start listening
+          await handleSpeakCommand();
+        }
+      } else {
+        // In typing mode, open AI Copilot chat
+        setShowCopilotChat(true);
+      }
+    } finally {
+      setTimeout(() => setIsToggling(false), 200); // Prevent rapid clicks
     }
   };
 
-  const handleRecordFlow = () => {
-    if (isRecording) {
-      stopRecording();
-    } else {
-      startRecording();
+  const handleSpeakCommand = async () => {
+    if (!voiceSupported) {
+      robotStateMachine.setError();
+      speak('Voice not supported on this device. Please use text input.');
+      setShowTextInput(true);
+      return;
     }
+    
+    try {
+      const permissionStatus = await navigator.permissions?.query({ name: 'microphone' as PermissionName });
+      
+      if (permissionStatus?.state === 'denied') {
+        robotStateMachine.setError();
+        toast({
+          title: "Microphone Access Blocked",
+          description: "Please enable microphone access in your browser settings.",
+          variant: "destructive",
+          duration: 6000,
+        });
+        speak('Microphone access is blocked. Please check your browser settings.');
+        setShowTextInput(true);
+        return;
+      }
+      
+      // Request permission and start listening
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach(track => track.stop()); // We just wanted to check permission
+      
+      startListening();
+      playEarcon('start');
+      playHaptic('light');
+      
+    } catch (error) {
+      console.error('Permission request failed:', error);
+      robotStateMachine.setError();
+      
+      if (error.name === 'NotAllowedError') {
+        toast({
+          title: "Microphone Permission Needed",
+          description: "Please allow microphone access when prompted.",
+          variant: "destructive",
+          duration: 6000,
+        });
+        speak('Please allow microphone access when prompted.');
+      } else {
+        toast({
+          title: "Microphone Error", 
+          description: "Unable to access microphone. Using text input instead.",
+          variant: "destructive",
+        });
+        speak('Unable to access microphone. Please use text input.');
+      }
+      
+      setShowTextInput(true);
+    }
+  };
+
+  const handleTextCommand = (command: string) => {
+    robotStateMachine.startSpeaking();
+    
+    if (command.length < 5) {
+      setPendingCommand({ text: command, task: `Create task: "${command}"` });
+      setShowConfirmation(true);
+      speak('Please confirm this task.');
+      playEarcon('error');
+    } else {
+      onVoiceCommand(command);
+      speak('Task added to today\'s tasks');
+      playEarcon('success');
+      playHaptic('light');
+    }
+    
+    setTimeout(() => robotStateMachine.finishSpeaking(), 2000);
+    
+    toast({
+      title: "Command received",
+      description: `"${command}"`,
+    });
+  };
+
+  const handleConfirmTask = () => {
+    if (pendingCommand) {
+      robotStateMachine.startSpeaking();
+      onVoiceCommand(pendingCommand.text);
+      speak('Task added to today\'s tasks');
+      playEarcon('success');
+      playHaptic('light');
+      setTimeout(() => robotStateMachine.finishSpeaking(), 2000);
+      setShowConfirmation(false);
+      setPendingCommand(null);
+    }
+  };
+
+  const handleCancelTask = () => {
+    setShowConfirmation(false);
+    setPendingCommand(null);
   };
 
   return (
     <>
-      <RecordingIndicator 
-        isRecording={isRecording} 
-        recordingTime={formattedTime}
-        onStop={stopRecording}
-      />
-      
-      <WorkflowAnalysis 
-        isVisible={showWorkflowAnalysis}
-        onClose={() => setShowWorkflowAnalysis(false)}
-        recordingData={recordingBlob}
-      />
-      
       <div className="flex flex-col items-center relative">
-        {/* Littlebird.ai inspired layout - no greeting, focus on interaction */}
+        <div className="flex flex-col items-center gap-4 p-6">
+          {/* Live Transcription Display */}
+          <LiveTranscriptionDisplay
+            isListening={isListening}
+            partialText={partialText || ''}
+            finalText={finalText || ''}
+            confidence={confidence || 0}
+            volume={volume || 0}
+            isSpeaking={isSpeaking || false}
+            speechDuration={speechDuration || 0}
+            silenceDuration={silenceDuration || 0}
+            className="mb-4"
+          />
 
-        {/* Taskly Robot - Mobile Optimized */}
-        <div className="relative flex items-center justify-center">
-          {/* Subtle background glow */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-full max-w-[350px] aspect-square bg-gradient-radial from-blue-400/10 via-blue-400/5 to-transparent rounded-full blur-2xl opacity-40" />
-          </div>
-          
-          {/* Robot container with mobile-optimized design */}
-          <div className={cn(
-            "relative transition-all duration-500 cursor-pointer animate-float-slow w-full max-w-[380px] mx-auto",
-            isListening 
-              ? "scale-105" 
-              : "hover:scale-[1.02]"
-          )}
-          onClick={handleBotClick}
-          >
-            <img 
-              src="/lovable-uploads/d9e422aa-ea2c-4619-8ac2-3818edd8bcb3.png"
-              alt="Taskly AI Assistant"
-              className="w-full h-auto object-contain animate-float-slow p-0 m-0 max-w-full"
-              style={{ filter: 'drop-shadow(0 0 20px rgba(59, 130, 246, 0.3))' }}
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.style.display = 'none';
-                target.nextElementSibling?.classList.remove('hidden');
-              }}
+          {/* Enhanced Animated Robot with State Machine */}
+          <div className="relative will-change-transform">
+            <AnimatedRobot 
+              isListening={isListening}
+              isExpanded={false}
+              onClick={handleBotClick}
+              className="mb-6"
+              state={robotStateMachine.state}
             />
-            
-            {/* Fallback Bot icon */}
-            <div className="hidden w-full aspect-square bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center max-w-[300px]">
-              <Bot className="h-24 w-24 text-white" />
-            </div>
-            
-            {/* Listening indicator - minimalistic */}
-            {isListening && (
-              <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2">
-                <div className="flex gap-1 px-4 py-2 bg-primary/20 rounded-full backdrop-blur-sm">
-                  <div className="w-2 h-6 bg-primary animate-pulse rounded-full" />
-                  <div className="w-2 h-6 bg-primary animate-pulse rounded-full" style={{ animationDelay: '0.2s' }} />
-                  <div className="w-2 h-6 bg-primary animate-pulse rounded-full" style={{ animationDelay: '0.4s' }} />
+          </div>
+
+          {/* Mode Indicator and Whisper Status */}
+          <div className="text-center mb-4 space-y-2">
+            <p className="text-sm text-muted-foreground">
+              {mode === 'speaking' 
+                ? (isListening ? '🎤 Listening... Tap to stop' : '🎤 Tap to speak') 
+                : '💬 Tap to chat'}
+            </p>
+            <WhisperStatus status={whisperStatus} isListening={isListening} />
+          </div>
+
+          {/* Voice History - Only show if there's history and not listening */}
+          {voiceHistory.length > 0 && !isListening && (
+            <div className="relative z-10 max-w-2xl text-center mt-4 animate-fade-in">
+              <div className="glass rounded-2xl p-6">
+                <h4 className="text-sm font-medium text-muted-foreground mb-4">Recent Commands</h4>
+                <div className="space-y-3 max-h-32 overflow-y-auto">
+                  {voiceHistory.slice(-3).map((command, index) => (
+                    <div key={index} className="text-left p-3 bg-background/60 rounded-lg border border-border/50">
+                      <p className="text-sm text-foreground">"{command}"</p>
+                    </div>
+                  ))}
                 </div>
               </div>
-            )}
-          </div>
-        </div>
-
-      {/* Action Buttons Row */}
-      <div className="flex gap-3 w-full justify-center max-w-md mx-auto mt-8">
-        <Button
-          onClick={handleRecordFlow}
-          size="default"
-          variant="outline"
-          className={cn(
-            "h-12 px-6 text-sm font-medium transition-all duration-300 rounded-xl border border-border/30 backdrop-blur-sm",
-            isRecording 
-              ? "bg-gradient-to-r from-red-500/20 to-red-600/20 border-red-500/40 text-red-400 shadow-lg shadow-red-500/25" 
-              : "bg-card/30 hover:bg-card/50 hover:border-border/50"
-          )}
-        >
-          <Video className={cn("h-4 w-4 mr-2", isRecording && "text-red-400")} />
-          {isRecording ? "Stop Recording" : "Record"}
-        </Button>
-        
-        {showSpeakButton && (
-          <Button
-            onClick={handleBotClick}
-            size="default"
-            variant="outline"
-            className={cn(
-              "h-12 px-6 text-sm font-medium transition-all duration-300 rounded-xl border border-border/30 backdrop-blur-sm",
-              isListening 
-                ? "bg-gradient-to-r from-primary/20 to-blue-500/20 border-primary/40 text-primary shadow-lg shadow-primary/25" 
-                : "bg-card/30 hover:bg-card/50 hover:border-border/50"
-            )}
-          >
-            <Mic className={cn("h-4 w-4 mr-2", isListening && "text-primary animate-pulse")} />
-            {isListening ? "Listening..." : "Speak"}
-          </Button>
-        )}
-      </div>
-
-      {/* Voice History - Only show if there's history */}
-      {voiceHistory.length > 0 && (
-        <div className="relative z-10 max-w-2xl text-center mt-4">
-          <div className="bg-muted/80 rounded-2xl p-6 backdrop-blur-sm">
-            <h4 className="text-sm font-medium text-muted-foreground mb-4">Voice Command History</h4>
-            <div className="space-y-3 max-h-32 overflow-y-auto">
-              {voiceHistory.slice(-5).map((command, index) => (
-                <div key={index} className="text-left p-3 bg-background/60 rounded-lg border border-border/50">
-                  <p className="text-sm text-foreground">"{command}"</p>
-                </div>
-              ))}
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Floating AI Assistant with Taskly Robot - Larger & Closer */}
-      <button
-        onClick={onShowSuggestions}
-        className="fixed bottom-6 right-6 z-50 transition-all duration-300 hover:scale-105"
-      >
-        <div className="relative">
-          <img 
-            src="/lovable-uploads/d9e422aa-ea2c-4619-8ac2-3818edd8bcb3.png"
-            alt="AI Assistant"
-            className="w-28 h-28 object-contain filter drop-shadow-lg"
-          />
-          {suggestionCount > 0 && (
-            <span className="absolute -top-1 -right-1 h-6 w-6 bg-gradient-to-r from-primary to-blue-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-lg animate-pulse">
-              {suggestionCount}
-            </span>
           )}
         </div>
-      </button>
       </div>
+
+      <CopilotChat 
+        isOpen={showCopilotChat}
+        onClose={() => setShowCopilotChat(false)}
+      />
+
+      <ConfirmationDialog
+        isOpen={showConfirmation}
+        onClose={handleCancelTask}
+        onConfirm={handleConfirmTask}
+        transcribedText={pendingCommand?.text || ''}
+        suggestedTask={pendingCommand?.task || ''}
+      />
+
+      <TextCommandInput
+        isOpen={showTextInput}
+        onClose={() => setShowTextInput(false)}
+        onSubmit={handleTextCommand}
+        placeholder="Type your command, e.g., 'Create a task to call John tomorrow'"
+      />
     </>
   );
 }
