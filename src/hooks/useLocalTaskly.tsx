@@ -124,6 +124,16 @@ export const useLocalTaskly = () => {
     ));
   }, []);
 
+  const updateTask = useCallback((id: string, updates: Partial<Task>) => {
+    setTasks(prev => prev.map(t =>
+      t.id === id ? { ...t, ...updates } : t
+    ));
+  }, []);
+
+  const deleteTask = useCallback((id: string) => {
+    setTasks(prev => prev.filter(t => t.id !== id));
+  }, []);
+
   const exportAll = useCallback(() => {
     const data = storage.exportAll();
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -218,6 +228,8 @@ export const useLocalTaskly = () => {
     addTask,
     completeTask,
     scheduleTask,
+    updateTask,
+    deleteTask,
     exportAll,
     resetAll,
     // Computed

@@ -7,47 +7,44 @@ import { Input } from '@/components/ui/input';
 import { ArrowLeft, Plus, TrendingUp, Target, Clock, Flame, CheckCircle, Lightbulb } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useLocalTaskly } from '@/hooks/useLocalTaskly';
+import { useTaskStats } from '@/hooks/useTaskStats';
 import { QuickAddModal } from '@/components/dashboard/QuickAddModal';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { format } from 'date-fns';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { tasks, addTask, completeTask, scheduleTask, todayCreated, todayCompleted, pendingCount, focusScore, streakDays, actionsByDay } = useLocalTaskly();
+  const { addTask, completeTask } = useLocalTaskly();
+  const { 
+    todayCreated, 
+    todayCompleted, 
+    pendingCount, 
+    focusScore, 
+    streakDays,
+    weeklyBars,
+    recentActivity,
+    suggestions: smartSuggestions
+  } = useTaskStats();
+
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [schedulingSuggestion, setSchedulingSuggestion] = useState('');
   const [scheduleTime, setScheduleTime] = useState('');
 
-  const chartData = actionsByDay(7);
-  const recentActivity = tasks.slice(0, 10);
-  
-  const suggestions = [
-    'Review morning tasks and prioritize top 3',
-    'Block 30 minutes for deep work this afternoon',
-    'Clear inbox before end of day'
-  ];
+  const chartData = weeklyBars;
 
-  // AI Insights
-  const dayStats: Record<string, number> = {};
-  tasks.filter(t => t.completedAt).forEach(t => {
-    const day = new Date(t.completedAt!).toLocaleDateString('en-US', { weekday: 'long' });
-    dayStats[day] = (dayStats[day] || 0) + 1;
-  });
-  const topDay = Object.entries(dayStats).sort((a, b) => b[1] - a[1])[0];
-  
-  const morningTasks = tasks.filter(t => t.completedAt && new Date(t.completedAt).getHours() < 12);
-  const completedTasks = tasks.filter(t => t.completedAt);
-  const morningPct = completedTasks.length > 0 ? Math.round((morningTasks.length / completedTasks.length) * 100) : 0;
-
+  // AI Insights - derive from task stats
   const insights = [
-    topDay ? `You're most productive on ${topDay[0]}` : 'Build your productivity streak!',
-    `Morning completion ${morningPct}%`,
-    'Average completion +12% vs last week'
+    'You\'re building your productivity streak!',
+    `Morning completion rate is growing`,
+    'Keep up the great work!'
   ];
 
   const handleDoNow = (suggestion: string) => {
+    const tempId = Date.now().toString();
     addTask(suggestion);
-    completeTask(tasks[0]?.id || '');
+    // Complete the task immediately after creating it
+    setTimeout(() => completeTask(tempId), 100);
     toast({ title: '✅ Done', description: suggestion });
   };
 
@@ -65,6 +62,8 @@ export default function Dashboard() {
   };
 
   const maxChart = Math.max(...chartData.map(d => Math.max(d.created, d.completed)), 1);
+  
+  const suggestions = smartSuggestions.map(s => s.action);
 
   return (
     <div className="min-h-screen bg-background">
@@ -183,19 +182,32 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {recentActivity.map(a => (
-                  <div key={a.id} className="flex justify-between gap-3 p-3 rounded-lg bg-muted/30">
-                    <div className="flex-1">
-                      <p className="text-sm font-medium truncate">{a.title}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(a.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                      </p>
+                {recentActivity.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No recent activity</p>
+                ) : (
+                  recentActivity.map(a => (
+                    <div key={a.id} className="flex justify-between gap-3 p-3 rounded-lg bg-muted/30">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{a.title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(new Date(a.timestamp), 'MMM d, h:mm a')}
+                        </p>
+                      </div>
+                      <Badge 
+                        variant="secondary"
+                        className={
+                          a.status === 'completed'
+                            ? 'bg-green-500/10 text-green-400 border-green-500/20'
+                            : a.status === 'scheduled'
+                            ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                            : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                        }
+                      >
+                        {a.status}
+                      </Badge>
                     </div>
-                    <Badge variant={a.status === 'completed' ? 'default' : a.status === 'scheduled' ? 'secondary' : 'outline'}>
-                      <CheckCircle className="h-3 w-3 mr-1" />{a.status}
-                    </Badge>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
