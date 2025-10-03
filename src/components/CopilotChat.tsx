@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Mic, Send, Bot, User, Loader2 } from "lucide-react";
 import { useVoiceRecognition } from "@/hooks/useVoiceRecognition";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
 interface Message {
@@ -24,7 +25,7 @@ export function CopilotChat({ isOpen, onClose }: CopilotChatProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      content: "AI assistant is currently being upgraded with a new AI provider. Coming soon with enhanced task management capabilities!",
+      content: "Hi! I'm your Taskly AI assistant. I can help you organize tasks, set priorities, and boost your productivity. What would you like to work on today?",
       role: 'assistant',
       timestamp: new Date()
     }
@@ -59,18 +60,40 @@ export function CopilotChat({ isOpen, onClose }: CopilotChatProps) {
     setInputValue('');
     setIsLoading(true);
 
-    // Simulate a brief loading time
-    setTimeout(() => {
+    try {
+      // Prepare conversation context (last 6 messages for context)
+      const context = messages.slice(-6).map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
+
+      const { data, error } = await supabase.functions.invoke('ai-copilot', {
+        body: { 
+          message: content,
+          context: context
+        }
+      });
+
+      if (error) throw error;
+
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: "AI assistant is currently being upgraded. Please check back soon for intelligent task management assistance!",
+        content: data.response,
         role: 'assistant',
         timestamp: new Date()
       };
 
       setMessages(prev => [...prev, assistantMessage]);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast({
+        title: "Error",
+        description: "Failed to get AI response. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {

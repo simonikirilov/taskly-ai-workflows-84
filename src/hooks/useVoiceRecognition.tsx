@@ -1,17 +1,11 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
-import { useWhisperTranscription } from './useWhisperTranscription';
-import { useAdvancedVAD } from './useAdvancedVAD';
-import { useStreamingTranscription } from './useStreamingTranscription';
+import { supabase } from '@/integrations/supabase/client';
 
 interface UseVoiceRecognitionOptions {
   onResult: (transcript: string) => void;
   onError?: (error: string) => void;
   onVolumeChange?: (volume: number) => void;
-  onPartialResult?: (transcript: string) => void;
-  useWhisper?: boolean;
-  useStreaming?: boolean;
-  sensitivityLevel?: number;
 }
 
 interface BrowserSupportCheck {
@@ -20,207 +14,33 @@ interface BrowserSupportCheck {
   canUseServerFallback: boolean;
   hasNativeSupport: boolean;
   hasMediaRecorder: boolean;
-  whisperSupported: boolean;
-  advancedVADSupported: boolean;
-  streamingSupported: boolean;
   permissionStatus: 'unknown' | 'granted' | 'denied' | 'prompt';
 }
 
-interface VoiceState {
-  isListening: boolean;
-  isSpeaking: boolean;
-  isProcessing: boolean;
-  partialText: string;
-  finalText: string;
-  confidence: number;
-  volume: number;
-  speechDuration: number;
-  silenceDuration: number;
-}
-
-export function useVoiceRecognition({ 
-  onResult, 
-  onError, 
-  onVolumeChange,
-  onPartialResult, 
-  useWhisper = true,
-  useStreaming = true,
-  sensitivityLevel = 3
-}: UseVoiceRecognitionOptions) {
-  const [voiceState, setVoiceState] = useState<VoiceState>({
-    isListening: false,
-    isSpeaking: false,
-    isProcessing: false,
-    partialText: '',
-    finalText: '',
-    confidence: 0,
-    volume: 0,
-    speechDuration: 0,
-    silenceDuration: 0,
-  });
+export function useVoiceRecognition({ onResult, onError, onVolumeChange }: UseVoiceRecognitionOptions) {
+  const [isListening, setIsListening] = useState(false);
   const [isSupported, setIsSupported] = useState<boolean | null>(null);
   const [supportStatus, setSupportStatus] = useState<BrowserSupportCheck | null>(null);
+  const [useServerFallback, setUseServerFallback] = useState(false);
+  const [audioLevel, setAudioLevel] = useState(0);
   
-  const streamRef = useRef<MediaStream | null>(null);
   const recognitionRef = useRef<any>(null);
-  const naturalStopTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const completionConfidenceRef = useRef<number>(0);
-
-  // Initialize advanced VAD
-  const advancedVAD = useAdvancedVAD({
-    sensitivityLevel,
-    adaptiveThreshold: true,
-    onSpeechStart: () => {
-      console.log('🎙️ Natural speech detected');
-      setVoiceState(prev => ({ ...prev, isSpeaking: true }));
-      
-      // Clear any pending natural stop timer
-      if (naturalStopTimerRef.current) {
-        clearTimeout(naturalStopTimerRef.current);
-        naturalStopTimerRef.current = null;
-      }
-    },
-    onSpeechEnd: () => {
-      console.log('🔇 Natural speech pause detected');
-      setVoiceState(prev => ({ ...prev, isSpeaking: false }));
-      handleNaturalSpeechPause();
-    },
-    onVolumeChange: (volume) => {
-      setVoiceState(prev => ({ ...prev, volume }));
-      onVolumeChange?.(volume);
-    }
-  });
-
-  // Initialize streaming transcription
-  const streamingTranscription = useStreamingTranscription({
-    chunkDuration: 800, // 800ms chunks for responsive streaming
-    onPartialResult: (text, confidence) => {
-      console.log('📝 Partial transcription:', text);
-      setVoiceState(prev => ({ 
-        ...prev, 
-        partialText: text, 
-        confidence,
-        isProcessing: false 
-      }));
-      onPartialResult?.(text);
-      
-      // Analyze completion confidence
-      analyzeCompletionConfidence(text, confidence);
-    },
-    onFinalResult: (result) => {
-      console.log('✅ Final transcription:', result.text);
-      setVoiceState(prev => ({ 
-        ...prev, 
-        finalText: result.text,
-        partialText: '',
-        confidence: result.confidence || 0.8,
-        isProcessing: false 
-      }));
-      onResult(result.text);
-    },
-    onError: (error) => {
-      console.error('Streaming transcription error:', error);
-      onError?.(error);
-      setVoiceState(prev => ({ ...prev, isProcessing: false }));
-    }
-  });
-
-  // Fallback Whisper transcription for non-streaming mode
-  const whisperTranscription = useWhisperTranscription({
-    onResult: (result) => {
-      console.log('✅ Whisper result:', result.text);
-      setVoiceState(prev => ({ 
-        ...prev, 
-        finalText: result.text,
-        confidence: result.confidence || 0.8,
-        isProcessing: false 
-      }));
-      onResult(result.text);
-    },
-    onError: (error) => {
-      console.error('Whisper transcription error:', error);
-      onError?.(error);
-      setVoiceState(prev => ({ ...prev, isProcessing: false }));
-    }
-  });
-
-  // Analyze completion confidence using linguistic patterns
-  const analyzeCompletionConfidence = useCallback((text: string, transcriptionConfidence: number) => {
-    const words = text.trim().split(/\s+/);
-    const sentences = text.split(/[.!?]+/).filter(s => s.trim());
-    
-    let completionScore = 0;
-    
-    // Length-based confidence (longer utterances are more likely complete)
-    if (words.length >= 5) completionScore += 0.3;
-    if (words.length >= 10) completionScore += 0.2;
-    
-    // Sentence completion markers
-    const lastChar = text.trim().slice(-1);
-    if (['.', '!', '?'].includes(lastChar)) completionScore += 0.4;
-    
-    // Common completion patterns
-    const completionPhrases = [
-      /\b(that's it|done|finished|complete|end|thanks?|okay|alright)\b/i,
-      /\b(please|thank you|got it)\b/i
-    ];
-    if (completionPhrases.some(pattern => pattern.test(text))) {
-      completionScore += 0.3;
-    }
-    
-    // Grammatical completion (simple heuristic)
-    if (sentences.length > 0 && sentences[sentences.length - 1].trim()) {
-      const lastSentence = sentences[sentences.length - 1].trim();
-      const hasSubjectVerb = /\b\w+\s+(is|are|was|were|will|would|can|could|should)\b/i.test(lastSentence);
-      if (hasSubjectVerb) completionScore += 0.2;
-    }
-    
-    // Combine with transcription confidence
-    const finalConfidence = Math.min(1, (completionScore * 0.7) + (transcriptionConfidence * 0.3));
-    completionConfidenceRef.current = finalConfidence;
-    
-    console.log('🧠 Completion analysis:', { completionScore, transcriptionConfidence, finalConfidence });
-  }, []);
-
-  // Update voice state when handleNaturalSpeechPause is called
-  const handleNaturalSpeechPause = useCallback(() => {
-    const { silenceDuration } = advancedVAD.vadState;
-    const confidence = completionConfidenceRef.current;
-    
-    // Dynamic pause handling based on context
-    let stopDelay = 1500; // Base delay
-    
-    // Adjust based on completion confidence
-    if (confidence > 0.8) stopDelay = 800;  // High confidence = quick stop
-    if (confidence < 0.5) stopDelay = 2500; // Low confidence = wait longer
-    
-    // Adjust based on silence duration
-    if (silenceDuration > 2000) stopDelay = Math.max(500, stopDelay - 500);
-    
-    // Clear any existing timer
-    if (naturalStopTimerRef.current) {
-      clearTimeout(naturalStopTimerRef.current);
-    }
-    
-    naturalStopTimerRef.current = setTimeout(() => {
-      if (!advancedVAD.isSpeaking && voiceState.isListening) {
-        console.log('🎯 Natural conversation end detected', { confidence, silenceDuration, stopDelay });
-        stopListening();
-      }
-    }, stopDelay);
-  }, [advancedVAD.vadState, advancedVAD.isSpeaking, voiceState.isListening]);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   const checkBrowserSupport = useCallback(async (): Promise<BrowserSupportCheck> => {
-    console.log('🔍 Checking browser support for natural voice recognition...');
+    console.log('🔍 Checking browser support for voice recognition...');
     
     const isHttps = location.protocol === 'https:' || location.hostname === 'localhost';
     const hasNativeSupport = ('webkitSpeechRecognition' in window) || ('SpeechRecognition' in window);
     const hasMediaDevices = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
     const hasMediaRecorder = typeof MediaRecorder !== 'undefined';
-    const whisperSupported = whisperTranscription.isInitialized || 
-                             (typeof window !== 'undefined' && 'WebAssembly' in window);
-    const advancedVADSupported = !!(window.AudioContext || (window as any).webkitAudioContext);
-    const streamingSupported = hasMediaRecorder && whisperSupported;
     
     let permissionStatus: 'unknown' | 'granted' | 'denied' | 'prompt' = 'unknown';
     
@@ -234,14 +54,11 @@ export function useVoiceRecognition({
       }
     }
 
-    console.log('📊 Advanced browser capabilities:', {
+    console.log('📊 Browser capabilities:', {
       isHttps,
       hasNativeSupport,
       hasMediaDevices,
       hasMediaRecorder,
-      whisperSupported,
-      advancedVADSupported,
-      streamingSupported,
       permissionStatus
     });
 
@@ -252,9 +69,6 @@ export function useVoiceRecognition({
         canUseServerFallback: hasMediaDevices && hasMediaRecorder,
         hasNativeSupport: false,
         hasMediaRecorder,
-        whisperSupported,
-        advancedVADSupported,
-        streamingSupported,
         permissionStatus
       };
     }
@@ -266,37 +80,223 @@ export function useVoiceRecognition({
         canUseServerFallback: false,
         hasNativeSupport: false,
         hasMediaRecorder,
-        whisperSupported,
-        advancedVADSupported,
-        streamingSupported,
+        permissionStatus
+      };
+    }
+
+    if (!hasMediaRecorder) {
+      return {
+        isSupported: hasNativeSupport,
+        reason: hasNativeSupport ? undefined : 'Voice recognition not supported in this browser',
+        canUseServerFallback: false,
+        hasNativeSupport,
+        hasMediaRecorder: false,
         permissionStatus
       };
     }
 
     return {
-      isSupported: advancedVADSupported || hasNativeSupport || whisperSupported,
-      reason: advancedVADSupported ? 'Natural speech detection available' : 
-             hasNativeSupport ? 'Browser speech recognition available' : 
-             whisperSupported ? 'AI transcription available' : 'Limited support',
+      isSupported: hasNativeSupport || hasMediaRecorder,
+      reason: hasNativeSupport ? undefined : 'Using server-based voice recognition',
       canUseServerFallback: hasMediaRecorder,
       hasNativeSupport,
       hasMediaRecorder,
-      whisperSupported,
-      advancedVADSupported,
-      streamingSupported,
       permissionStatus
     };
-  }, [whisperTranscription.isInitialized]);
+  }, []);
 
-  // Initialize support check
+  const setupVoiceActivityDetection = useCallback((stream: MediaStream) => {
+    if (!window.AudioContext && !(window as any).webkitAudioContext) {
+      console.log('⚠️ Web Audio API not supported');
+      return;
+    }
+
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      audioContextRef.current = new AudioContextClass();
+      const analyser = audioContextRef.current.createAnalyser();
+      const source = audioContextRef.current.createMediaStreamSource(stream);
+      
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.3;
+      source.connect(analyser);
+      analyserRef.current = analyser;
+
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+
+      const detectVoiceActivity = () => {
+        if (!analyserRef.current || !isListening) return;
+        
+        analyserRef.current.getByteFrequencyData(dataArray);
+        
+        let sum = 0;
+        for (let i = 0; i < bufferLength; i++) {
+          sum += dataArray[i];
+        }
+        const average = sum / bufferLength;
+        const volume = Math.min(100, Math.max(0, (average / 128) * 100));
+        
+        setAudioLevel(volume);
+        onVolumeChange?.(volume);
+
+        const SILENCE_THRESHOLD = 5;
+        const SILENCE_DURATION = 2000;
+
+        if (volume < SILENCE_THRESHOLD) {
+          if (!silenceTimeoutRef.current) {
+            silenceTimeoutRef.current = setTimeout(() => {
+              console.log('🔇 Silence detected, auto-stopping recording');
+              if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+                mediaRecorderRef.current.stop();
+              }
+            }, SILENCE_DURATION);
+          }
+        } else {
+          if (silenceTimeoutRef.current) {
+            clearTimeout(silenceTimeoutRef.current);
+            silenceTimeoutRef.current = null;
+          }
+        }
+
+        animationFrameRef.current = requestAnimationFrame(detectVoiceActivity);
+      };
+
+      detectVoiceActivity();
+    } catch (error) {
+      console.log('⚠️ Error setting up voice activity detection:', error);
+    }
+  }, [isListening, onVolumeChange]);
+
+  const cleanupAudioResources = useCallback(() => {
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    if (silenceTimeoutRef.current) {
+      clearTimeout(silenceTimeoutRef.current);
+      silenceTimeoutRef.current = null;
+    }
+    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    setAudioLevel(0);
+  }, []);
+
+  const startServerVoiceRecognition = useCallback(async () => {
+    try {
+      setIsListening(true);
+      audioChunksRef.current = [];
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          sampleRate: 16000,
+          channelCount: 1,
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        }
+      });
+
+      streamRef.current = stream;
+      setupVoiceActivityDetection(stream);
+
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: 'audio/webm;codecs=opus'
+      });
+
+      mediaRecorderRef.current = mediaRecorder;
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        cleanupAudioResources();
+        
+        try {
+          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+          
+          const reader = new FileReader();
+          reader.onloadend = async () => {
+            try {
+              const base64Audio = (reader.result as string).split(',')[1];
+              
+              const { data, error } = await supabase.functions.invoke('voice-to-text', {
+                body: { audio: base64Audio }
+              });
+
+              if (error) throw error;
+
+              if (data.text) {
+                const voiceHistory = JSON.parse(localStorage.getItem('taskly-voice-history') || '[]');
+                voiceHistory.push({ text: data.text, timestamp: new Date().toISOString() });
+                localStorage.setItem('taskly-voice-history', JSON.stringify(voiceHistory.slice(-10)));
+                
+                onResult(data.text);
+              } else {
+                throw new Error('No transcription received');
+              }
+            } catch (error) {
+              const errorMessage = `Server transcription error: ${error.message}`;
+              onError?.(errorMessage);
+              toast({
+                title: "Voice recognition error",
+                description: errorMessage,
+                variant: "destructive",
+              });
+            }
+          };
+          reader.readAsDataURL(audioBlob);
+        } catch (error) {
+          const errorMessage = `Audio processing error: ${error.message}`;
+          onError?.(errorMessage);
+          toast({
+            title: "Voice recognition error",
+            description: errorMessage,
+            variant: "destructive",
+          });
+        }
+
+        setIsListening(false);
+      };
+
+      // Reduced timeout to 6 seconds for better UX
+      timeoutRef.current = setTimeout(() => {
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+          mediaRecorderRef.current.stop();
+        }
+      }, 6000);
+
+      mediaRecorder.start();
+    } catch (error) {
+      const errorMessage = `Microphone access denied: ${error.message}`;
+      onError?.(errorMessage);
+      setIsListening(false);
+      cleanupAudioResources();
+      toast({
+        title: "Microphone access denied",
+        description: "Please allow microphone access to use voice features",
+        variant: "destructive",
+      });
+    }
+  }, [onResult, onError, setupVoiceActivityDetection, cleanupAudioResources]);
+
   useEffect(() => {
     const initializeSupportCheck = async () => {
-      console.log('🚀 Initializing natural voice recognition support check...');
+      console.log('🚀 Initializing voice recognition support check...');
       try {
         const support = await checkBrowserSupport();
         setSupportStatus(support);
         setIsSupported(support.isSupported);
-        console.log('✅ Support check complete:', support);
+        console.log('✅ Initial support check complete:', support);
       } catch (error) {
         console.error('❌ Error checking browser support:', error);
         setIsSupported(false);
@@ -306,9 +306,6 @@ export function useVoiceRecognition({
           canUseServerFallback: false,
           hasNativeSupport: false,
           hasMediaRecorder: false,
-          whisperSupported: false,
-          advancedVADSupported: false,
-          streamingSupported: false,
           permissionStatus: 'unknown'
         });
       }
@@ -317,229 +314,121 @@ export function useVoiceRecognition({
     initializeSupportCheck();
   }, [checkBrowserSupport]);
 
-  // Start natural voice recognition
   const startListening = useCallback(async () => {
-    console.log('🎙️ Starting natural voice recognition...');
+    console.log('🎙️ Starting voice recognition...');
     
     const support = await checkBrowserSupport();
     setSupportStatus(support);
-    
+    console.log('🔍 Current support status:', support);
+
+    // Always prefer server fallback for better reliability and auto-stop
+    if (support.canUseServerFallback) {
+      console.log('📡 Using server voice recognition with voice activity detection');
+      setUseServerFallback(true);
+      await startServerVoiceRecognition();
+      return;
+    }
+
     if (!support.isSupported) {
-      const errorMessage = support.reason || 'Voice recognition not supported';
-      onError?.(errorMessage);
+      console.log('❌ Voice recognition not supported, no fallback available');
+      onError?.(support.reason || "Voice recognition not supported");
       toast({
-        title: "Voice Recognition Unavailable",
-        description: errorMessage,
+        title: "Voice not supported",
+        description: support.reason + ". Please use the type option instead.",
         variant: "destructive",
       });
       return;
     }
 
-    try {
-      // Get microphone access
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-          sampleRate: 16000
-        } 
-      });
-      
-      streamRef.current = stream;
-      
-      // Start VAD
-      await advancedVAD.startVAD(stream);
-      
-      // Start streaming or batch transcription based on preference
-      if (useStreaming && support.streamingSupported) {
-        console.log('🚀 Starting streaming transcription');
-        await streamingTranscription.startStreaming(stream);
-      } else if (support.whisperSupported) {
-        console.log('🚀 Starting Whisper transcription');
-        // Whisper will be triggered when speech ends naturally
-      } else {
-        // Fallback to native speech recognition if available
-        if (support.hasNativeSupport) {
-          console.log('🚀 Fallback to native speech recognition');
-          await startNativeSpeechRecognition();
-          return;
-        }
-      }
-      
-      // Update state
-      setVoiceState(prev => ({
-        ...prev,
-        isListening: true,
-        isProcessing: false,
-        partialText: '',
-        finalText: '',
-        confidence: 0
-      }));
-      
-      console.log('✅ Natural voice recognition started successfully');
-      
-    } catch (error) {
-      console.error('❌ Failed to start voice recognition:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to access microphone';
-      onError?.(errorMessage);
-      toast({
-        title: "Microphone Access Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    }
-  }, [checkBrowserSupport, advancedVAD, streamingTranscription, useStreaming, onError]);
-
-  // Start native speech recognition (fallback)
-  const startNativeSpeechRecognition = useCallback(async () => {
+    // Fallback to native if server isn't available
+    console.log('🚀 Starting native speech recognition...');
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
 
     recognition.continuous = false;
-    recognition.interimResults = true; // Enable partial results
+    recognition.interimResults = false;
     recognition.lang = 'en-US';
 
     recognition.onstart = () => {
       console.log('🎙️ Native speech recognition started');
-      setVoiceState(prev => ({ ...prev, isListening: true }));
+      setIsListening(true);
+      setUseServerFallback(false);
+      timeoutRef.current = setTimeout(() => {
+        if (recognitionRef.current) {
+          console.log('⏰ Auto-stopping due to timeout');
+          recognitionRef.current.stop();
+        }
+      }, 4000);
     };
 
     recognition.onresult = (event) => {
-      let transcript = '';
-      let isFinal = false;
-      
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const result = event.results[i];
-        transcript += result[0].transcript;
-        if (result.isFinal) {
-          isFinal = true;
-        }
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
       }
+      const transcript = event.results[0][0].transcript;
+      console.log('✅ Speech recognition result:', transcript);
       
-      if (isFinal) {
-        console.log('✅ Final speech result:', transcript);
-        setVoiceState(prev => ({ 
-          ...prev, 
-          finalText: transcript, 
-          partialText: '',
-          confidence: event.results[event.results.length - 1][0].confidence || 0.8
-        }));
-        onResult(transcript);
-      } else {
-        console.log('📝 Partial speech result:', transcript);
-        setVoiceState(prev => ({ 
-          ...prev, 
-          partialText: transcript,
-          confidence: event.results[event.results.length - 1][0].confidence || 0.5
-        }));
-        onPartialResult?.(transcript);
-      }
+      const voiceHistory = JSON.parse(localStorage.getItem('taskly-voice-history') || '[]');
+      voiceHistory.push({ text: transcript, timestamp: new Date().toISOString() });
+      localStorage.setItem('taskly-voice-history', JSON.stringify(voiceHistory.slice(-10)));
+      
+      onResult(transcript);
+      setIsListening(false);
     };
 
     recognition.onerror = (event) => {
-      console.error('❌ Native speech recognition error:', event.error);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
+      console.log('❌ Native speech recognition error:', event.error);
       const errorMessage = `Speech recognition error: ${event.error}`;
       onError?.(errorMessage);
-      setVoiceState(prev => ({ ...prev, isListening: false }));
+      setIsListening(false);
+      toast({
+        title: "Voice recognition error",
+        description: errorMessage,
+        variant: "destructive",
+      });
     };
 
     recognition.onend = () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
       console.log('🔚 Native speech recognition ended');
-      setVoiceState(prev => ({ ...prev, isListening: false }));
+      setIsListening(false);
     };
 
     recognitionRef.current = recognition;
+    setIsSupported(true);
     recognition.start();
-  }, [onResult, onPartialResult, onError]);
+  }, [onResult, onError, checkBrowserSupport, startServerVoiceRecognition]);
 
-  // Stop voice recognition
-  const stopListening = useCallback(async () => {
-    console.log('🛑 Stopping natural voice recognition');
-    
-    // Clear natural stop timer
-    if (naturalStopTimerRef.current) {
-      clearTimeout(naturalStopTimerRef.current);
-      naturalStopTimerRef.current = null;
+  const stopListening = useCallback(() => {
+    console.log('🛑 Manually stopping voice recognition');
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
     }
-    
-    // Stop VAD
-    if (advancedVAD.isActive) {
-      advancedVAD.stopVAD();
-    }
-    
-    // Stop streaming transcription
-    if (streamingTranscription.isStreaming) {
-      const finalResult = await streamingTranscription.stopStreaming();
-      if (finalResult) {
-        console.log('✅ Final streaming result:', finalResult.text);
-        setVoiceState(prev => ({ 
-          ...prev, 
-          finalText: finalResult.text,
-          confidence: finalResult.confidence || 0.8
-        }));
-        onResult(finalResult.text);
-      }
-    }
-    
-    // Stop native recognition
     if (recognitionRef.current) {
       recognitionRef.current.stop();
-      recognitionRef.current = null;
     }
-    
-    // Stop media stream
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.stop();
     }
-    
-    // Update state
-    setVoiceState(prev => ({
-      ...prev,
-      isListening: false,
-      isSpeaking: false,
-      isProcessing: false
-    }));
-    
-    console.log('✅ Voice recognition stopped');
-  }, [advancedVAD, streamingTranscription, onResult]);
-
-  // Update voice state with VAD data
-  useEffect(() => {
-    setVoiceState(prev => ({
-      ...prev,
-      volume: advancedVAD.volume,
-      speechDuration: advancedVAD.speechDuration,
-      silenceDuration: advancedVAD.silenceDuration
-    }));
-  }, [advancedVAD.volume, advancedVAD.speechDuration, advancedVAD.silenceDuration]);
+    cleanupAudioResources();
+    setIsListening(false);
+  }, [cleanupAudioResources]);
 
   return {
-    // State
-    ...voiceState,
+    isListening,
     isSupported,
-    supportStatus,
-    
-    // Actions
     startListening,
     stopListening,
+    supportStatus,
+    useServerFallback,
     checkBrowserSupport,
-    
-    // Advanced features
-    isSpeaking: voiceState.isSpeaking,
-    isProcessing: voiceState.isProcessing || streamingTranscription.isProcessing,
-    partialText: voiceState.partialText,
-    finalText: voiceState.finalText,
-    confidence: voiceState.confidence,
-    speechDuration: voiceState.speechDuration,
-    silenceDuration: voiceState.silenceDuration,
-    
-    // Legacy compatibility
-    audioLevel: voiceState.volume,
-    whisperStatus: whisperTranscription.status,
-    isWhisperInitialized: whisperTranscription.isInitialized,
-    whisperError: whisperTranscription.error,
+    audioLevel,
   };
 }
 
