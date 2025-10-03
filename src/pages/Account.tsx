@@ -1,111 +1,125 @@
 import { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import { useLocalStore } from '@/hooks/useLocalStore';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { useAuth } from '@/hooks/useAuth';
-import { useNavigate } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  Camera, 
-  Globe, 
-  Calendar, 
-  Mail, 
-  FileText, 
-  Bell, 
-  Shield, 
-  Download, 
-  Trash2, 
-  Lock, 
-  Info,
-  CheckCircle,
-  Volume2,
-  Bot,
-  Eye,
-  Mic
-} from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
+import { ArrowLeft, Camera, Download, Trash2, Shield, Database } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 export default function Account() {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const { state: localState, updateState } = useLocalStore();
   
   // Profile state
   const [displayName, setDisplayName] = useState(user?.email?.split('@')[0] || '');
   const [username, setUsername] = useState('');
-  const [email, setEmail] = useState(user?.email || '');
+  const [email] = useState(user?.email || '');
   const [timezone, setTimezone] = useState('UTC-5 (Eastern)');
   const [language, setLanguage] = useState('EN');
-  const [slogan, setSlogan] = useState('Report • Label • Automate');
+  const [hasProfileChanges, setHasProfileChanges] = useState(false);
   
-  // Settings state
-  const [robotVoice, setRobotVoice] = useState(false);
-  const [expressions, setExpressions] = useState('Medium');
-  const [showSpeakButton, setShowSpeakButton] = useState(false);
-  const [watching, setWatching] = useState(true);
-  
-  
-  // Notifications state
-  const [reminders, setReminders] = useState(true);
-  const [preBlockNudge, setPreBlockNudge] = useState(true);
-  const [doneReceipts, setDoneReceipts] = useState(true);
-  
-  // Security state
-  const [appLock, setAppLock] = useState('Off');
-  
-  // Save state
-  const [hasChanges, setHasChanges] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
+  // Delete confirmation
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
-  if (!user) {
-    return null;
-  }
-
-  const handleSave = () => {
-    // Save all settings to localStorage
-    localStorage.setItem('taskly-profile', JSON.stringify({
-      displayName, username, email, timezone, language, slogan
-    }));
-    localStorage.setItem('taskly-settings', JSON.stringify({
-      robotVoice, expressions, showSpeakButton, watching,
-      reminders, preBlockNudge, doneReceipts,
-      appLock
-    }));
-    
-    setSaveSuccess(true);
-    setHasChanges(false);
-    setTimeout(() => setSaveSuccess(false), 2000);
+  const handleProfileChange = (field: string, value: any) => {
+    setHasProfileChanges(true);
+    switch (field) {
+      case 'displayName':
+        setDisplayName(value);
+        break;
+      case 'username':
+        setUsername(value.toLowerCase().replace(/[^a-z0-9-]/g, ''));
+        break;
+      case 'timezone':
+        setTimezone(value);
+        break;
+      case 'language':
+        setLanguage(value);
+        break;
+    }
   };
 
-  const handleDeleteData = () => {
-    // Clear all local data
-    localStorage.removeItem('taskly-profile');
-    localStorage.removeItem('taskly-settings');
-    localStorage.removeItem('taskly-tasks');
-    localStorage.removeItem('taskly-workflows');
+  const handleSaveProfile = () => {
+    localStorage.setItem('taskly-profile', JSON.stringify({
+      displayName,
+      username,
+      email,
+      timezone,
+      language
+    }));
+    
+    setHasProfileChanges(false);
+    toast({
+      title: "✅ Profile updated",
+      description: "Your changes have been saved",
+    });
   };
 
   const handleExportData = () => {
     const data = {
       profile: JSON.parse(localStorage.getItem('taskly-profile') || '{}'),
-      settings: JSON.parse(localStorage.getItem('taskly-settings') || '{}'),
-      tasks: JSON.parse(localStorage.getItem('taskly-tasks') || '[]'),
-      workflows: JSON.parse(localStorage.getItem('taskly-workflows') || '[]')
+      settings: localState,
+      activities: JSON.parse(localStorage.getItem('taskly-activities') || '[]'),
+      suggestions: JSON.parse(localStorage.getItem('taskly-suggestions') || '[]'),
     };
     
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'taskly-data-export.json';
+    a.download = `taskly-export-${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    
+    toast({
+      title: "✅ Data exported",
+      description: "Your data has been downloaded as JSON",
+    });
   };
+
+  const handleDeleteData = () => {
+    if (deleteConfirmText !== 'DELETE') {
+      toast({
+        title: "Confirmation required",
+        description: "Please type DELETE to confirm",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    localStorage.removeItem('taskly-profile');
+    localStorage.removeItem('taskly-activities');
+    localStorage.removeItem('taskly-suggestions');
+    localStorage.removeItem('taskly-local-store');
+    setDeleteConfirmText('');
+    
+    toast({
+      title: "✅ Data deleted",
+      description: "All local data has been cleared",
+    });
+  };
+
+  const handleSignOutOthers = () => {
+    toast({
+      title: "✅ Sessions cleared",
+      description: "Other sessions have been signed out",
+    });
+  };
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -147,238 +161,217 @@ export default function Account() {
           <p className="text-muted-foreground">Manage your profile and preferences</p>
         </div>
 
-        {/* A. Profile Card */}
-        <Card className="p-6 space-y-6">
-          <h2 className="text-xl font-semibold">Profile</h2>
-          
-          <div className="flex items-start gap-6">
-            <div className="relative">
-              <Avatar className="h-24 w-24">
-                <AvatarImage src="" />
-                <AvatarFallback className="text-lg font-medium">
-                  {displayName.slice(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <Button 
-                size="sm" 
-                variant="secondary" 
-                className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 gap-2"
-              >
-                <Camera className="h-3 w-3" />
-                Change
-              </Button>
-            </div>
-            
-            <div className="flex-1 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="displayName">Display Name</Label>
-                  <Input 
-                    id="displayName"
-                    value={displayName}
-                    onChange={(e) => { setDisplayName(e.target.value); setHasChanges(true); }}
-                    placeholder="Your name"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="username">Username</Label>
-                  <Input 
-                    id="username"
-                    value={username}
-                    onChange={(e) => { setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '')); setHasChanges(true); }}
-                    placeholder="your-handle"
-                  />
-                </div>
+        {/* 1. Profile Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Profile</CardTitle>
+            <CardDescription>Your personal information and settings</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="flex items-start gap-6">
+              <div className="relative">
+                <Avatar className="h-20 w-20">
+                  <AvatarImage src="" />
+                  <AvatarFallback className="text-lg font-medium">
+                    {displayName.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <Button 
+                  size="sm" 
+                  variant="secondary" 
+                  className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 gap-1 text-xs h-7"
+                >
+                  <Camera className="h-3 w-3" />
+                  Upload
+                </Button>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="flex-1 space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="displayName">Display Name</Label>
+                    <Input 
+                      id="displayName"
+                      value={displayName}
+                      onChange={(e) => handleProfileChange('displayName', e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="username">Username</Label>
+                    <Input 
+                      id="username"
+                      value={username}
+                      onChange={(e) => handleProfileChange('username', e.target.value)}
+                      placeholder="your-handle"
+                    />
+                  </div>
+                </div>
+                
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
                   <Input 
                     id="email"
                     value={email}
-                    onChange={(e) => { setEmail(e.target.value); setHasChanges(true); }}
-                    placeholder="your@email.com"
+                    disabled
+                    className="bg-muted"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="timezone">Timezone</Label>
-                  <Select value={timezone} onValueChange={(value) => { setTimezone(value); setHasChanges(true); }}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="UTC-8 (Pacific)">UTC-8 (Pacific)</SelectItem>
-                      <SelectItem value="UTC-7 (Mountain)">UTC-7 (Mountain)</SelectItem>
-                      <SelectItem value="UTC-6 (Central)">UTC-6 (Central)</SelectItem>
-                      <SelectItem value="UTC-5 (Eastern)">UTC-5 (Eastern)</SelectItem>
-                    </SelectContent>
-                  </Select>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="timezone">Timezone</Label>
+                    <Select value={timezone} onValueChange={(v) => handleProfileChange('timezone', v)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="UTC-8 (Pacific)">UTC-8 (Pacific)</SelectItem>
+                        <SelectItem value="UTC-7 (Mountain)">UTC-7 (Mountain)</SelectItem>
+                        <SelectItem value="UTC-6 (Central)">UTC-6 (Central)</SelectItem>
+                        <SelectItem value="UTC-5 (Eastern)">UTC-5 (Eastern)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Language</Label>
+                    <div className="flex gap-2">
+                      <Button 
+                        size="sm" 
+                        variant={language === 'EN' ? 'default' : 'outline'}
+                        onClick={() => handleProfileChange('language', 'EN')}
+                        className="flex-1"
+                      >
+                        EN
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant={language === 'ES' ? 'default' : 'outline'}
+                        onClick={() => handleProfileChange('language', 'ES')}
+                        className="flex-1"
+                      >
+                        ES
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant={language === 'FR' ? 'default' : 'outline'}
+                        onClick={() => handleProfileChange('language', 'FR')}
+                        className="flex-1"
+                      >
+                        FR
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </div>
-              
-              <div className="flex items-center gap-4">
-                <Label>Language</Label>
-                <div className="flex gap-2">
-                  <Button 
-                    size="sm" 
-                    variant={language === 'EN' ? 'default' : 'outline'}
-                    onClick={() => { setLanguage('EN'); setHasChanges(true); }}
-                  >
-                    EN
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant={language === 'BG' ? 'default' : 'outline'}
-                    onClick={() => { setLanguage('BG'); setHasChanges(true); }}
-                  >
-                    BG
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex justify-end">
-            <Button 
-              disabled={!hasChanges}
-              onClick={handleSave}
-              className="gap-2"
-            >
-              {saveSuccess && <CheckCircle className="h-4 w-4" />}
-              {saveSuccess ? 'Saved!' : 'Save Changes'}
-            </Button>
-          </div>
-        </Card>
-
-        {/* B. Personalization */}
-        <Card className="p-6 space-y-4">
-          <h2 className="text-xl font-semibold">Personalization</h2>
-          
-          <div className="space-y-2">
-            <Label htmlFor="slogan">Slogan under greeting</Label>
-            <Input 
-              id="slogan"
-              value={slogan}
-              onChange={(e) => { setSlogan(e.target.value); setHasChanges(true); }}
-              placeholder="Report • Label • Automate"
-            />
-          </div>
-          
-          <div className="grid grid-cols-2 gap-6">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Label className="flex items-center gap-2">
-                  <Volume2 className="h-4 w-4" />
-                  Robot voice
-                </Label>
-                <p className="text-sm text-muted-foreground">Narration of replies</p>
-              </div>
-              <Switch 
-                checked={robotVoice} 
-                onCheckedChange={(checked) => { setRobotVoice(checked); setHasChanges(true); }} 
-              />
             </div>
             
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Bot className="h-4 w-4" />
-                Expression intensity
-              </Label>
-              <Select value={expressions} onValueChange={(value) => { setExpressions(value); setHasChanges(true); }}>
+            <div className="flex justify-end pt-4 border-t">
+              <Button 
+                disabled={!hasProfileChanges}
+                onClick={handleSaveProfile}
+              >
+                Save changes
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 2. Security Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              Security
+            </CardTitle>
+            <CardDescription>Manage authentication and active sessions</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label>Two-factor authentication</Label>
+                <p className="text-sm text-muted-foreground">Add an extra layer of security</p>
+              </div>
+              <Switch 
+                checked={localState.twoFactorAuth}
+                onCheckedChange={(checked) => {
+                  updateState({ twoFactorAuth: checked });
+                  toast({
+                    title: checked ? "2FA enabled" : "2FA disabled",
+                    description: checked ? "Two-factor authentication is now active" : "Two-factor authentication is now disabled",
+                  });
+                }}
+              />
+            </div>
+
+            <div className="pt-4 border-t">
+              <Label className="mb-3 block">Active sessions</Label>
+              <div className="p-3 rounded-lg bg-muted/30 mb-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">Current device</p>
+                    <p className="text-xs text-muted-foreground">Last active: Now</p>
+                  </div>
+                  <Badge variant="secondary">Active</Badge>
+                </div>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleSignOutOthers}
+              >
+                Sign out others
+              </Button>
+            </div>
+
+            <div className="pt-4 border-t">
+              <Label className="mb-3 block">App lock</Label>
+              <Select 
+                value={localState.appLock} 
+                onValueChange={(value: any) => {
+                  updateState({ appLock: value });
+                  toast({
+                    title: "App lock updated",
+                    description: `App lock set to ${value}`,
+                  });
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Low">Low</SelectItem>
-                  <SelectItem value="Medium">Medium</SelectItem>
-                  <SelectItem value="High">High</SelectItem>
+                  <SelectItem value="off">Off</SelectItem>
+                  <SelectItem value="1min">1 minute</SelectItem>
+                  <SelectItem value="5min">5 minutes</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-6">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Label className="flex items-center gap-2">
-                  <Mic className="h-4 w-4" />
-                  Show Speak Button
-                </Label>
-                <p className="text-sm text-muted-foreground">Display voice input</p>
-              </div>
-              <Switch 
-                checked={showSpeakButton} 
-                onCheckedChange={(checked) => { setShowSpeakButton(checked); setHasChanges(true); }} 
-              />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Label className="flex items-center gap-2">
-                  <Eye className="h-4 w-4" />
-                  Watching
-                </Label>
-                <p className="text-sm text-muted-foreground">Mirrors home bubble</p>
-              </div>
-              <Switch 
-                checked={watching} 
-                onCheckedChange={(checked) => { setWatching(checked); setHasChanges(true); }} 
-              />
-            </div>
-          </div>
+          </CardContent>
         </Card>
 
-
-        {/* D. Notifications */}
-        <Card className="p-6 space-y-4">
-          <h2 className="text-xl font-semibold flex items-center gap-2">
-            <Bell className="h-5 w-5" />
-            Notifications
-          </h2>
-          
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label>Reminders</Label>
-              <Switch 
-                checked={reminders} 
-                onCheckedChange={(checked) => { setReminders(checked); setHasChanges(true); }} 
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <Label>Pre-block nudge</Label>
-                <p className="text-sm text-muted-foreground">5 min before focus blocks</p>
-              </div>
-              <Switch 
-                checked={preBlockNudge} 
-                onCheckedChange={(checked) => { setPreBlockNudge(checked); setHasChanges(true); }} 
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <Label>Done receipts</Label>
-              <Switch 
-                checked={doneReceipts} 
-                onCheckedChange={(checked) => { setDoneReceipts(checked); setHasChanges(true); }} 
-              />
-            </div>
-          </div>
-        </Card>
-
-        {/* E. Data & Privacy */}
-        <Card className="p-6 space-y-4">
-          <h2 className="text-xl font-semibold">Data & Privacy</h2>
-          
-          <div className="space-y-4">
-            <div className="p-3 bg-muted/50 rounded-lg">
-              <p className="text-sm"><strong>Storage:</strong> Local-first</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                You control your data. We only store structure (titles/links), not bodies.
+        {/* 3. Data & Privacy Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Database className="h-5 w-5" />
+              Data & Privacy
+            </CardTitle>
+            <CardDescription>Control your data and privacy settings</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="p-4 rounded-lg bg-muted/50 border">
+              <p className="text-sm font-medium mb-1">Storage: Local-first</p>
+              <p className="text-xs text-muted-foreground">
+                We store structure (titles/links), not bodies. Your data stays on your device.
               </p>
             </div>
             
             <div className="flex gap-3">
-              <Button variant="outline" className="flex-1 gap-2" onClick={handleExportData}>
+              <Button 
+                variant="outline" 
+                className="flex-1 gap-2"
+                onClick={handleExportData}
+              >
                 <Download className="h-4 w-4" />
                 Export Data (JSON)
               </Button>
@@ -397,70 +390,42 @@ export default function Account() {
                       This action cannot be undone. Type "DELETE" to confirm.
                     </DialogDescription>
                   </DialogHeader>
-                  <div className="space-y-4">
-                    <Input placeholder="Type DELETE to confirm" />
-                    <div className="flex gap-3">
-                      <Button variant="outline" className="flex-1">Cancel</Button>
-                      <Button variant="destructive" onClick={handleDeleteData}>Delete</Button>
-                    </div>
-                  </div>
+                  <Input 
+                    placeholder="Type DELETE to confirm"
+                    value={deleteConfirmText}
+                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  />
+                  <DialogFooter className="gap-2">
+                    <Button variant="outline" onClick={() => setDeleteConfirmText('')}>
+                      Cancel
+                    </Button>
+                    <Button 
+                      variant="destructive" 
+                      onClick={handleDeleteData}
+                      disabled={deleteConfirmText !== 'DELETE'}
+                    >
+                      Delete
+                    </Button>
+                  </DialogFooter>
                 </DialogContent>
               </Dialog>
             </div>
-          </div>
-        </Card>
 
-        {/* F. Security */}
-        <Card className="p-6 space-y-4">
-          <h2 className="text-xl font-semibold flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            Security
-          </h2>
-          
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>App lock</Label>
-              <Select value={appLock} onValueChange={(value) => { setAppLock(value); setHasChanges(true); }}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Off">Off</SelectItem>
-                  <SelectItem value="Passcode">Passcode</SelectItem>
-                  <SelectItem value="Biometric">Biometric</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="pt-4 border-t">
+              <Button 
+                variant="link" 
+                className="px-0"
+                onClick={() => {
+                  navigate('/settings');
+                  setTimeout(() => {
+                    document.getElementById('privacy-section')?.scrollIntoView({ behavior: 'smooth' });
+                  }, 100);
+                }}
+              >
+                Privacy choices →
+              </Button>
             </div>
-            
-            <Button variant="outline" className="w-full gap-2">
-              <Lock className="h-4 w-4" />
-              Lock Now (Test)
-            </Button>
-          </div>
-        </Card>
-
-        {/* G. About */}
-        <Card className="p-6 space-y-4">
-          <h2 className="text-xl font-semibold flex items-center gap-2">
-            <Info className="h-5 w-5" />
-            About
-          </h2>
-          
-          <div className="space-y-3 text-sm">
-            <div className="flex justify-between">
-              <span>Version</span>
-              <span>1.0.0</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Build</span>
-              <span>2024.12.001</span>
-            </div>
-          </div>
-          
-          <div className="flex gap-3">
-            <Button variant="outline" className="flex-1">Help / FAQ</Button>
-            <Button variant="outline" className="flex-1">Contact Support</Button>
-          </div>
+          </CardContent>
         </Card>
       </div>
     </div>

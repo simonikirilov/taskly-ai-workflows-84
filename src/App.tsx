@@ -10,6 +10,7 @@ import { SimpleOnboardingFlow } from "@/components/onboarding/SimpleOnboardingFl
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Account from "./pages/Account";
+import Dashboard from "./pages/Dashboard";
 import Settings from "./pages/Settings";
 import Workflows from "./pages/Workflows";
 import Help from "./pages/Help";
@@ -41,6 +42,7 @@ const App = () => {
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/account" element={<Account />} />
+                <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/workflows" element={<Workflows />} />
                 <Route path="/help" element={<Help />} />
